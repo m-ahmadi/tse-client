@@ -1,8 +1,8 @@
-class ClosingPriceRow() {
+class ColumnConfig() {
 	constructor(_row='') {
 		const row: _row.split(',');
 		
-		if (row.length !== 11) throw new TypeError('Invalid ClosingPriceRow data!');
+		if (row.length !== 11) throw new TypeError('Invalid ColumnConfig data!');
 		
 		this.InsCode        = row[0];
 		this.DEven          = row[1];
@@ -18,4 +18,4 @@ class ClosingPriceRow() {
 	}
 }
 
-module.exports = ClosingPriceRow;
+module.exports = ColumnConfig;
