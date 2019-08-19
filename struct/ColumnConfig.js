@@ -1,21 +1,52 @@
-class ColumnConfig() {
+// orig: ColumnInfo
+
+class ColumnConfig {
 	constructor(_row='') {
 		const row: _row.split(',');
 		
-		if (row.length !== 11) throw new TypeError('Invalid ColumnConfig data!');
+		if (row.length !== 4) throw new TypeError('Invalid ColumnConfig data!');
 		
-		this.InsCode        = row[0];
-		this.DEven          = row[1];
-		this.PClosing       = row[2];
-		this.PDrCotVal      = row[3];
-		this.ZTotTran       = row[4];
-		this.QTotTran5J     = row[5];
-		this.QTotCap        = row[6];
-		this.PriceMin       = row[7];
-		this.PriceMax       = row[8];
-		this.PriceYesterday = row[9];
-		this.PriceFirst     = row[10];
+		this.Index   = row[0]; // int32
+		this.Type    = row[1]; // ColumnType (ColumnType)Enum.Parse(typeof(ColumnType), strArray[1].ToString())
+		this.Header  = row[2]; // string
+		this.Visible = row[3]; // boolean row[3] === '1'
 	}
 }
+
+const ColumnType_ = {
+	0:  'CompanyCode',
+	1:  'LatinName',
+	2:  'Symbol',
+	3:  'Name',
+	4:  'Date',
+	5:  'ShamsiDate',
+	6:  'PriceFirst',
+	7:  'PriceMax',
+	8:  'PriceMin',
+	9:  'LastPrice',
+	10: 'ClosingPrice',
+	11: 'Price',
+	12: 'Volume',
+	13: 'Count',
+	14: 'PriceYesterday'
+};
+
+const _ColumnType = {
+	CompanyCode:    0,
+	LatinName:      1,
+	Symbol:         2,
+	Name:           3,
+	Date:           4,
+	ShamsiDate:     5,
+	PriceFirst:     6,
+	PriceMax:       7,
+	PriceMin:       8,
+	LastPrice:      9,
+	ClosingPrice:   10,
+	Price:          11,
+	Volume:         12,
+	Count:          13,
+	PriceYesterday: 14
+};
 
 module.exports = ColumnConfig;
