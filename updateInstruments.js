@@ -7,7 +7,7 @@ const writeFile = require('util').promisify(fs.writeFile);
 const deven = '20010321';
 
 
-(async function getData() {
+(async function () {
 	const axiosRes = await rq.InstrumentAndShare(deven).catch(console.log);
 	const response = xmljs.xml2js(axiosRes.data);
 	const data = response.elements[0].elements[0].elements[0].elements[0].elements[0].text;
@@ -26,4 +26,4 @@ const deven = '20010321';
 	} else {
 		throw new Error('Invalid Shares data!');
 	}
-})()
+})();
