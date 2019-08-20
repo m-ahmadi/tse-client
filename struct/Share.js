@@ -4,7 +4,7 @@ class Share {
 	constructor(_row='') {
 		const row = _row.split(',');
 		
-		if (row.length !== 5) throw new TypeError('Invalid Share data!');
+		if (row.length !== 5) throw new Error('Invalid Share data!');
 		
 		this.Idn              = row[0]; // long
 		this.InsCode          = row[1]; // long

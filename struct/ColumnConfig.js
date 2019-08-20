@@ -4,7 +4,7 @@ class ColumnConfig {
 	constructor(_row='') {
 		const row = _row.split(',');
 		
-		if (row.length !== 4) throw new TypeError('Invalid ColumnConfig data!');
+		if (row.length !== 4) throw new Error('Invalid ColumnConfig data!');
 		
 		this.Index   = row[0]; // int32
 		this.Type    = row[1]; // ColumnType (ColumnType)Enum.Parse(typeof(ColumnType), strArray[1].ToString())

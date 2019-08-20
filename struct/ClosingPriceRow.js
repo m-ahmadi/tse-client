@@ -7,7 +7,7 @@ class ClosingPriceRow {
 	constructor(_row='') {
 		const row = _row.split(',');
 		
-		if (row.length !== 11) throw new TypeError('Invalid ClosingPriceRow data!');
+		if (row.length !== 11) throw new Error('Invalid ClosingPriceRow data!');
 		
 		this.InsCode        = row[0];  // int64
 		this.DEven          = row[1];  // int32
