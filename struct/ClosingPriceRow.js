@@ -5,7 +5,7 @@ const f = parseFloat;
 
 class ClosingPriceRow {
 	constructor(_row='') {
-		const row: _row.split(',');
+		const row = _row.split(',');
 		
 		if (row.length !== 11) throw new TypeError('Invalid ClosingPriceRow data!');
 		

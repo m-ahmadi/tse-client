@@ -2,7 +2,7 @@
 
 class Share {
 	constructor(_row='') {
-		const row: _row.split(',');
+		const row = _row.split(',');
 		
 		if (row.length !== 5) throw new TypeError('Invalid Share data!');
 		

@@ -2,7 +2,7 @@
 
 class Instrument {
 	constructor(_row='') {
-		const row: _row.split(',');
+		const row = _row.split(',');
 		
 		if (row.length !== 17) throw new TypeError('Invalid Instrument data!');
 

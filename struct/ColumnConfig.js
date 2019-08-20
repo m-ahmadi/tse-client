@@ -2,7 +2,7 @@
 
 class ColumnConfig {
 	constructor(_row='') {
-		const row: _row.split(',');
+		const row = _row.split(',');
 		
 		if (row.length !== 4) throw new TypeError('Invalid ColumnConfig data!');
 		
