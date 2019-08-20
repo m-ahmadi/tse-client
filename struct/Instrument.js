@@ -4,7 +4,7 @@ class Instrument {
 	constructor(_row='') {
 		const row = _row.split(',');
 		
-		if (row.length !== 17) throw new Error('Invalid Instrument data!');
+		if (row.length !== 18) throw new Error('Invalid Instrument data!');
 
 		// unspecified one are string
 		this.InsCode      = row[0];  // int64 (long)
