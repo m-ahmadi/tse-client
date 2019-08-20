@@ -11,20 +11,33 @@ const writeFile = promisify(fs.writeFile);
 const readFile = promisify(fs.readFile);
 
 (async function () {
+	const insStr = await readFile('./data/instruments.csv', 'utf8');
+	let instruments = {};
+	insStr.split('\n').forEach(v => {
+		instruments[ v.match(/^\d*\b/)[0] ] = v;
+	});
 	const csvStr = await readFile('./state/SelectedInstruments.csv', 'utf8');
-	const instruments = await readFile('./data/instruments.csv', 'utf8');
-	let selectedInstruments = csvStr.split('\n');
+	let selectedInstruments = csvStr.slice(0, -1).split('\n');
 	
 	selectedInstruments = selectedInstruments.map(v => {
+		const row = instruments[v];
+		if ( row && !u.isEmptyStr(row) ) {
+			return new Instrument(row);
+		} else {
+			throw new Error(`Selected instrument: ${v} not found in instruments!`);
+		}
+	});
+	
+	/* selectedInstruments = selectedInstruments.map(v => {
 		const pattern = '^'+v+'.*$';
 		const re = new RegExp(pattern, 'm');
-		const result = instruments.match(re);
+		const result = insStr.match(re);
 		if ( !u.isEmptyStr(result) ) {
 			return new Instrument( result[0] );
 		} else {
-			throw new Error('Selected instrument not found in instruments!');
+			throw new Error(`Selected instrument: ${v} not found in instruments!`);
 		}
-	});
+	}); */
 	
 	let insCodes = "";
 	selectedInstruments.forEach(v => {
