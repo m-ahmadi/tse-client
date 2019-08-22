@@ -5,6 +5,7 @@ const u = require('util-ma');
 
 const rq = require('./lib/request');
 const compress = require('./lib/compress');
+const getSelectedInstruments = require('./lib/getSelectedInstruments');
 const Instrument = require('./struct/Instrument');
 
 const writeFile = promisify(fs.writeFile);
@@ -16,12 +17,10 @@ const readFile = promisify(fs.readFile);
 	insStr.split('\n').forEach(v => {
 		instruments[ v.match(/^\d*\b/)[0] ] = v;
 	});
-	const csvStr = await readFile('./state/SelectedInstruments.csv', 'utf8');
-	let selectedInstruments = csvStr.slice(0, -1).split('\n');
+	let selectedInstruments = await getSelectedInstruments();
 	
 	selectedInstruments = selectedInstruments.map(v => {
-		const safe = v.indexOf('\n') !== -1 ? v.slice(0, -1) : v; // removing EOL chars
-		const row = instruments[safe];
+		const row = instruments[v];
 		if ( row && !u.isEmptyStr(row) ) {
 			return new Instrument(row);
 		} else {
