@@ -20,7 +20,8 @@ const readFile = promisify(fs.readFile);
 	let selectedInstruments = csvStr.slice(0, -1).split('\n');
 	
 	selectedInstruments = selectedInstruments.map(v => {
-		const row = instruments[v];
+		const safe = v.indexOf('\n') !== -1 ? v.slice(0, -1) : v; // removing EOL chars
+		const row = instruments[safe];
 		if ( row && !u.isEmptyStr(row) ) {
 			return new Instrument(row);
 		} else {
