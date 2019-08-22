@@ -5,6 +5,7 @@ const u = require('util-ma');
 
 const rq = require('./lib/request');
 const compress = require('./lib/compress');
+const getInstruments = require('./lib/getInstruments');
 const getSelectedInstruments = require('./lib/getSelectedInstruments');
 const Instrument = require('./struct/Instrument');
 
@@ -12,29 +13,16 @@ const writeFile = promisify(fs.writeFile);
 const readFile = promisify(fs.readFile);
 
 (async function () {
-	const insStr = await readFile('./data/instruments.csv', 'utf8');
-	let instruments = {};
-	insStr.split('\n').forEach(v => {
-		instruments[ v.match(/^\d*\b/)[0] ] = v;
-	});
-	let selectedInstruments = await getSelectedInstruments();
-	
-	selectedInstruments = selectedInstruments.map(v => {
-		const row = instruments[v];
-		if ( row && !u.isEmptyStr(row) ) {
-			return new Instrument(row);
-		} else {
-			throw new Error(`Selected instrument: ${v} not found in instruments!`);
-		}
-	});
+	let instruments = await getInstruments();
+	let selectedInstruments = await getSelectedInstruments(true);
 	
 	let insCodes = "";
-	selectedInstruments.forEach(v => {
-		insCodes += v.InsCode + ',';
-		insCodes += v.DEven + ',';
-		insCodes += v.YMarNSC === 'NO' ? 0 : 1;
+	for (instrument in selectedInstruments) {
+		insCodes += instrument.InsCode + ',';
+		insCodes += instrument.DEven + ',';
+		insCodes += instrument.YMarNSC === 'NO' ? 0 : 1;
 		insCodes += ';';
-	});
+	}
 	insCodes = insCodes.slice(0, -1);
 	insCodes = compress(insCodes);
 	
