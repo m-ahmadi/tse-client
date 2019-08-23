@@ -1,6 +1,7 @@
 const fs = require('fs');
 const { promisify } = require('util');
 const jalaali = require('jalaali-js');
+const writeFile = promisify(fs.writeFile);
 
 const getSelectedInstruments = require('./lib/getSelectedInstruments');
 const ClosingPriceRow = require('./struct/ClosingPriceRow');
@@ -37,59 +38,75 @@ const readFile = promisify(fs.readFile);
 	// if (instrument.YMarNSC != "ID")
 	let files = [];
 	files = selectedInstruments.map(instrument => insCosingPrices[instrument.InsCode]);
-	files = files.map(closingPrice => {
-		const instrument = selectedInstruments.find(instrument => instrument.InsCode === closingPrice.InsCode);
-		let str = '';
-		for (column of columns) {
-			switch (column.Type) {
-				case 'CompanyCode':
-					str += instrument.CompanyCode;
-					break;
-				case 'LatinName':
-					str += instrument.LatinName;
-					break;
-				case 'Symbol':
-					str += instrument.Symbol.replace(' ', '_');
-					break;
-				case 'Name':
-					str += instrument.Name.replace(' ', '_');
-					break;
-				case 'Date':
-					str += closingPrice.DEven;
-					break;
-				case 'ShamsiDate':
-					// str += Utility.ConvertGregorianIntToJalaliInt(closingPrice.DEven);
-					break;
-				case 'PriceFirst':
-					str += closingPrice.PriceFirst;
-					break;
-				case 'PriceMax':
-					str += closingPrice.PriceMax;
-					break;
-				case 'PriceMin':
-					str += closingPrice.PriceMin;
-					break;
-				case 'LastPrice':
-					str += closingPrice.PDrCotVal;
-					break;
-				case 'ClosingPrice':
-					str += closingPrice.PClosing;
-					break;
-				case 'Price':
-					str += closingPrice.QTotCap;
-					break;
-				case 'Volume':
-					str += closingPrice.QTotTran5J;
-					break;
-				case 'Count':
-					str += closingPrice.ZTotTran;
-					break;
-				case 'PriceYesterday':
-					str += closingPrice.PriceYesterday;
-					break;
+	files = files.map(closingPrices => {
+		const instrument = selectedInstruments.find(v => v.InsCode === closingPrices[0].InsCode);
+		let str = headerRow;
+		closingPrices.forEach(closingPrice => {
+			for (column of columns) {
+				str += getCell(instrument, closingPrice, column.Type);
+				str += ',';
 			}
-		}
+			str = str.slice(0, -1);
+			str += '\n';
+		});
+		str = str.slice(0, -1);
+		return str;
 	});
 	
-	var x = n;
+	let c = 0;
+	for (file of files) {
+		writeFile(`./${c+=1}.csv`, '\ufeff'+file, 'utf8'); // utf8 bom
+	}
 })()
+
+function getCell(instrument, closingPrice, columnType) {
+	let str = '';
+	switch (columnType) {
+		case 'CompanyCode':
+			str += instrument.CompanyCode;
+			break;
+		case 'LatinName':
+			str += instrument.LatinName;
+			break;
+		case 'Symbol':
+			str += instrument.Symbol.replace(' ', '_');
+			break;
+		case 'Name':
+			str += instrument.Name.replace(' ', '_');
+			break;
+		case 'Date':
+			str += closingPrice.DEven;
+			break;
+		case 'ShamsiDate':
+			// str += Utility.ConvertGregorianIntToJalaliInt(closingPrice.DEven);
+			break;
+		case 'PriceFirst':
+			str += closingPrice.PriceFirst;
+			break;
+		case 'PriceMax':
+			str += closingPrice.PriceMax;
+			break;
+		case 'PriceMin':
+			str += closingPrice.PriceMin;
+			break;
+		case 'LastPrice':
+			str += closingPrice.PDrCotVal;
+			break;
+		case 'ClosingPrice':
+			str += closingPrice.PClosing;
+			break;
+		case 'Price':
+			str += closingPrice.QTotCap;
+			break;
+		case 'Volume':
+			str += closingPrice.QTotTran5J;
+			break;
+		case 'Count':
+			str += closingPrice.ZTotTran;
+			break;
+		case 'PriceYesterday':
+			str += closingPrice.PriceYesterday;
+			break;
+	}
+	return str;
+}
