@@ -23,7 +23,6 @@ const readFile = promisify(fs.readFile);
 		insCosingPrices[insCode] = cpstr.split('\n').map( row => new ClosingPriceRow(row) );
 	}
 	
-	// if (instrument.YMarNSC != "ID")
 	const colstr = await readFile('./state/Columns.csv', 'utf8');
 	const colstrlf = colstr.match(/\r\n/g) !== null ? colstr.replace(/\r\n/g, '\n') : colstr;
 	let columns = colstrlf.slice(0, -1).split('\n').map( v => new ColumnConfig(v) );
@@ -35,13 +34,59 @@ const readFile = promisify(fs.readFile);
 	headerRow = headerRow.slice(0, -1);
 	headerRow += '\n';
 	
+	// if (instrument.YMarNSC != "ID")
 	let files = [];
 	files = selectedInstruments.map(instrument => insCosingPrices[instrument.InsCode]);
 	files = files.map(closingPrice => {
+		const instrument = selectedInstruments.find(instrument => instrument.InsCode === closingPrice.InsCode);
 		let str = '';
 		for (column of columns) {
 			switch (column.Type) {
-				// case 'Symbol'
+				case 'CompanyCode':
+					str += instrument.CompanyCode;
+					break;
+				case 'LatinName':
+					str += instrument.LatinName;
+					break;
+				case 'Symbol':
+					str += instrument.Symbol.replace(' ', '_');
+					break;
+				case 'Name':
+					str += instrument.Name.replace(' ', '_');
+					break;
+				case 'Date':
+					str += closingPrice.DEven;
+					break;
+				case 'ShamsiDate':
+					// str += Utility.ConvertGregorianIntToJalaliInt(closingPrice.DEven);
+					break;
+				case 'PriceFirst':
+					str += closingPrice.PriceFirst;
+					break;
+				case 'PriceMax':
+					str += closingPrice.PriceMax;
+					break;
+				case 'PriceMin':
+					str += closingPrice.PriceMin;
+					break;
+				case 'LastPrice':
+					str += closingPrice.PDrCotVal;
+					break;
+				case 'ClosingPrice':
+					str += closingPrice.PClosing;
+					break;
+				case 'Price':
+					str += closingPrice.QTotCap;
+					break;
+				case 'Volume':
+					str += closingPrice.QTotTran5J;
+					break;
+				case 'Count':
+					str += closingPrice.ZTotTran;
+					break;
+				case 'PriceYesterday':
+					str += closingPrice.PriceYesterday;
+					break;
 			}
 		}
 	});
