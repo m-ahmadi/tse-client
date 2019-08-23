@@ -5,7 +5,6 @@ const u = require('util-ma');
 
 const rq = require('./lib/request');
 const compress = require('./lib/compress');
-const getInstruments = require('./lib/getInstruments');
 const getSelectedInstruments = require('./lib/getSelectedInstruments');
 const Instrument = require('./struct/Instrument');
 
@@ -13,11 +12,10 @@ const writeFile = promisify(fs.writeFile);
 const readFile = promisify(fs.readFile);
 
 (async function () {
-	let instruments = await getInstruments();
 	let selectedInstruments = await getSelectedInstruments(true);
 	
 	let insCodes = "";
-	for (instrument in selectedInstruments) {
+	for (instrument of selectedInstruments) {
 		insCodes += instrument.InsCode + ',';
 		insCodes += instrument.DEven + ',';
 		insCodes += instrument.YMarNSC === 'NO' ? 0 : 1;
