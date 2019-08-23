@@ -14,32 +14,37 @@ const startDeven = (date.getFullYear()*10000) + ((date.getMonth()+1)*100) + date
 const readFile = promisify(fs.readFile);
 
 (async function () {
-	let selectedInstruments = await getSelectedInstruments();
+	let selectedInstruments = await getSelectedInstruments(true);
 	
 	let insCosingPrices = {};
-	for (v of selectedInstruments) {
-		const str = await readFile(`./data/${v}.csv`, 'utf8');
-		insCosingPrices[v] = str.split('\n').map( v => new ClosingPriceRow(v) );
+	for (instrument of selectedInstruments) {
+		const insCode = instrument.InsCode;
+		const cpstr = await readFile(`./data/${insCode}.csv`, 'utf8');
+		insCosingPrices[insCode] = cpstr.split('\n').map( row => new ClosingPriceRow(row) );
 	}
 	
 	// if (instrument.YMarNSC != "ID")
 	const colstr = await readFile('./state/Columns.csv', 'utf8');
-	let columns = colstr.slice(0, -1).split('\n').map( v => new ColumnConfig(v) );
+	const colstrlf = colstr.match(/\r\n/g) !== null ? colstr.replace(/\r\n/g, '\n') : colstr;
+	let columns = colstrlf.slice(0, -1).split('\n').map( v => new ColumnConfig(v) );
+	
 	let headerRow = '';
 	for (column of columns) {
 		headerRow += column.Header + ',';
 	}
-	headerRow.slice(0, -1);
+	headerRow = headerRow.slice(0, -1);
 	headerRow += '\n';
 	
-	let files = selectedInstruments
-		.map(insCode => insCosingPrices[insCode])
-		.map(closingPrice => {
-			let str = '';
-			for (column of columns) {
-				str += column.CompanyCode
+	let files = [];
+	files = selectedInstruments.map(instrument => insCosingPrices[instrument.InsCode]);
+	files = files.map(closingPrice => {
+		let str = '';
+		for (column of columns) {
+			switch (column.Type) {
+				// case 'Symbol'
 			}
-		});
+		}
+	});
 	
 	var x = n;
 })()
