@@ -3,6 +3,7 @@ const { promisify } = require('util');
 const jalaali = require('jalaali-js');
 const writeFile = promisify(fs.writeFile);
 
+const settings = require('./lib/settings');
 const getSelectedInstruments = require('./lib/getSelectedInstruments');
 const ClosingPriceRow = require('./struct/ClosingPriceRow');
 const ColumnConfig = require('./struct/ColumnConfig');
@@ -35,9 +36,7 @@ const readFile = promisify(fs.readFile);
 	headerRow = headerRow.slice(0, -1);
 	headerRow += '\n';
 	
-	// if (instrument.YMarNSC != "ID")
-	let files = [];
-	files = selectedInstruments.map(instrument => insCosingPrices[instrument.InsCode]);
+	let files = selectedInstruments.map(v => insCosingPrices[v.InsCode]);
 	files = files.map(closingPrices => {
 		const instrument = selectedInstruments.find(v => v.InsCode === closingPrices[0].InsCode);
 		let str = headerRow;
@@ -53,11 +52,55 @@ const readFile = promisify(fs.readFile);
 		return str;
 	});
 	
-	let c = 0;
-	for (file of files) {
-		writeFile(`./${c+=1}.csv`, '\ufeff'+file, 'utf8'); // utf8 bom
+	const writes = selectedInstruments.map( (v, i) => {
+		const filename = getFilename(settings, v);
+		const content = files[i];
+		return [filename, content];
+	});
+	
+	for (write of writes) {
+		writeFile(`./${write[0]}.csv`, '\ufeff'+write[1], 'utf8'); // utf8 bom
 	}
 })()
+
+
+function getFilename(settings, instrument) {
+	const adjust = settings.adjustPrices;
+	const suffix = (fa=false) => {
+		let str = '';
+		if (instrument.YMarNSC != 'ID') {
+			if (adjust === 1) {
+				str = fa ? '-ت' : '-a';
+			} else if (adjust === 2) {
+				str = fa ? '-ا' : '-i';
+			}
+		}
+		return str;
+	};
+	
+	let filename = '';
+	switch (settings.filename) {
+		case 0:
+			filename = instrument.CIsin + suffix();
+			break;
+		case 1:
+			filename = instrument.LatinName + suffix();
+			break;
+		case 2:
+			filename = instrument.LatinSymbol + suffix();
+			break;
+		case 3:
+			filename = instrument.Name + suffix(true);
+			break;
+		case 4:
+			filename = instrument.Symbol + suffix(true);
+			break;
+		default:
+			filename = instrument.CIsin + suffix();
+			break;
+	}
+	return filename;
+}
 
 function getCell(instrument, closingPrice, columnType) {
 	let str = '';
