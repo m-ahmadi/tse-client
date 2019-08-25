@@ -64,58 +64,62 @@ const readFile = promisify(fs.readFile);
 })()
 
 
-function getFilename(settings, instrument) {
-	const adjust = settings.adjustPrices;
-	const suffix = (fa=false) => {
-		let str = '';
-		if (instrument.YMarNSC != 'ID') {
-			if (adjust === 1) {
-				str = fa ? '-ت' : '-a';
-			} else if (adjust === 2) {
-				str = fa ? '-ا' : '-i';
-			}
+function suffix(YMarNSC, adjustPrices, fa=false) {
+	let str = '';
+	if (YMarNSC != 'ID') {
+		if (adjustPrices === 1) {
+			str = fa ? '-ت' : '-a';
+		} else if (adjustPrices === 2) {
+			str = fa ? '-ا' : '-i';
 		}
-		return str;
-	};
+	}
+	return str;
+}
+
+function getFilename(settings, instrument) {
+	const y = instrument.YMarNSC;
+	const a = settings.adjustPrices;
 	
 	let filename = '';
 	switch (settings.filename) {
 		case 0:
-			filename = instrument.CIsin + suffix();
+			filename = instrument.CIsin + suffix(y, a);
 			break;
 		case 1:
-			filename = instrument.LatinName + suffix();
+			filename = instrument.LatinName + suffix(y, a);
 			break;
 		case 2:
-			filename = instrument.LatinSymbol + suffix();
+			filename = instrument.LatinSymbol + suffix(y, a);
 			break;
 		case 3:
-			filename = instrument.Name + suffix(true);
+			filename = instrument.Name + suffix(y, a, true);
 			break;
 		case 4:
-			filename = instrument.Symbol + suffix(true);
+			filename = instrument.Symbol + suffix(y, a, true);
 			break;
 		default:
-			filename = instrument.CIsin + suffix();
+			filename = instrument.CIsin + suffix(y, a);
 			break;
 	}
 	return filename;
 }
 
 function getCell(instrument, closingPrice, columnType) {
+	const y = instrument.YMarNSC;
+	const a = settings.adjustPrices;
 	let str = '';
 	switch (columnType) {
 		case 'CompanyCode':
 			str += instrument.CompanyCode;
 			break;
 		case 'LatinName':
-			str += instrument.LatinName;
+			str += instrument.LatinName + suffix(y, a);
 			break;
 		case 'Symbol':
-			str += instrument.Symbol.replace(' ', '_');
+			str += instrument.Symbol.replace(' ', '_') + suffix(y, a, true);
 			break;
 		case 'Name':
-			str += instrument.Name.replace(' ', '_');
+			str += instrument.Name.replace(' ', '_') + suffix(y, a, true);
 			break;
 		case 'Date':
 			str += closingPrice.DEven;
