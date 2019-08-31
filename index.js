@@ -1,7 +1,11 @@
 const fs = require('fs');
 const { promisify } = require('util');
 const jalaali = require('jalaali-js');
+
+const readFile = promisify(fs.readFile);
 const writeFile = promisify(fs.writeFile);
+
+const getColumns = require('./lib/getColumns');
 
 const settings = require('./lib/settings');
 const getSelectedInstruments = require('./lib/getSelectedInstruments');
@@ -13,21 +17,14 @@ const d = jalaali.toGregorian(j[0], j[1], j[2]);
 const date = new Date(d.gy, d.gm - 1, d.gd);
 const startDeven = (date.getFullYear()*10000) + ((date.getMonth()+1)*100) + date.getDate();
 
-const readFile = promisify(fs.readFile);
-
 (async function () {
-	let selectedInstruments = await getSelectedInstruments(true);
-	
-	let insCosingPrices = {};
-	for (instrument of selectedInstruments) {
-		const insCode = instrument.InsCode;
+	const selectedInstruments = await getSelectedInstruments(true);
+	const prices = {};
+	for (insCode of selectedInstruments) {
 		const cpstr = await readFile(`./data/${insCode}.csv`, 'utf8');
-		insCosingPrices[insCode] = cpstr.split('\n').map( row => new ClosingPriceRow(row) );
+		prices[insCode] = cpstr.split('\n').map( row => new ClosingPriceRow(row) );
 	}
-	
-	const colstr = await readFile('./state/Columns.csv', 'utf8');
-	const colstrlf = colstr.match(/\r\n/g) !== null ? colstr.replace(/\r\n/g, '\n') : colstr;
-	let columns = colstrlf.slice(0, -1).split('\n').map( v => new ColumnConfig(v) );
+	const columns = await getColumns();
 	
 	let headerRow = '';
 	for (column of columns) {
@@ -36,7 +33,15 @@ const readFile = promisify(fs.readFile);
 	headerRow = headerRow.slice(0, -1);
 	headerRow += '\n';
 	
-	let files = selectedInstruments.map(v => insCosingPrices[v.InsCode]);
+	let files = selectedInstruments.map(v => {
+		const adjust = settings.adjustPrices;
+		const closingPrices = prices[v.InsCode];
+		if (adjust === 1 || adjust === 2) {
+			return adjustPrices(adjust, closingPrices);
+		} else {
+			return closingPrices;
+		}
+	});
 	files = files.map(closingPrices => {
 		const instrument = selectedInstruments.find(v => v.InsCode === closingPrices[0].InsCode);
 		let str = headerRow;
@@ -61,8 +66,12 @@ const readFile = promisify(fs.readFile);
 	for (write of writes) {
 		writeFile(`./${write[0]}.csv`, '\ufeff'+write[1], 'utf8'); // utf8 bom
 	}
-})()
+})();
 
+// helpers
+function adjustPrices(level, closingPrices) {
+	
+}
 
 function suffix(YMarNSC, adjustPrices, fa=false) {
 	let str = '';
