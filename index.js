@@ -5,10 +5,10 @@ const jalaali = require('jalaali-js');
 const readFile = promisify(fs.readFile);
 const writeFile = promisify(fs.writeFile);
 
-const getColumns = require('./lib/getColumns');
-
 const settings = require('./lib/settings');
 const getSelectedInstruments = require('./lib/getSelectedInstruments');
+const getShares = require('./lib/getShares');
+const getColumns = require('./lib/getColumns');
 const ClosingPriceRow = require('./struct/ClosingPriceRow');
 const ColumnConfig = require('./struct/ColumnConfig');
 
@@ -20,7 +20,8 @@ const startDeven = (date.getFullYear()*10000) + ((date.getMonth()+1)*100) + date
 (async function () {
 	const selectedInstruments = await getSelectedInstruments(true);
 	const prices = {};
-	for (insCode of selectedInstruments) {
+	for (instrument of selectedInstruments) {
+		const insCode = instrument.InsCode;
 		const cpstr = await readFile(`./data/${insCode}.csv`, 'utf8');
 		prices[insCode] = cpstr.split('\n').map( row => new ClosingPriceRow(row) );
 	}
@@ -33,11 +34,13 @@ const startDeven = (date.getFullYear()*10000) + ((date.getMonth()+1)*100) + date
 	headerRow = headerRow.slice(0, -1);
 	headerRow += '\n';
 	
+	const shares = await getShares();
+	
 	let files = selectedInstruments.map(v => {
 		const adjust = settings.adjustPrices;
 		const closingPrices = prices[v.InsCode];
 		if (adjust === 1 || adjust === 2) {
-			return adjustPrices(adjust, closingPrices);
+			return adjustPrices(adjust, closingPrices, shares);
 		} else {
 			return closingPrices;
 		}
@@ -69,8 +72,60 @@ const startDeven = (date.getFullYear()*10000) + ((date.getMonth()+1)*100) + date
 })();
 
 // helpers
-function adjustPrices(level, closingPrices) {
-	
+function adjustPrices(cond, closingPrices, shares) {
+	const cp = closingPrices;
+	const len = closingPrices.length;
+	const res = [];
+	if ( (cond == 1 || cond == 2) && len > 1 ) {
+		let num2 = 1;
+		res.push( cp[len-1] );
+		let gaps = 0.0;
+		if (cond == 1) {
+			for (let i=len-2; i>=0; i-=1) {
+				if (cp[i].PClosing != cp[i + 1].PriceYesterday) {
+						gaps += 1;
+				}
+			}
+		}
+		if (cond == 1 && (gaps / len < 0.08 || cond == 2)) {
+			for (let i=len-2; i >= 0; i-=1) {
+				/* Predicate<TseShareInfo> aShareThatsDifferent = p => {
+					if (p.InsCode.ToString().Equals(currentItemInscode)) {
+							return p.DEven == cp[i + 1].DEven;
+					}
+					return false;
+				}; */
+				const pricesDontMatch = cp[i].PClosing != cp[i + 1].PriceYesterday;
+
+				if (cond == 1 && pricesDontMatch) {
+					num2 = num2 * cp[i + 1].PriceYesterday / cp[i].PClosing;
+				} else if ( cond == 2 && pricesDontMatch && StaticData.TseShares.Exists(aShareThatsDifferent) ) {
+					var something = StaticData.TseShares.Find(aShareThatsDifferent);
+					var oldShares = something.NumberOfShareOld;
+					var newShares = something.NumberOfShareNew;
+					num2 = (num2 * oldShares) / newShares;
+				}
+
+				res.push({
+					InsCode: cp[i].InsCode,
+					DEven: cp[i].DEven,
+					PClosing: round(num2 * cp[i].PClosing, 2),
+					PDrCotVal: round(num2 * cp[i].PDrCotVal, 2),
+					ZTotTran: cp[i].ZTotTran,
+					QTotTran5J: cp[i].QTotTran5J,
+					QTotCap: cp[i].QTotCap,
+					PriceMin: round(num2 * cp[i].PriceMin),
+					PriceMax: round(num2 * cp[i].PriceMax),
+					PriceYesterday: round(num2 * cp[i].PriceYesterday),
+					PriceFirst: round(num2 * cp[i].PriceFirst, 2)
+				});
+			}
+			/* cp.Clear();
+			for (let i=res.length-1; i>=0; i-=1)
+				cp.Add(closingPriceInfoList[index]); */
+		}
+	}
+	return res;
 }
 
 function suffix(YMarNSC, adjustPrices, fa=false) {
@@ -165,4 +220,15 @@ function getCell(instrument, closingPrice, columnType) {
 			break;
 	}
 	return str;
+}
+
+function round(num, decimalPlaces) {
+	var d = decimalPlaces || 0;
+	var m = Math.pow(10, d);
+	var n = +(d ? num * m : num).toFixed(8);
+	var i = Math.floor(n), f = n - i;
+	var e = 1e-8;
+	var r = (f > 0.5 - e && f < 0.5 + e) ?
+						((i % 2 == 0) ? i : i + 1) : round(n);
+	return d ? r / m : r;
 }
