@@ -37,14 +37,3 @@ const readFile = promisify(fs.readFile);
 		throw new Error('Invalid ClosingPrice data!');
 	}
 })();
-
-/* selectedInstruments = selectedInstruments.map(v => {
-		const pattern = '^'+v+'.*$';
-		const re = new RegExp(pattern, 'm');
-		const result = insStr.match(re);
-		if ( !u.isEmptyStr(result) ) {
-			return new Instrument( result[0] );
-		} else {
-			throw new Error(`Selected instrument: ${v} not found in instruments!`);
-		}
-	}); */

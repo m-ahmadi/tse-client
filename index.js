@@ -95,10 +95,10 @@ function adjustPrices(cond, closingPrices, shares) {
 					}
 					return false;
 				}; */
-				const pricesDontMatch = cp[i].PClosing != cp[i + 1].PriceYesterday;
+				const pricesDontMatch = cp[i].PClosing != cp[i+1].PriceYesterday;
 
 				if (cond == 1 && pricesDontMatch) {
-					num2 = num2 * cp[i + 1].PriceYesterday / cp[i].PClosing;
+					num2 = num2 * cp[i+1].PriceYesterday / cp[i].PClosing;
 				} else if ( cond == 2 && pricesDontMatch && StaticData.TseShares.Exists(aShareThatsDifferent) ) {
 					var something = StaticData.TseShares.Find(aShareThatsDifferent);
 					var oldShares = something.NumberOfShareOld;
