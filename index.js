@@ -21,7 +21,7 @@ const startDeven = (date.getFullYear()*10000) + ((date.getMonth()+1)*100) + date
 	const selectedInstruments = await getSelectedInstruments(true);
 	const prices = {};
 	for (v of selectedInstruments) {
-		prices[insCode] = await getInstrumentPrices(v.InsCode);
+		prices[v.InsCode] = await getInstrumentPrices(v.InsCode);
 	}
 	const columns = await getColumns();
 	
@@ -32,7 +32,7 @@ const startDeven = (date.getFullYear()*10000) + ((date.getMonth()+1)*100) + date
 	headerRow = headerRow.slice(0, -1);
 	headerRow += '\n';
 	
-	const shares = await getShares();
+	const shares = await getShares(true);
 	
 	let files = selectedInstruments.map(v => {
 		const insCode = v.InsCode;
@@ -87,23 +87,15 @@ function adjustPrices(cond, closingPrices, shares, insCode) {
 			}
 		}
 		if (cond == 1 && (gaps / len < 0.08 || cond == 2)) {
-			for (let i=len-2; i >= 0; i-=1) {
-				/* Predicate<TseShareInfo> aShareThatsDifferent = p => {
-					if (p.InsCode.ToString().Equals(currentItemInscode)) {
-							return p.DEven == cp[i + 1].DEven;
-					}
-					return false;
-				}; */
-				
-				
+			for (let i=len-2; i>=0; i-=1) {
 				const pricesDontMatch = cp[i].PClosing != cp[i+1].PriceYesterday;
-
+				const targetShare = shares.find(share => share.InsCode === insCode && share.DEven === cp[i+1].DEven);
+				
 				if (cond == 1 && pricesDontMatch) {
 					num2 = num2 * cp[i+1].PriceYesterday / cp[i].PClosing;
-				} else if ( cond == 2 && pricesDontMatch && StaticData.TseShares.Exists(aShareThatsDifferent) ) {
-					var something = StaticData.TseShares.Find(aShareThatsDifferent);
-					var oldShares = something.NumberOfShareOld;
-					var newShares = something.NumberOfShareNew;
+				} else if ( cond == 2 && pricesDontMatch && targetShare ) {
+					var oldShares = targetShare.NumberOfShareOld;
+					var newShares = targetShare.NumberOfShareNew;
 					num2 = (num2 * oldShares) / newShares;
 				}
 
@@ -121,9 +113,6 @@ function adjustPrices(cond, closingPrices, shares, insCode) {
 					PriceFirst: round(num2 * cp[i].PriceFirst, 2)        // note
 				});
 			}
-			/* cp.Clear();
-			for (let i=res.length-1; i>=0; i-=1)
-				cp.Add(closingPriceInfoList[index]); */
 		}
 	}
 	return res;
