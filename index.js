@@ -9,7 +9,7 @@ const settings = require('./lib/settings');
 const getSelectedInstruments = require('./lib/getSelectedInstruments');
 const getShares = require('./lib/getShares');
 const getColumns = require('./lib/getColumns');
-const ClosingPriceRow = require('./struct/ClosingPriceRow');
+const ClosingPrice = require('./struct/ClosingPrice');
 const ColumnConfig = require('./struct/ColumnConfig');
 
 const j = "1380/01/01".split('/').map(v => parseInt(v));
@@ -23,7 +23,7 @@ const startDeven = (date.getFullYear()*10000) + ((date.getMonth()+1)*100) + date
 	for (instrument of selectedInstruments) {
 		const insCode = instrument.InsCode;
 		const cpstr = await readFile(`./data/${insCode}.csv`, 'utf8');
-		prices[insCode] = cpstr.split('\n').map( row => new ClosingPriceRow(row) );
+		prices[insCode] = cpstr.split('\n').map( row => new ClosingPrice(row) );
 	}
 	const columns = await getColumns();
 	
@@ -37,10 +37,11 @@ const startDeven = (date.getFullYear()*10000) + ((date.getMonth()+1)*100) + date
 	const shares = await getShares();
 	
 	let files = selectedInstruments.map(v => {
-		const adjust = settings.adjustPrices;
-		const closingPrices = prices[v.InsCode];
-		if (adjust === 1 || adjust === 2) {
-			return adjustPrices(adjust, closingPrices, shares);
+		const insCode = v.InsCode;
+		const cond = settings.adjustPrices;
+		const closingPrices = prices[insCode];
+		if (cond === 1 || cond === 2) {
+			return adjustPrices(cond, closingPrices, shares, insCode);
 		} else {
 			return closingPrices;
 		}
@@ -72,7 +73,7 @@ const startDeven = (date.getFullYear()*10000) + ((date.getMonth()+1)*100) + date
 })();
 
 // helpers
-function adjustPrices(cond, closingPrices, shares) {
+function adjustPrices(cond, closingPrices, shares, insCode) {
 	const cp = closingPrices;
 	const len = closingPrices.length;
 	const res = [];
@@ -95,6 +96,8 @@ function adjustPrices(cond, closingPrices, shares) {
 					}
 					return false;
 				}; */
+				
+				
 				const pricesDontMatch = cp[i].PClosing != cp[i+1].PriceYesterday;
 
 				if (cond == 1 && pricesDontMatch) {
