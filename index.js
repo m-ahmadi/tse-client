@@ -9,7 +9,7 @@ const settings = require('./lib/settings');
 const getSelectedInstruments = require('./lib/getSelectedInstruments');
 const getShares = require('./lib/getShares');
 const getColumns = require('./lib/getColumns');
-const ClosingPrice = require('./struct/ClosingPrice');
+const getInstrumentPrices = require('./lib/getInstrumentPrices');
 const ColumnConfig = require('./struct/ColumnConfig');
 
 const j = "1380/01/01".split('/').map(v => parseInt(v));
@@ -20,10 +20,8 @@ const startDeven = (date.getFullYear()*10000) + ((date.getMonth()+1)*100) + date
 (async function () {
 	const selectedInstruments = await getSelectedInstruments(true);
 	const prices = {};
-	for (instrument of selectedInstruments) {
-		const insCode = instrument.InsCode;
-		const cpstr = await readFile(`./data/${insCode}.csv`, 'utf8');
-		prices[insCode] = cpstr.split('\n').map( row => new ClosingPrice(row) );
+	for (v of selectedInstruments) {
+		prices[insCode] = await getInstrumentPrices(v.InsCode);
 	}
 	const columns = await getColumns();
 	

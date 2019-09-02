@@ -3,7 +3,7 @@
 const i = parseInt;
 const f = parseFloat;
 
-class ClosingPrices {
+class ClosingPrice {
 	constructor(_row='') {
 		const row = _row.split(',');
 		
@@ -23,4 +23,4 @@ class ClosingPrices {
 	}
 }
 
-module.exports = ClosingPrices;
+module.exports = ClosingPrice;
