@@ -109,15 +109,15 @@ function adjustPrices(cond, closingPrices, shares) {
 				res.push({
 					InsCode: cp[i].InsCode,
 					DEven: cp[i].DEven,
-					PClosing: round(num2 * cp[i].PClosing, 2),
-					PDrCotVal: round(num2 * cp[i].PDrCotVal, 2),
+					PClosing: round(num2 * cp[i].PClosing, 2),           // note
+					PDrCotVal: round(num2 * cp[i].PDrCotVal, 2),         // note (last price)
 					ZTotTran: cp[i].ZTotTran,
 					QTotTran5J: cp[i].QTotTran5J,
 					QTotCap: cp[i].QTotCap,
-					PriceMin: round(num2 * cp[i].PriceMin),
-					PriceMax: round(num2 * cp[i].PriceMax),
-					PriceYesterday: round(num2 * cp[i].PriceYesterday),
-					PriceFirst: round(num2 * cp[i].PriceFirst, 2)
+					PriceMin: round(num2 * cp[i].PriceMin),              // note
+					PriceMax: round(num2 * cp[i].PriceMax),              // note
+					PriceYesterday: round(num2 * cp[i].PriceYesterday),  // note
+					PriceFirst: round(num2 * cp[i].PriceFirst, 2)        // note
 				});
 			}
 			/* cp.Clear();
@@ -222,13 +222,9 @@ function getCell(instrument, closingPrice, columnType) {
 	return str;
 }
 
-function round(num, decimalPlaces) {
-	var d = decimalPlaces || 0;
-	var m = Math.pow(10, d);
-	var n = +(d ? num * m : num).toFixed(8);
-	var i = Math.floor(n), f = n - i;
-	var e = 1e-8;
-	var r = (f > 0.5 - e && f < 0.5 + e) ?
-						((i % 2 == 0) ? i : i + 1) : round(n);
-	return d ? r / m : r;
+function round(n, d=2) {
+	var x = n * Math.pow(10, d);
+	var r = Math.round(x);
+	var br = Math.abs(x) % 1 === 0.5 ? (r % 2 === 0 ? r : r-1) : r;
+	return br / Math.pow(10, d);
 }
