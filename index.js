@@ -102,15 +102,15 @@ function adjustPrices(cond, closingPrices, shares, insCode) {
 				res.push({
 					InsCode: cp[i].InsCode,
 					DEven: cp[i].DEven,
-					PClosing: round(num2 * cp[i].PClosing, 2),           // note
-					PDrCotVal: round(num2 * cp[i].PDrCotVal, 2),         // note (last price)
+					PClosing: round(num2 * cp[i].PClosing, 2),           // close
+					PDrCotVal: round(num2 * cp[i].PDrCotVal, 2),         // last
 					ZTotTran: cp[i].ZTotTran,
 					QTotTran5J: cp[i].QTotTran5J,
 					QTotCap: cp[i].QTotCap,
-					PriceMin: round(num2 * cp[i].PriceMin),              // note
-					PriceMax: round(num2 * cp[i].PriceMax),              // note
-					PriceYesterday: round(num2 * cp[i].PriceYesterday),  // note
-					PriceFirst: round(num2 * cp[i].PriceFirst, 2)        // note
+					PriceMin: round(num2 * cp[i].PriceMin),              // min
+					PriceMax: round(num2 * cp[i].PriceMax),              // max
+					PriceYesterday: round(num2 * cp[i].PriceYesterday),  // yesterday
+					PriceFirst: round(num2 * cp[i].PriceFirst, 2)        // first
 				});
 			}
 		}

@@ -5,6 +5,8 @@
   "main": "index.js",
   "scripts": {
     "start": "nodemon -x node --inspect-brk index.js -w ./ -e js,json,csv",
+    "update": "node updateClosingPrices",
+    "gen": "node index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {

@@ -17,7 +17,8 @@ const readFile = promisify(fs.readFile);
 	let insCodes = "";
 	for (instrument of selectedInstruments) {
 		insCodes += instrument.InsCode + ',';
-		insCodes += instrument.DEven + ',';
+		// insCodes += instrument.DEven + ',';
+		insCodes += '20010321' + ',';
 		insCodes += instrument.YMarNSC === 'NO' ? 0 : 1;
 		insCodes += ';';
 	}

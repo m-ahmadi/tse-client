@@ -19,7 +19,7 @@ module.exports = {
 		// 2:  ascii
 		// default: 1
 	daysWithoutTrade: false,
-	startDate: '1380/01/01',
+	startDate: '1380/01/01', // '20010321'
 	showHeaders: true,
 	storageLocation: './' // experimental
 };
