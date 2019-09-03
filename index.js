@@ -92,7 +92,7 @@ function adjustPrices(cond, closingPrices, shares, insCode) {
 				const targetShare = shares.find(share => share.InsCode === insCode && share.DEven === cp[i+1].DEven);
 				
 				if (cond == 1 && pricesDontMatch) {
-					num2 = num2 * cp[i+1].PriceYesterday / cp[i].PClosing;
+					num2 = (num2 * cp[i+1].PriceYesterday) / cp[i].PClosing;
 				} else if ( cond == 2 && pricesDontMatch && targetShare ) {
 					var oldShares = targetShare.NumberOfShareOld;
 					var newShares = targetShare.NumberOfShareNew;
