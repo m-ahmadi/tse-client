@@ -1,21 +1,16 @@
 const fs = require('fs');
 const { promisify } = require('util');
-const jalaali = require('jalaali-js');
 
 const readFile = promisify(fs.readFile);
 const writeFile = promisify(fs.writeFile);
 
-const settings = require('./lib/settings');
+const settings = require('./settings');
 const getSelectedInstruments = require('./lib/getSelectedInstruments');
 const getShares = require('./lib/getShares');
 const getColumns = require('./lib/getColumns');
 const getInstrumentPrices = require('./lib/getInstrumentPrices');
+const util = require('./lib/util');
 const ColumnConfig = require('./struct/ColumnConfig');
-
-const j = "1380/01/01".split('/').map(v => parseInt(v));
-const d = jalaali.toGregorian(j[0], j[1], j[2]);
-const date = new Date(d.gy, d.gm - 1, d.gd);
-const startDeven = (date.getFullYear()*10000) + ((date.getMonth()+1)*100) + date.getDate();
 
 (async function () {
 	const selectedInstruments = await getSelectedInstruments(true);
@@ -180,6 +175,7 @@ function getCell(instrument, closingPrice, columnType) {
 			break;
 		case 'ShamsiDate':
 			// str += Utility.ConvertGregorianIntToJalaliInt(closingPrice.DEven);
+			str += util.gregToShamsi(closingPrice.DEven);
 			break;
 		case 'PriceFirst':
 			str += closingPrice.PriceFirst;
