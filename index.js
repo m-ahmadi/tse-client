@@ -10,7 +10,7 @@ const getShares = require('./lib/getShares');
 const getColumns = require('./lib/getColumns');
 const getInstrumentPrices = require('./lib/getInstrumentPrices');
 const util = require('./lib/util');
-const ColumnConfig = require('./struct/ColumnConfig');
+const Column = require('./struct/Column');
 
 (async function () {
 	const selectedInstruments = await getSelectedInstruments(true);
@@ -22,7 +22,9 @@ const ColumnConfig = require('./struct/ColumnConfig');
 	
 	let headerRow = '';
 	for (column of columns) {
-		headerRow += column.Header + ',';
+		if (column.Visible) {
+			headerRow += column.Header + ',';
+		}
 	}
 	headerRow = headerRow.slice(0, -1);
 	headerRow += '\n';
@@ -44,8 +46,10 @@ const ColumnConfig = require('./struct/ColumnConfig');
 		let str = headerRow;
 		closingPrices.forEach(closingPrice => {
 			for (column of columns) {
-				str += getCell(instrument, closingPrice, column.Type);
-				str += ',';
+				if (column.Visible) {
+					str += getCell(instrument, closingPrice, column.Type);
+					str += ',';
+				}
 			}
 			str = str.slice(0, -1);
 			str += '\n';
