@@ -21,13 +21,15 @@ const Column = require('./struct/Column');
 	const columns = await getColumns();
 	
 	let headerRow = '';
-	for (column of columns) {
-		if (column.Visible) {
-			headerRow += column.Header + ',';
+	if (settings.showHeaders) {
+		for (column of columns) {
+			if (column.Visible) {
+				headerRow += column.Header + ',';
+			}
 		}
+		headerRow = headerRow.slice(0, -1);
+		headerRow += '\n';
 	}
-	headerRow = headerRow.slice(0, -1);
-	headerRow += '\n';
 	
 	const shares = await getShares(true);
 	
@@ -46,7 +48,7 @@ const Column = require('./struct/Column');
 		let str = headerRow;
 		closingPrices.forEach(closingPrice => {
 			for (column of columns) {
-				if (column.Visible) {
+				if (column.Visible && (closingPrice.ZTotTran !== 0 || settings.daysWithoutTrade) ) {
 					str += getCell(instrument, closingPrice, column.Type);
 					str += ',';
 				}
