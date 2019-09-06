@@ -98,8 +98,8 @@ function adjustPrices(cond, closingPrices, shares, insCode) {
 				if (cond == 1 && pricesDontMatch) {
 					num = num.times(next.PriceYesterday).div(curr.PClosing);
 				} else if (cond == 2 && pricesDontMatch && targetShare) {
-					var oldShares = targetShare.NumberOfShareOld;
-					var newShares = targetShare.NumberOfShareNew;
+					const oldShares = targetShare.NumberOfShareOld;
+					const newShares = targetShare.NumberOfShareNew;
 					num = num.times(oldShares).div(newShares);
 				}
 				
