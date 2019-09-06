@@ -49,7 +49,7 @@ const Column = require('./struct/Column');
 		let str = headerRow;
 		closingPrices.forEach(closingPrice => {
 			for (column of columns) {
-				if (column.Visible && (closingPrice.ZTotTran !== 0 || settings.daysWithoutTrade) ) {
+				if (column.Visible && (!Big(closingPrice.ZTotTran).eq(0) || settings.daysWithoutTrade) ) {
 					str += getCell(instrument, closingPrice, column.Type);
 					str += ',';
 				}
@@ -83,40 +83,53 @@ function adjustPrices(cond, closingPrices, shares, insCode) {
 		res.push( cp[len-1] );
 		if (cond == 1) {
 			for (let i=len-2; i>=0; i-=1) {
-				if (cp[i].PClosing != cp[i + 1].PriceYesterday) gaps = gaps.plus(1);
+				if ( !Big(cp[i].PClosing).eq(cp[i+1].PriceYesterday) ) {
+					gaps = gaps.plus(1);
+				}
 			}
 		}
-		if (cond == 1 && (gaps.div(len).lt(0.08) || cond == 2)) {
+		if ( cond == 1 && (gaps.div(len).lt('0.08') || cond == 2) ) {
 			for (let i=len-2; i>=0; i-=1) {
-				const item = cp[i];
-				const pricesDontMatch = cp[i].PClosing != cp[i+1].PriceYesterday;
-				const targetShare = shares.find(share => share.InsCode === insCode && share.DEven === cp[i+1].DEven);
+				const curr = cp[i];
+				const next = cp[i+1];
+				const pricesDontMatch = !Big(curr.PClosing).eq(next.PriceYesterday);
+				const targetShare = shares.find(share => share.InsCode === insCode && share.DEven === next.DEven);
 				
 				if (cond == 1 && pricesDontMatch) {
-					num = num.times(cp[i+1].PriceYesterday).div(cp[i].PClosing);
+					num = num.times(next.PriceYesterday).div(curr.PClosing);
 				} else if (cond == 2 && pricesDontMatch && targetShare) {
-					const oldShares = targetShare.NumberOfShareOld;
-					const newShares = targetShare.NumberOfShareNew;
+					var oldShares = targetShare.NumberOfShareOld;
+					var newShares = targetShare.NumberOfShareNew;
 					num = num.times(oldShares).div(newShares);
 				}
 				
-				res.push({
-					InsCode: item.InsCode,
-					DEven: item.DEven,
-					PClosing: num.times(item.PClosing).round(2).toFixed(2),              // close
-					PDrCotVal: num.times(item.PDrCotVal).round(2).toFixed(2),            // last
-					ZTotTran: item.ZTotTran,
-					QTotTran5J: item.QTotTran5J,
-					QTotCap: item.QTotCap,
-					PriceMin: num.times(item.PriceMin).round().toString(),               // low
-					PriceMax: num.times(item.PriceMax).round().toString(),               // high
-					PriceYesterday: num.times(item.PriceYesterday).round().toString(),   // yesterday
-					PriceFirst: num.times(item.PriceFirst).round(2).toFixed(2)           // first
-				});
+				let
+				close = num.times(curr.PClosing).round(2).toFixed(2),
+				last  = num.times(curr.PDrCotVal).round(2).toFixed(2),
+				low   = num.times(curr.PriceMin).round().toString(),
+				high  = num.times(curr.PriceMax).round().toString(),
+				yday  = num.times(curr.PriceYesterday).round().toString(),
+				first = num.times(curr.PriceFirst).round(2).toFixed(2);
+				
+				const adjustedClosingPrice = {
+					InsCode: curr.InsCode,
+					DEven: curr.DEven,
+					PClosing: close,              // close
+					PDrCotVal: last,              // last
+					ZTotTran: curr.ZTotTran,
+					QTotTran5J: curr.QTotTran5J,
+					QTotCap: curr.QTotCap,
+					PriceMin: low,                // low
+					PriceMax: high,               // high
+					PriceYesterday: yday,         // yesterday
+					PriceFirst: first             // first
+				};
+				res.push(adjustedClosingPrice);
 			}
 		}
 	}
 	return res.reverse();
+	// return res;
 }
 
 function suffix(YMarNSC, adjustPrices, fa=false) {
