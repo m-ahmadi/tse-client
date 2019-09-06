@@ -112,17 +112,17 @@ function adjustPrices(cond, closingPrices, shares, insCode) {
 				first = num.times(curr.PriceFirst).round(2).toFixed(2);
 				
 				const adjustedClosingPrice = {
-					InsCode: curr.InsCode,
-					DEven: curr.DEven,
-					PClosing: close,              // close
-					PDrCotVal: last,              // last
-					ZTotTran: curr.ZTotTran,
-					QTotTran5J: curr.QTotTran5J,
-					QTotCap: curr.QTotCap,
-					PriceMin: low,                // low
-					PriceMax: high,               // high
-					PriceYesterday: yday,         // yesterday
-					PriceFirst: first             // first
+					InsCode:        curr.InsCode,
+					DEven:          curr.DEven,
+					PClosing:       close,           // close
+					PDrCotVal:      last,            // last
+					ZTotTran:       curr.ZTotTran,
+					QTotTran5J:     curr.QTotTran5J,
+					QTotCap:        curr.QTotCap,
+					PriceMin:       low,             // low
+					PriceMax:       high,            // high
+					PriceYesterday: yday,            // yesterday
+					PriceFirst:     first            // first
 				};
 				res.push(adjustedClosingPrice);
 			}
