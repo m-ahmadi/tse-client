@@ -1,6 +1,8 @@
 const fs = require('fs');
 const { promisify } = require('util');
-
+const Big = require('big.js');
+Big.DP = 28
+Big.RM = 2;
 const readFile = promisify(fs.readFile);
 const writeFile = promisify(fs.writeFile);
 
@@ -30,7 +32,6 @@ const Column = require('./struct/Column');
 		headerRow = headerRow.slice(0, -1);
 		headerRow += '\n';
 	}
-	
 	const shares = await getShares(true);
 	
 	let files = selectedInstruments.map(v => {
@@ -77,46 +78,45 @@ function adjustPrices(cond, closingPrices, shares, insCode) {
 	const len = closingPrices.length;
 	const res = [];
 	if ( (cond == 1 || cond == 2) && len > 1 ) {
-		let num2 = 1;
+		let gaps = new Big('0.0');
+		let num = new Big('1.0');
 		res.push( cp[len-1] );
-		let gaps = 0.0;
 		if (cond == 1) {
 			for (let i=len-2; i>=0; i-=1) {
-				if (cp[i].PClosing != cp[i + 1].PriceYesterday) {
-						gaps += 1;
-				}
+				if (cp[i].PClosing != cp[i + 1].PriceYesterday) gaps = gaps.plus(1);
 			}
 		}
-		if (cond == 1 && (gaps / len < 0.08 || cond == 2)) {
+		if (cond == 1 && (gaps.div(len).lt(0.08) || cond == 2)) {
 			for (let i=len-2; i>=0; i-=1) {
+				const item = cp[i];
 				const pricesDontMatch = cp[i].PClosing != cp[i+1].PriceYesterday;
 				const targetShare = shares.find(share => share.InsCode === insCode && share.DEven === cp[i+1].DEven);
 				
 				if (cond == 1 && pricesDontMatch) {
-					num2 = (num2 * cp[i+1].PriceYesterday) / cp[i].PClosing;
-				} else if ( cond == 2 && pricesDontMatch && targetShare ) {
-					var oldShares = targetShare.NumberOfShareOld;
-					var newShares = targetShare.NumberOfShareNew;
-					num2 = (num2 * oldShares) / newShares;
+					num = num.times(cp[i+1].PriceYesterday).div(cp[i].PClosing);
+				} else if (cond == 2 && pricesDontMatch && targetShare) {
+					const oldShares = targetShare.NumberOfShareOld;
+					const newShares = targetShare.NumberOfShareNew;
+					num = num.times(oldShares).div(newShares);
 				}
-
+				
 				res.push({
-					InsCode: cp[i].InsCode,
-					DEven: cp[i].DEven,
-					PClosing: round(num2 * cp[i].PClosing, 2),           // close
-					PDrCotVal: round(num2 * cp[i].PDrCotVal, 2),         // last
-					ZTotTran: cp[i].ZTotTran,
-					QTotTran5J: cp[i].QTotTran5J,
-					QTotCap: cp[i].QTotCap,
-					PriceMin: round(num2 * cp[i].PriceMin),              // min
-					PriceMax: round(num2 * cp[i].PriceMax),              // max
-					PriceYesterday: round(num2 * cp[i].PriceYesterday),  // yesterday
-					PriceFirst: round(num2 * cp[i].PriceFirst, 2)        // first
+					InsCode: item.InsCode,
+					DEven: item.DEven,
+					PClosing: num.times(item.PClosing).round(2).toFixed(2),              // close
+					PDrCotVal: num.times(item.PDrCotVal).round(2).toFixed(2),            // last
+					ZTotTran: item.ZTotTran,
+					QTotTran5J: item.QTotTran5J,
+					QTotCap: item.QTotCap,
+					PriceMin: num.times(item.PriceMin).round().toString(),               // low
+					PriceMax: num.times(item.PriceMax).round().toString(),               // high
+					PriceYesterday: num.times(item.PriceYesterday).round().toString(),   // yesterday
+					PriceFirst: num.times(item.PriceFirst).round(2).toFixed(2)           // first
 				});
 			}
 		}
 	}
-	return res;
+	return res.reverse();
 }
 
 function suffix(YMarNSC, adjustPrices, fa=false) {
