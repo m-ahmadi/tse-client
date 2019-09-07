@@ -1,6 +1,6 @@
 {
-  "name": "tc",
-  "version": "0.0.1",
+  "name": "tse-client",
+  "version": "0.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
