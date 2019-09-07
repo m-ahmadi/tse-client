@@ -10,8 +10,8 @@ module.exports = {
 	delimiter: '',
 	adjustPrices: 2,
 		// 0:  none
-		// 1:  capital increase
-		// 2:  capital increase and dividends
+		// 1:  share increase
+		// 2:  share increase and dividends
 		// default: 0
 	encoding: 1,
 		// 0:  unicode
