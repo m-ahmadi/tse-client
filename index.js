@@ -1,7 +1,7 @@
 const fs = require('fs');
 const { promisify } = require('util');
 const Big = require('big.js');
-Big.DP = 28
+Big.DP = 40
 Big.RM = 2;
 const readFile = promisify(fs.readFile);
 const writeFile = promisify(fs.writeFile);
@@ -194,7 +194,6 @@ function getCell(instrument, closingPrice, columnType) {
 			str += closingPrice.DEven;
 			break;
 		case 'ShamsiDate':
-			// str += Utility.ConvertGregorianIntToJalaliInt(closingPrice.DEven);
 			str += util.gregToShamsi(closingPrice.DEven);
 			break;
 		case 'PriceFirst':
@@ -226,11 +225,4 @@ function getCell(instrument, closingPrice, columnType) {
 			break;
 	}
 	return str;
-}
-
-function round(n, d=2) {
-	var x = n * Math.pow(10, d);
-	var r = Math.round(x);
-	var br = Math.abs(x) % 1 === 0.5 ? (r % 2 === 0 ? r : r-1) : r;
-	return br / Math.pow(10, d);
 }
