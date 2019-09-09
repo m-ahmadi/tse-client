@@ -1,12 +1,14 @@
 const fs = require('fs');
 const { promisify } = require('util');
+const sep = require('path').sep;
 const Big = require('big.js');
 Big.DP = 40
 Big.RM = 2;
 const readFile = promisify(fs.readFile);
 const writeFile = promisify(fs.writeFile);
+const access = promisify(fs.access);
 
-const settings = require('./settings');
+const defaultSettings = require('./defaultSettings');
 const getSelectedInstruments = require('./lib/getSelectedInstruments');
 const getShares = require('./lib/getShares');
 const getColumns = require('./lib/getColumns');
@@ -14,7 +16,10 @@ const getInstrumentPrices = require('./lib/getInstrumentPrices');
 const util = require('./lib/util');
 const Column = require('./struct/Column');
 
-module.exports = async function () {
+module.exports = async function (userSettings) {
+	const settings = Object.assign(defaultSettings, userSettings);
+	const { adjustPrices, delimiter } = settings;
+	
 	const selectedInstruments = await getSelectedInstruments(true);
 	const prices = {};
 	for (v of selectedInstruments) {
@@ -36,10 +41,10 @@ module.exports = async function () {
 	
 	let files = selectedInstruments.map(v => {
 		const insCode = v.InsCode;
-		const cond = settings.adjustPrices;
+		const cond = adjustPrices;
 		const closingPrices = prices[insCode];
 		if (cond === 1 || cond === 2) {
-			return adjustPrices(cond, closingPrices, shares, insCode);
+			return adjust(cond, closingPrices, shares, insCode);
 		} else {
 			return closingPrices;
 		}
@@ -50,8 +55,8 @@ module.exports = async function () {
 		closingPrices.forEach(closingPrice => {
 			for (column of columns) {
 				if (column.Visible && (!Big(closingPrice.ZTotTran).eq(0) || settings.daysWithoutTrade) ) {
-					str += getCell(instrument, closingPrice, column.Type);
-					str += ',';
+					str += getCell(column.Type, instrument, closingPrice, adjustPrices);
+					str += delimiter;
 				}
 			}
 			str = str.slice(0, -1);
@@ -61,19 +66,25 @@ module.exports = async function () {
 		return str;
 	});
 	
-	const writes = selectedInstruments.map( (v, i) => {
-		const filename = getFilename(settings, v);
+	const writes = selectedInstruments.map( (instrument, i) => {
+		const filename = getFilename(settings.filename, instrument, adjustPrices);
 		const content = files[i];
 		return [filename, content];
 	});
 	
+	let dir = settings.outDir;
+	let ext = settings.fileExtension;
+	await access(dir).catch(err => dir = defaultSettings.outDir);
+	dir = dir.endsWith(sep) ? dir : dir+sep;
+	ext = ext.startsWith('.') ? ext : '.'+ext;
+	const bom = settings.encoding === 1 ? '' : '\ufeff';
 	for (write of writes) {
-		writeFile(`./${write[0]}.csv`, '\ufeff'+write[1], 'utf8'); // utf8 bom
+		writeFile(dir+write[0]+ext, bom+write[1], 'utf8');
 	}
 };
 
 // helpers
-function adjustPrices(cond, closingPrices, shares, insCode) {
+function adjust(cond, closingPrices, shares, insCode) {
 	const cp = closingPrices;
 	const len = closingPrices.length;
 	const res = [];
@@ -145,37 +156,38 @@ function suffix(YMarNSC, adjustPrices, fa=false) {
 	return str;
 }
 
-function getFilename(settings, instrument) {
+function getFilename(filename, instrument, adjustPrices) {
 	const y = instrument.YMarNSC;
-	const a = settings.adjustPrices;
+	const a = adjustPrices;
 	
-	let filename = '';
-	switch (settings.filename) {
+	let str = '';
+	switch (filename) {
 		case 0:
-			filename = instrument.CIsin + suffix(y, a);
+			str = instrument.CIsin + suffix(y, a);
 			break;
 		case 1:
-			filename = instrument.LatinName + suffix(y, a);
+			str = instrument.LatinName + suffix(y, a);
 			break;
 		case 2:
-			filename = instrument.LatinSymbol + suffix(y, a);
+			str = instrument.LatinSymbol + suffix(y, a);
 			break;
 		case 3:
-			filename = instrument.Name + suffix(y, a, true);
+			str = instrument.Name + suffix(y, a, true);
 			break;
 		case 4:
-			filename = instrument.Symbol + suffix(y, a, true);
+			str = instrument.Symbol + suffix(y, a, true);
 			break;
 		default:
-			filename = instrument.CIsin + suffix(y, a);
+			str = instrument.CIsin + suffix(y, a);
 			break;
 	}
-	return filename;
+	return str;
 }
 
-function getCell(instrument, closingPrice, columnType) {
+function getCell(columnType, instrument, closingPrice, adjustPrices) {
 	const y = instrument.YMarNSC;
-	const a = settings.adjustPrices;
+	const a = adjustPrices;
+	
 	let str = '';
 	switch (columnType) {
 		case 'CompanyCode':
