@@ -17,5 +17,5 @@ module.exports = {
 	daysWithoutTrade: false,
 	startDate: '1380/01/01', // '20010321'
 	showHeaders: true,
-	outDir: './'
+	outDir: '.'
 };

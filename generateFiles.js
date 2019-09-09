@@ -17,7 +17,7 @@ const util = require('./lib/util');
 const Column = require('./struct/Column');
 
 module.exports = async function (userSettings) {
-	const settings = Object.assign(defaultSettings, userSettings);
+	const settings = Object.assign({}, defaultSettings, userSettings);
 	const { adjustPrices, delimiter } = settings;
 	
 	const selectedInstruments = await getSelectedInstruments(true);
