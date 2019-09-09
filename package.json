@@ -7,7 +7,7 @@
     "start": "nodemon -x node --inspect-brk index.js -w ./ -e js,json,csv",
     "upp": "node updateClosingPrices.js",
     "upi": "node updateInstruments.js",
-    "gen": "node index.js",
+    "gen": "node generateFiles.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
