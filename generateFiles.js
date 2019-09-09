@@ -77,27 +77,27 @@ function adjustPrices(cond, closingPrices, shares, insCode) {
 	const cp = closingPrices;
 	const len = closingPrices.length;
 	const res = [];
-	if ( (cond == 1 || cond == 2) && len > 1 ) {
+	if ( (cond === 1 || cond === 2) && len > 1 ) {
 		let gaps = new Big('0.0');
 		let num = new Big('1.0');
 		res.push( cp[len-1] );
-		if (cond == 1) {
+		if (cond === 1) {
 			for (let i=len-2; i>=0; i-=1) {
 				if ( !Big(cp[i].PClosing).eq(cp[i+1].PriceYesterday) ) {
 					gaps = gaps.plus(1);
 				}
 			}
 		}
-		if ( (cond == 1 && gaps.div(len).lt('0.08')) || cond == 2 ) {
+		if ( (cond === 1 && gaps.div(len).lt('0.08')) || cond === 2 ) {
 			for (let i=len-2; i>=0; i-=1) {
 				const curr = cp[i];
 				const next = cp[i+1];
 				const pricesDontMatch = !Big(curr.PClosing).eq(next.PriceYesterday);
 				const targetShare = shares.find(share => share.InsCode === insCode && share.DEven === next.DEven);
 				
-				if (cond == 1 && pricesDontMatch) {
+				if (cond === 1 && pricesDontMatch) {
 					num = num.times(next.PriceYesterday).div(curr.PClosing);
-				} else if (cond == 2 && pricesDontMatch && targetShare) {
+				} else if (cond === 2 && pricesDontMatch && targetShare) {
 					const oldShares = targetShare.NumberOfShareOld;
 					const newShares = targetShare.NumberOfShareNew;
 					num = num.times(oldShares).div(newShares);
