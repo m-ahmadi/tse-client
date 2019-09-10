@@ -12,7 +12,7 @@ const defaultSettings = require('./defaultSettings');
 const getSelectedInstruments = require('./lib/getSelectedInstruments');
 const getShares = require('./lib/getShares');
 const getColumns = require('./lib/getColumns');
-const getInstrumentPrices = require('./lib/getInstrumentPrices');
+const getClosingPrices = require('./lib/getClosingPrices');
 const util = require('./lib/util');
 const Column = require('./struct/Column');
 
@@ -23,7 +23,7 @@ module.exports = async function (userSettings) {
 	const selectedInstruments = await getSelectedInstruments(true);
 	const prices = {};
 	for (v of selectedInstruments) {
-		prices[v.InsCode] = await getInstrumentPrices(v.InsCode);
+		prices[v.InsCode] = await getClosingPrices(v.InsCode);
 	}
 	const columns = await getColumns();
 	
