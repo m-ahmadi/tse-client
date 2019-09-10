@@ -2,14 +2,23 @@ const rq = require('./lib/request');
 const xmljs = require('xml-js');
 const fs = require('fs');
 const u = require('util-ma');
-const writeFile = require('util').promisify(fs.writeFile);
+const promisify = require('util').promisify;
+
+const readFile = promisify(fs.readFile);
+const writeFile = promisify(fs.writeFile);
+const access = promisify(fs.access);
 
 const defaultSettings = require('./defaultSettings');
 const util = require('./lib/util');
 
+const lastdateFile = './state/LastInstrumentUpdate.txt';
+
 module.exports = async function (userSettings) {
 	const settings = Object.assign({}, defaultSettings, userSettings);
-	const deven = util.shamsiToGreg(settings.startDate);
+	const startDeven = util.shamsiToGreg(settings.startDate);
+	
+	let deven = await readFile(lastdateFile, 'utf8');
+	deven = (!deven || deven === 'never') ? startDeven : deven;
 	
 	const axiosRes = await rq.InstrumentAndShare(deven).catch(console.log);
 	const response = xmljs.xml2js(axiosRes.data);
@@ -29,4 +38,6 @@ module.exports = async function (userSettings) {
 	} else {
 		throw new Error('Invalid Shares data!');
 	}
+	
+	writeFile(lastdateFile, util.dateToStr(new Date()));
 };
