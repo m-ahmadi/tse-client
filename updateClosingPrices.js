@@ -1,6 +1,5 @@
 const fs = require('fs');
 const { promisify } = require('util');
-const u = require('util-ma');
 
 const writeFile = promisify(fs.writeFile);
 const readFile = promisify(fs.readFile);
@@ -25,10 +24,10 @@ const Instrument = require('./struct/Instrument');
 	const axiosRes = await rq.ClosingPrices(insCodes).catch(console.log);
 	let data = axiosRes.data;
 	
-	if ( !u.isEmptyStr(data) ) {
+	if (data !== '') {
 		data = data.split('@').map( v => v.replace(/;/g, '\n') );
-		selectedInstruments.forEach((v, i) => {
-			writeFile(`./data/${v.InsCode}.csv`, data[i]);
+		selectedInstruments.forEach( (instrument, i) => {
+			writeFile(`./data/${instrument.InsCode}.csv`, data[i]);
 		});
 	} else {
 		throw new Error('Invalid ClosingPrice data!');
