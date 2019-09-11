@@ -26,9 +26,10 @@ const Instrument = require('./struct/Instrument');
 	
 	if (data !== '') {
 		data = data.split('@').map( v => v.replace(/;/g, '\n') );
-		selectedInstruments.forEach( (instrument, i) => {
-			writeFile(`./data/${instrument.InsCode}.csv`, data[i]);
-		});
+		const writes = selectedInstruments.map( (v, i) => [ v.insCode, data[i] ] );
+		for (write of writes) {
+			await writeFile(`./data/${write[0]}.csv`, write[1]);
+		}
 	} else {
 		throw new Error('Invalid ClosingPrice data!');
 	}
