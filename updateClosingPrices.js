@@ -1,10 +1,8 @@
 const fs = require('fs');
 const { promisify } = require('util');
-const xmljs = require('xml-js');
 const u = require('util-ma');
 
-const rq = require('./lib/request');
-const compress = require('./lib/compress');
+const rq = require('./lib/request.v2');
 const getSelectedInstruments = require('./lib/getSelectedInstruments');
 const Instrument = require('./struct/Instrument');
 
@@ -23,11 +21,9 @@ const readFile = promisify(fs.readFile);
 		insCodes += ';';
 	}
 	insCodes = insCodes.slice(0, -1);
-	insCodes = compress(insCodes);
 	
-	const axiosRes = await rq.DecompressAndGetInsturmentClosingPrice(insCodes).catch(console.log);
-	const response = xmljs.xml2js(axiosRes.data);
-	let data = response.elements[0].elements[0].elements[0].elements[0].elements[0].text;
+	const axiosRes = await rq.ClosingPrices(insCodes).catch(console.log);
+	let data = axiosRes.data;
 	
 	if ( !u.isEmptyStr(data) ) {
 		data = data.split('@').map( v => v.replace(/;/g, '\n') );
