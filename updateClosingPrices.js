@@ -2,12 +2,12 @@ const fs = require('fs');
 const { promisify } = require('util');
 const u = require('util-ma');
 
+const writeFile = promisify(fs.writeFile);
+const readFile = promisify(fs.readFile);
+
 const rq = require('./lib/request.v2');
 const getSelectedInstruments = require('./lib/getSelectedInstruments');
 const Instrument = require('./struct/Instrument');
-
-const writeFile = promisify(fs.writeFile);
-const readFile = promisify(fs.readFile);
 
 (async function () {
 	let selectedInstruments = await getSelectedInstruments(true);

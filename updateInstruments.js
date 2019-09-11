@@ -1,15 +1,14 @@
-const rq = require('./lib/request.v2');
 const fs = require('fs');
 const u = require('util-ma');
-const promisify = require('util').promisify;
+const { promisify } = require('util');
 
 const readFile = promisify(fs.readFile);
 const writeFile = promisify(fs.writeFile);
 const access = promisify(fs.access);
 
 const defaultSettings = require('./defaultSettings');
+const rq = require('./lib/request.v2');
 const util = require('./lib/util');
-
 const lastdateFile = './state/LastInstrumentUpdate.txt';
 
 module.exports = async function (userSettings) {
