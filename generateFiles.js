@@ -79,7 +79,7 @@ module.exports = async function (userSettings) {
 	ext = ext.startsWith('.') ? ext : '.'+ext;
 	const bom = settings.encoding === 1 ? '' : '\ufeff';
 	for (write of writes) {
-		writeFile(dir+write[0]+ext, bom+write[1], 'utf8');
+		await writeFile(dir+write[0]+ext, bom+write[1]);
 	}
 };
 
