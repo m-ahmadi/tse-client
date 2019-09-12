@@ -1,3 +1,5 @@
+const path = require('path');
+
 module.exports = {
 	filename: 4,
 		// 0:  Isin code
@@ -19,4 +21,5 @@ module.exports = {
 	showHeaders: true,
 	outDir: '.',
 	cacheDir: 'data'
+	// cacheDir: path.join(process.env.HOME, '.tc-cache')
 };
