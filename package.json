@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "postinstall": "node scripts/postinstall.js",
     "start": "nodemon -x node --inspect-brk index.js -w ./ -e js,json,csv",
     "upp": "node updateClosingPrices.js",
     "upi": "node -e require('./updateInstruments')()",
