@@ -14,7 +14,6 @@ const getShares = require('./lib/getShares');
 const getColumns = require('./lib/getColumns');
 const getClosingPrices = require('./lib/getClosingPrices');
 const util = require('./lib/util');
-const Column = require('./struct/Column');
 
 module.exports = async function (userSettings) {
 	const settings = Object.assign({}, defaultSettings, userSettings);
