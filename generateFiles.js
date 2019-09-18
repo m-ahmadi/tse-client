@@ -29,9 +29,7 @@ module.exports = async function (userSettings) {
 	let headerRow = '';
 	if (settings.showHeaders) {
 		for (column of columns) {
-			if (column.Visible) {
-				headerRow += column.Header + ',';
-			}
+			headerRow += column.Header + ',';
 		}
 		headerRow = headerRow.slice(0, -1);
 		headerRow += '\n';
@@ -53,7 +51,7 @@ module.exports = async function (userSettings) {
 		let str = headerRow;
 		closingPrices.forEach(closingPrice => {
 			for (column of columns) {
-				if (column.Visible && (!Big(closingPrice.ZTotTran).eq(0) || settings.daysWithoutTrade) ) {
+				if (!Big(closingPrice.ZTotTran).eq(0) || settings.daysWithoutTrade) {
 					str += getCell(column.Type, instrument, closingPrice, adjustPrices);
 					str += delimiter;
 				}
