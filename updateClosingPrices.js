@@ -9,7 +9,7 @@ const getSelectedInstruments = require('./lib/getSelectedInstruments');
 const Instrument = require('./struct/Instrument');
 
 module.exports = async function () {
-	let selectedInstruments = await getSelectedInstruments(true);
+	const selectedInstruments = await getSelectedInstruments(true);
 	
 	let insCodes = "";
 	for (instrument of selectedInstruments) {
