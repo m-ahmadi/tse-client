@@ -1,6 +1,23 @@
 // orig: ColumnInfo
 
-const ColumnType = require('./ColumnType');
+// enum (orig: ColumnType)
+const columnTypes = [
+	'CompanyCode',
+	'LatinName',
+	'Symbol',
+	'Name',
+	'Date',
+	'ShamsiDate',
+	'PriceFirst',
+	'PriceMax',
+	'PriceMin',
+	'LastPrice',
+	'ClosingPrice',
+	'Price',
+	'Volume',
+	'Count',
+	'PriceYesterday'
+];
 
 class Column {
 	constructor(_row='') {
