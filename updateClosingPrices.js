@@ -8,7 +8,7 @@ const rq = require('./lib/request.v2');
 const getSelectedInstruments = require('./lib/getSelectedInstruments');
 const Instrument = require('./struct/Instrument');
 
-(async function () {
+module.exports = async function () {
 	let selectedInstruments = await getSelectedInstruments(true);
 	
 	let insCodes = "";
@@ -33,4 +33,4 @@ const Instrument = require('./struct/Instrument');
 	} else {
 		throw new Error('Invalid ClosingPrice data!');
 	}
-})();
+};
