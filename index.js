@@ -8,10 +8,10 @@ cmd
 	.usage('[command] [options]\n  tc search faSymbol -b symbol\n  tc select faSymbol1 faSymbol2 [faSymbol3 ...]\n  tc update\n  tc data')
 	.description('A client for receiving Tehran Securities Exchange (TSETMC) data.')
 	.option('-s, --show-selected', 'Show list of selected instruments.');
-cmd.command('search <query>').description('Search instruments by name, symbol or both.')
-	.option('-b, --search-by <criteria>', 'Specify search criteria.\n\t\t\t\toptions: symbol|name|both', 'both')
+cmd.command('search <query>').description('Search in instrument symbols or names. (or both)\n\t\t\t\t  specify which with -b option. default: both')
+	.option('-b, --search-in [what]>', 'Specify search criteria.\n\t\t\t\toptions: symbol|name|both', 'both')
 	.action(search);
-cmd.command('select <string...>').description('Select instruments or columns.\n\t\t\t\tBy default selects instruments(s), pass -c option to select columns.\n\t\t\t\tInstruments are selected by their Farsi symbol.')
+cmd.command('select <string...>').description('Select instruments or columns.\n\t\t\t\t  default action: select instruments.\n\t\t\t\t  pass -c option to select columns.')
 	.option('-c, --columns', 'Select specified columns. (semicolons & spaces are replaced with newline)')
 	.action(select);
 cmd.command('update').description('Update data.')
