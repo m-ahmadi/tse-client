@@ -27,11 +27,11 @@ async function search(str, { searchBy }) {
 		return;
 	}
 	const both = searchBy === 'both' ? true : false;
-	searchBy = searchBy[0].toUpperCase() + searchBy.slice(1).toLowerCase();
+	const propName = searchBy[0].toUpperCase() + searchBy.slice(1).toLowerCase();
 	const getInstruments = require('./lib/getInstruments');
 	const ins = await getInstruments(true, true);
 	const res = ins
-		.filter(i => both ? i.Symbol.includes(str) || i.Name.includes(str) : i[searchBy].includes(str))
+		.filter(i => both ? i.Symbol.includes(str) || i.Name.includes(str) : i[propName].includes(str))
 		.map(i => `${i.Symbol.yellow.bold} (${i.Name.grey})`)
 		.sort()
 		.join('\n');
