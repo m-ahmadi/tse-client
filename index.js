@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 const cmd = require('commander');
 const colors = require('colors');
 
