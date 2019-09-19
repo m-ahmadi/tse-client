@@ -29,7 +29,7 @@ module.exports = async function (userSettings) {
 	let headerRow = '';
 	if (settings.showHeaders) {
 		for (column of columns) {
-			headerRow += column.Header + ',';
+			headerRow += column.header + ',';
 		}
 		headerRow = headerRow.slice(0, -1);
 		headerRow += '\n';
@@ -52,7 +52,7 @@ module.exports = async function (userSettings) {
 		closingPrices.forEach(closingPrice => {
 			for (column of columns) {
 				if (!Big(closingPrice.ZTotTran).eq(0) || settings.daysWithoutTrade) {
-					str += getCell(column.Type, instrument, closingPrice, adjustPrices);
+					str += getCell(column.name, instrument, closingPrice, adjustPrices);
 					str += delimiter;
 				}
 			}
@@ -181,12 +181,12 @@ function getFilename(filename, instrument, adjustPrices) {
 	return str;
 }
 
-function getCell(columnType, instrument, closingPrice, adjustPrices) {
+function getCell(columnName, instrument, closingPrice, adjustPrices) {
 	const y = instrument.YMarNSC;
 	const a = adjustPrices;
 	
 	let str = '';
-	switch (columnType) {
+	switch (columnName) {
 		case 'CompanyCode':
 			str += instrument.CompanyCode;
 			break;
