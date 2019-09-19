@@ -24,7 +24,7 @@ module.exports = async function (userSettings) {
 	for (v of selectedInstruments) {
 		prices[v.InsCode] = await getClosingPrices(v.InsCode);
 	}
-	const columns = await getColumns();
+	const columns = await getColumns(true);
 	
 	let headerRow = '';
 	if (settings.showHeaders) {
