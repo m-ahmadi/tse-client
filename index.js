@@ -1,38 +1,20 @@
-// require('./updateInstruments')()
-// require('./updateClosingPrices')
-const args = process.argv.slice(2);
+const cmd = require('commander');
+const colors = require('colors');
 
-const selectInstrument = require('./lib/selectInstrument');
-
-const defaultSettings = require('./defaultSettings');
-const getInstruments = require('./lib/getInstruments');
-
-if ( args.includes("search") ) search( args[args.indexOf("search")+1] )
-
-function getInstrumentData(userSettings) {
-	const settings = Object.assign({}, defaultSettings, userSettings);
-	
-	
-}
-
-async function search(str) {
-	const ins = await getInstruments(true, true);
-	const res = ins
-		.filter(i => i.Symbol.includes(str))
-		.map(i => `${i.Symbol} - ${i.Name}`)
-		.join('\n');
-	console.log(res ? res : `No match for: ` + str);
-}
-
-function _selectInstrument() {
-	// const ins = await getInstruments(true, true);
-	// ins.filter(i => i.Symbol.match('آرمان'))
-	
-	var x = ins.map(i => `${i.Symbol} (${i.Name})`)
-	x = x.sort();
-	
-	x.filter(i => i.match(/مبا/g)).sort()
-	var t;
-	
-	selectInstrument();
-}
+cmd
+	.version(''+JSON.parse(require('fs').readFileSync(require('path').join(__dirname, 'package.json'), 'utf8')).version, '-v, --version')
+	.usage('[command] [options]\n  tc search faSymbol -b symbol\n  tc select faSymbol1 faSymbol2 [faSymbol3 ...]\n  tc update\n  tc data')
+	.description('A client for reciving Tehran Securities Exchange (TSETMC) data.')
+	.option('s, --show-selected', 'show a list of selected instruments');
+cmd.command('search <query>').description('search in instrument names and symbols')
+	.option('-b, --search-by <criteria>', 'specify search criteria. options: symbol|name|both', 'both')
+	.action(search);
+cmd.command('select <string...>').description('select instruments or columns. instrument symbols should be space separated.')
+	.option('-t, --target [target]', 'specify target of selection. options: instruments|columns', 'instruments')
+	.action(select);
+cmd.command('update').description('update data')
+	.option('-p, --prices', 'update the data of selected instruments')
+	.option('-i, --instrument-list', 'update the list of instruments')
+	.action(update);
+cmd.command('data').description('get price data').action(data);
+cmd.parse(process.argv);
