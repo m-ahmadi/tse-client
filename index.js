@@ -18,3 +18,20 @@ cmd.command('update').description('update data')
 	.action(update);
 cmd.command('data').description('get price data').action(data);
 cmd.parse(process.argv);
+
+async function search(str, { searchBy }) {
+	if (str.length < 2) {
+		console.log('at least 2 characters'.red);
+		return;
+	}
+	const both = searchBy === 'both' ? true : false;
+	searchBy = searchBy[0].toUpperCase() + searchBy.slice(1).toLowerCase();
+	const getInstruments = require('./lib/getInstruments');
+	const ins = await getInstruments(true, true);
+	const res = ins
+		.filter(i => both ? i.Symbol.includes(str) || i.Name.includes(str) : i[searchBy].includes(str))
+		.map(i => `${i.Symbol.yellow.bold} (${i.Name.grey})`)
+		.sort()
+		.join('\n');
+	console.log(res ? res : 'No match for: '.red + str.white);
+}
