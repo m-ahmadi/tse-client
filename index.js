@@ -6,8 +6,9 @@ cmd
 	.helpOption('-h, --help', 'Show help.')
 	.version(''+JSON.parse(require('fs').readFileSync(require('path').join(__dirname, 'package.json'), 'utf8')).version, '-v, --version', 'Show version number.')
 	.usage('[command] [options]\n  tc search faSymbol -b symbol\n  tc select faSymbol1 faSymbol2 [faSymbol3 ...]\n  tc update\n  tc data')
-	.description('A client for receiving Tehran Securities Exchange (TSETMC) data.')
-	.option('-s, --show-selected', 'Show list of selected instruments.');
+	.description('A client for receiving Tehran Securities Exchange (TSETMC) data.');
+cmd.command('show [what]', ).description('Show stuff. options: selins|selcols|cols|lastupdate. default: selins\n\t\t\t\t  selins:  selected instruments\n\t\t\t\t  selcols: selected columns\n\t\t\t\t  cols:    all columns')
+	.action(show);
 cmd.command('search <query>').description('Search in instrument symbols or names. (or both)\n\t\t\t\t  specify which with -b option. default: both')
 	.option('-b, --search-in [what]>', 'Specify search criteria.\n\t\t\t\toptions: symbol|name|both', 'both')
 	.action(search);
