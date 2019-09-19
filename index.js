@@ -37,3 +37,20 @@ async function search(str, { searchBy }) {
 		.join('\n');
 	console.log(res ? res : 'No match for: '.red + str.white);
 }
+
+async function select(arr, { columns }) {
+	const args = arr.length > 1 ? arr : arr[0].replace(/;| /g, '\n').split('\n');
+	if (columns) {
+		const writeFile = require('util').promisify(require('fs').writeFile);
+		await writeFile('./state/SelectedColumns.csv', args.join('\n'));
+		return;
+	}
+	const ins = await require('./lib/getInstruments')(true, true);
+	
+	let insCodes = args.map(i => {
+		const found = ins.find(j => j.Symbol === i);
+		return found ? found.InsCode : console.log('No such instrument: '.red + i.white);
+	});
+	insCodes = insCodes.filter(i => i ? i : undefined).join('\n');
+	await require('./lib/selectInstrument')(insCodes);
+}
