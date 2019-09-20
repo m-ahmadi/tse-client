@@ -69,8 +69,7 @@ module.exports = async function (userSettings) {
 		return [filename, content];
 	});
 	
-	let dir = settings.outDir;
-	let ext = settings.fileExtension;
+	let { outDir: dir, fileExtension: ext } = settings;
 	await access(dir).catch(err => dir = defaultSettings.outDir);
 	dir = dir.endsWith(sep) ? dir : dir+sep;
 	ext = ext.startsWith('.') ? ext : '.'+ext;
