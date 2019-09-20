@@ -3,6 +3,9 @@
   "version": "0.0.1",
   "description": "",
   "main": "index.js",
+	"bin": {
+    "tc": "index.js"
+  },
   "scripts": {
     "postinstall": "node scripts/postinstall.js",
     "start": "nodemon -x node --inspect-brk index.js -w ./ -e js,json,csv",
