@@ -22,6 +22,29 @@ cmd.command('update').description('Update data.')
 cmd.command('data').description('Get price data.').action(data);
 cmd.parse(process.argv);
 
+
+async function show(str) {
+	const readFileIntoArray = await require('./lib/readFileIntoArray');
+	const getColumns = require('./lib/getColumns');
+	if (str === 'selins') {
+		const ins = await require('./lib/getInstruments')(true);
+		const selins = await readFileIntoArray('./state/SelectedInstruments.csv');
+		selins.forEach( i => console.log(ins[i].Symbol) ) ;
+	} else if (str === 'selcols') {
+		const selcols = await getColumns()();
+		console.table(selcols)
+	} else if (str === 'cols') {
+		const colstr = [...Array(15)].map((i,j)=>j).join(';');
+		const cols = getColumns(colstr).map( i => ({name: i.name, fname: i.fname}) );
+		console.table(cols);
+	} else if (str === 'lastupdate') {
+		const { gregToShamsi: toShamsi, formatDateStr: format } = require('./lib/util');
+		let date = await readFileIntoArray('./state/LastInstrumentUpdate.csv');
+		date = date[0];
+		console.log(`${format(date)} (${format(toShamsi(date)).cyan})`);
+	}
+}
+
 async function search(str, { searchBy }) {
 	if (str.length < 2) {
 		console.log('at least 2 characters'.red);
