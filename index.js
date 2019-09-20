@@ -32,7 +32,7 @@ async function show(str) {
 		selins.forEach( i => console.log(ins[i].Symbol) ) ;
 	} else if (str === 'selcols') {
 		const selcols = await getColumns()();
-		console.table(selcols)
+		console.table(selcols);
 	} else if (str === 'cols') {
 		const colstr = [...Array(15)].map((i,j)=>j).join(';');
 		const cols = getColumns(colstr).map( i => ({name: i.name, fname: i.fname}) );
