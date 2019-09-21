@@ -29,7 +29,7 @@ async function show(str) {
 	if (str === 'selins') {
 		const ins = await require('./lib/getInstruments')(true);
 		const selins = await readFileIntoArray('./state/SelectedInstruments.csv');
-		selins.forEach( i => console.log(ins[i].Symbol) ) ;
+		console.table( selins.map(i => ins[i].Symbol).join('\n') );
 	} else if (str === 'selcols') {
 		const selcols = await getColumns()();
 		console.table(selcols);
