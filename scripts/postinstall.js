@@ -1,5 +1,5 @@
 const fs = require('fs');
-const { cacheDir } = require('../defaultSettings');
+const { cacheDir } = require('../state');
 
 if ( !fs.existsSync(cacheDir) ) {
 	fs.mkdirSync(cacheDir);

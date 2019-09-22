@@ -38,15 +38,13 @@ const fnames = [
 ];
 
 class Column {
-	constructor(str='') {
-		const row = str.includes(',') ? str.split(',') : [str];
-		
-		if (row.length > 2) throw new Error('Invalid Column data!');
+	constructor(row=[]) {
+		const len = row.length;
+		if (len > 2 || len < 1) throw new Error('Invalid Column data!');
 		
 		this.name   = names[ row[0] ];
 		this.fname  = fnames[ row[0] ];
 		this.header = row[1];
-		
 	}
 }
 

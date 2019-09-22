@@ -36,23 +36,22 @@ cmd.parse(process.argv);
 
 
 async function show(str) {
-	const readFileIntoArray = await require('./lib/readFileIntoArray');
+	const state = require('./lib/state');
 	const getColumns = require('./lib/getColumns');
 	if (str === 'selins') {
 		const ins = await require('./lib/getInstruments')(true);
-		const selins = await readFileIntoArray('./state/SelectedInstruments.csv');
+		const selins = await state.get('selectedInstruments');
 		console.table( selins.map(i => ins[i].Symbol).join('\n') );
 	} else if (str === 'selcols') {
 		const selcols = await getColumns()();
 		console.table(selcols);
 	} else if (str === 'cols') {
-		const colstr = [...Array(15)].map((i,j)=>j).join(';');
+		const colstr = [...Array(15)].map((i,j)=>j).join(',');
 		const cols = getColumns(colstr).map( i => ({name: i.name, fname: i.fname}) );
 		console.table(cols);
 	} else if (str === 'lastupdate') {
 		const { gregToShamsi: toShamsi, formatDateStr: format } = require('./lib/util');
-		let date = await readFileIntoArray('./state/LastInstrumentUpdate.csv');
-		date = date[0];
+		const date = await state.get('lastInstrumentUpdate');
 		console.log(`${format(date)} (${format(toShamsi(date)).cyan})`);
 	}
 }
@@ -78,7 +77,8 @@ async function select(arr, { columns }) {
 	const args = arr.length > 1 ? arr : arr[0].replace(/;| /g, '\n').split('\n');
 	if (columns) {
 		const writeFile = require('util').promisify(require('fs').writeFile);
-		await writeFile('./state/SelectedColumns.csv', args.join('\n'));
+		const state = await require('./lib/state');
+		await state.set('selectedColumns', args);
 		return;
 	}
 	const ins = await require('./lib/getInstruments')(true, true);

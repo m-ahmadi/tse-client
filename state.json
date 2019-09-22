@@ -1,0 +1,48 @@
+{
+  "cacheDir": "data",
+  "lastInstrumentUpdate": "never",
+  "defaultColumns": [
+    2,
+    "<TICKER>",
+    4,
+    "<DTYYYYMMDD>",
+    6,
+    "<OPEN>",
+    7,
+    "<HIGH>",
+    8,
+    "<LOW>",
+    10,
+    "<CLOSE>",
+    12,
+    "<VOL>",
+    11,
+    "<PRICE>",
+    13,
+    "<COUNT>",
+    14,
+    "<YESTERDAY>"
+  ],
+  "selectedColumns": [
+    4,
+    "<DTYYYYMMDD>",
+    5,
+    "<DTYYYYMMDD>",
+    6,
+    "<OPEN>",
+    8,
+    "<LOW>",
+    7,
+    "<HIGH>",
+    9,
+    "<LAST>",
+    10,
+    "<CLOSE>",
+    14,
+    "<YESTERDAY>"
+  ],
+  "selectedInstruments": [
+    "9211775239375291",
+    "9211775239375291"
+  ]
+}

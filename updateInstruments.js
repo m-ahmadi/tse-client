@@ -11,14 +11,14 @@ const rq = require('./lib/request.v2');
 const getInstruments = require('./lib/getInstruments');
 const getShares = require('./lib/getShares');
 const util = require('./lib/util');
+const state = require('./lib/state');
 
 module.exports = async function (userSettings) {
 	const settings = Object.assign({}, defaultSettings, userSettings);
-	const { cacheDir } = settings;
-	const lastupdateFile = './state/LastInstrumentUpdate.csv';
+	const _state = await state.get();
+	const { cacheDir, lastInstrumentUpdate: lastUpdate } = _state;
 	const insFile    = cacheDir + '/instruments.csv';
 	const sharesFile = cacheDir + '/shares.csv';
-	const lastUpdate = await readFile(lastupdateFile, 'utf8');
 	
 	let lastDeven;
 	let lastId;
@@ -52,5 +52,5 @@ module.exports = async function (userSettings) {
 		await writeFile(sharesFile, shares.replace(/;/g, '\n').slice(0, -1) );
 	}
 	
-	await writeFile(lastupdateFile, util.dateToStr(new Date()));
+	await state.set('lastInstrumentUpdate', util.dateToStr(new Date()));
 };
