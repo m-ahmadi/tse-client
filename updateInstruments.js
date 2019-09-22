@@ -1,4 +1,5 @@
 const fs = require('fs');
+const { join } = require('path');
 const { promisify } = require('util');
 
 const readFile = promisify(fs.readFile);
@@ -17,8 +18,8 @@ module.exports = async function (userSettings) {
 	const settings = Object.assign({}, defaultSettings, userSettings);
 	const _state = await state.get();
 	const { cacheDir, lastInstrumentUpdate: lastUpdate } = _state;
-	const insFile    = cacheDir + '/instruments.csv';
-	const sharesFile = cacheDir + '/shares.csv';
+	const insFile    = join(cacheDir, 'instruments.csv');
+	const sharesFile = join(cacheDir, 'shares.csv');
 	
 	let lastDeven;
 	let lastId;
