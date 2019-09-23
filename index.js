@@ -32,6 +32,7 @@ cmd.command('export').description('Create file(s) for current selected instrumen
 	.action(xport);
 cmd.parse(process.argv);
 
+if (cmd.cacheDir) cacheDirHandler(cmd.cacheDir);
 
 async function show(str) {
 	const state = require('./lib/state');
@@ -87,4 +88,17 @@ async function select(arr, { columns }) {
 	});
 	insCodes = insCodes.filter(i => i ? i : undefined).join('\n');
 	await require('./lib/selectInstrument')(insCodes);
+}
+
+async function cacheDirHandler(newPath) {
+	const state = require('./lib/state');
+	const cacheDir = await state.get('cacheDir');
+	if (newpath) {
+		const moveDir = require('./lib/moveDir');
+		await moveDir(cacheDir, newPath);
+		await state.set('cacheDir', newPath);
+		console.log(`cacheDir changed from "${cacheDir.yellow}" to "${newPath.cyan}".`);
+		return;
+	}
+	return cacheDir;
 }
