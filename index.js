@@ -6,11 +6,9 @@ cmd
 	.helpOption('-h, --help', 'Show help.')
 	.usage('[command] [options]\n  tc search faSymbol -b symbol\n  tc select faSymbol1 faSymbol2 [faSymbol3 ...]\n  tc update\n  tc data')
 	.description('A client for receiving Tehran Securities Exchange (TSETMC) data.')
+	.option('-s, --show [value]', 'Show stuff. options: selins|selcols|cols|lastupdate.\n\t\t\t\t  selins:  selected instruments\n\t\t\t\t  selcols: selected columns\n\t\t\t\t  cols:    list of valid column indexes\n\t\t\t\t ', 'selins')
 	.option('--cache-dir [path]', 'Show or change the location of cacheDir.\n\t\t\t\t  if [path] is provided, new location is set and\n\t\t\t\t  existing content is moved to the new location.')
-	.option('--shush [value]', 'Show stuff as well.')
 	.version(''+JSON.parse(require('fs').readFileSync(require('path').join(__dirname, 'package.json'), 'utf8')).version, '-v, --version', 'Show version number.');
-cmd.command('show [value]', ).description('Show stuff. options: selins|selcols|cols|lastupdate. default: selins\n\t\t\t\t  selins:  selected instruments\n\t\t\t\t  selcols: selected columns\n\t\t\t\t  cols:    list of valid column indexes')
-	.action(show);
 cmd.command('search <query>').description('Search in instrument symbols or names. (or both)\n\t\t\t\t  specify which with -b option. default: both')
 	.option('-b, --search-in [what]>', 'Specify search criteria.\n\t\t\t\toptions: symbol|name|both', 'both')
 	.action(search);
