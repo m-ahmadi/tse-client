@@ -91,15 +91,21 @@ async function select(arr, { columns }) {
 	await require('./lib/selectInstrument')(insCodes);
 }
 
-async function cacheDirHandler(newPath) {
+async function cacheDirHandler(_newPath) {
+	const newPath = _newPath === true ? undefined : _newPath;
+	const { join } = require('path');
 	const state = require('./lib/state');
 	const cacheDir = await state.get('cacheDir');
-	if (newpath) {
+	if (newPath) {
 		const moveDir = require('./lib/moveDir');
-		await moveDir(cacheDir, newPath);
-		await state.set('cacheDir', newPath);
-		console.log(`cacheDir changed from "${cacheDir.yellow}" to "${newPath.cyan}".`);
+		const moved = await moveDir(cacheDir, newPath);
+		if (moved) {
+			await state.set('cacheDir', newPath);
+			console.log(`${'cacheDir'.yellow} changed from ${join(__dirname, cacheDir).red.bold} to ${join(__dirname, newPath).green.bold}.`);
+		} else {
+			console.log('directory not empty: '.red.bold + join(__dirname, newPath).yellow);
+		}
 		return;
 	}
-	return cacheDir;
+	console.log( 'cacheDir: '.yellow + join(__dirname, cacheDir).cyan );
 }
