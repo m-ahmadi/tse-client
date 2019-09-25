@@ -60,13 +60,13 @@ async function show(_str) {
 	}
 }
 
-async function search(str, { searchBy }) {
+async function search(str, { searchIn }) {
 	if (str.length < 2) {
 		console.log('at least 2 characters'.red);
 		return;
 	}
-	const both = searchBy === 'both' ? true : false;
-	const propName = searchBy[0].toUpperCase() + searchBy.slice(1).toLowerCase();
+	const both = searchIn === 'both' ? true : false;
+	const propName = searchIn[0].toUpperCase() + searchIn.slice(1).toLowerCase();
 	const getInstruments = require('./lib/getInstruments');
 	const ins = await getInstruments(true, true);
 	const res = ins
