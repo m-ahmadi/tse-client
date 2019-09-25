@@ -6,7 +6,7 @@ cmd
 	.helpOption('-h, --help', 'Show help.')
 	.usage('[command] [options]\n  tc search faSymbol -b symbol\n  tc select faSymbol1 faSymbol2 [faSymbol3 ...]\n  tc update\n  tc data')
 	.description('A client for receiving Tehran Securities Exchange (TSETMC) data.')
-	.option('-s, --show [value]', 'Show stuff. options: selins|selcols|cols|lastupdate.\n\t\t\t\t  selins:  selected instruments\n\t\t\t\t  selcols: selected columns\n\t\t\t\t  cols:    list of valid column indexes\n\t\t\t\t ', 'selins')
+	.option('-s, --show [value]', 'Show stuff. options: selins|selcols|cols|lastupdate. default: selins\n\t\t\t\t  selins:  selected instruments\n\t\t\t\t  selcols: selected columns\n\t\t\t\t  cols:    list of valid column indexes')
 	.option('--cache-dir [path]', 'Show or change the location of cacheDir.\n\t\t\t\t  if [path] is provided, new location is set and\n\t\t\t\t  existing content is moved to the new location.')
 	.version(''+JSON.parse(require('fs').readFileSync(require('path').join(__dirname, 'package.json'), 'utf8')).version, '-v, --version', 'Show version number.');
 cmd.command('search <query>').description('Search in instrument symbols or names. (or both)\n\t\t\t\t  specify which with -b option. default: both')
@@ -35,7 +35,8 @@ cmd.parse(process.argv);
 if (cmd.show) show(cmd.show);
 if (cmd.cacheDir) cacheDirHandler(cmd.cacheDir);
 
-async function show(str) {
+async function show(_str) {
+	const str = _str === true ? 'selins' : _str;
 	const state = require('./lib/state');
 	const getColumns = require('./lib/getColumns');
 	if (str === 'selins') {
@@ -50,9 +51,10 @@ async function show(str) {
 		const cols = getColumns(colstr).map( i => ({name: i.name, fname: i.fname}) );
 		console.table(cols);
 	} else if (str === 'lastupdate') {
-		const { gregToShamsi: toShamsi, formatDateStr: format } = require('./lib/util');
 		const date = await state.get('lastInstrumentUpdate');
-		console.log(`${format(date)} (${format(toShamsi(date)).cyan})`);
+		const { gregToShamsi: toShamsi, formatDateStr: format } = require('./lib/util');
+		const output = date === 'never' ? date.yellow : `${format(date)} (${format(toShamsi(date)).cyan})`;
+		console.log(output);
 	}
 }
 
