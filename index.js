@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 const cmd = require('commander');
-const colors = require('colors');
+require('./lib/colors');
 
 cmd
 	.helpOption('-h, --help', 'Show help.')
@@ -71,7 +71,7 @@ async function search(str, { searchBy }) {
 	const ins = await getInstruments(true, true);
 	const res = ins
 		.filter(i => both ? i.Symbol.includes(str) || i.Name.includes(str) : i[propName].includes(str))
-		.map(i => `${i.Symbol.yellow.bold} (${i.Name.grey})`)
+		.map(i => `${i.Symbol.yellowBold} (${i.Name.grey})`)
 		.sort()
 		.join('\n');
 	console.log(res ? res : 'No match for: '.red + str.white);
@@ -105,9 +105,9 @@ async function cacheDirHandler(_newPath) {
 		const moved = await moveDir(cacheDir, newPath);
 		if (moved) {
 			await state.set('cacheDir', newPath);
-			console.log(`${'cacheDir'.yellow} changed from ${join(__dirname, cacheDir).red.bold} to ${join(__dirname, newPath).green.bold}.`);
+			console.log(`${'cacheDir'.yellow} changed from ${join(__dirname, cacheDir).redBold} to ${join(__dirname, newPath).greenBold}.`);
 		} else {
-			console.log('directory not empty: '.red.bold + join(__dirname, newPath).yellow);
+			console.log('directory not empty: '.redBold + join(__dirname, newPath).yellow);
 		}
 		return;
 	}
