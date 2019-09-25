@@ -32,8 +32,10 @@ cmd.command('export').description('Create file(s) for current selected instrumen
 	.action(xport);
 cmd.parse(process.argv);
 
-if (cmd.show) show(cmd.show);
-if (cmd.cacheDir) cacheDirHandler(cmd.cacheDir);
+(async function () {
+	if (cmd.show) await show(cmd.show);
+	if (cmd.cacheDir) await cacheDirHandler(cmd.cacheDir);
+})();
 
 async function show(_str) {
 	const str = _str === true ? 'selins' : _str;
