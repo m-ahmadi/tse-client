@@ -8,15 +8,16 @@ const readFile = promisify(fs.readFile);
 const writeFile = promisify(fs.writeFile);
 const access = promisify(fs.access);
 
-const defaultSettings = require('./defaultSettings');
+const _settings = require('./lib/settings');
 const getSelectedInstruments = require('./lib/getSelectedInstruments');
 const getShares = require('./lib/getShares');
 const getColumns = require('./lib/getColumns')();
 const getClosingPrices = require('./lib/getClosingPrices');
 const util = require('./lib/util');
 
-module.exports = async function (userSettings) {
-	const settings = Object.assign({}, defaultSettings, userSettings);
+module.exports = async function () {
+	const allSettings = await _settings.get();
+	const settings = Object.assign({}, allSettings.defaultExport, allSettings.selectedExport);
 	const { adjustPrices, delimiter } = settings;
 	
 	const selectedInstruments = await getSelectedInstruments(true);
@@ -70,7 +71,7 @@ module.exports = async function (userSettings) {
 	});
 	
 	let { outDir: dir, fileExtension: ext } = settings;
-	await access(dir).catch(err => dir = defaultSettings.outDir);
+	await access(dir).catch(err => dir = allSettings.defaultExport.outDir);
 	dir = dir.endsWith(sep) ? dir : dir+sep;
 	ext = ext.startsWith('.') ? ext : '.'+ext;
 	const bom = settings.encoding === 1 ? '' : '\ufeff';

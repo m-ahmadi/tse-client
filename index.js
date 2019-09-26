@@ -39,11 +39,11 @@ cmd.parse(process.argv);
 
 async function show(_str) {
 	const str = _str === true ? 'selins' : _str;
-	const state = require('./lib/state');
+	const settings = require('./lib/settings');
 	const getColumns = require('./lib/getColumns');
 	if (str === 'selins') {
 		const ins = await require('./lib/getInstruments')(true);
-		const selins = await state.get('selectedInstruments');
+		const selins = await settings.get('selectedInstruments');
 		console.table( selins.map(i => ins[i].Symbol).join('\n') );
 	} else if (str === 'selcols') {
 		const selcols = await getColumns()();
@@ -53,7 +53,7 @@ async function show(_str) {
 		const cols = getColumns(colstr).map( i => ({name: i.name, fname: i.fname}) );
 		console.table(cols);
 	} else if (str === 'lastupdate') {
-		const date = await state.get('lastInstrumentUpdate');
+		const date = await settings.get('lastInstrumentUpdate');
 		const { gregToShamsi: toShamsi, formatDateStr: format } = require('./lib/util');
 		const output = date === 'never' ? date.yellow : `${format(date)} (${format(toShamsi(date)).cyan})`;
 		console.log(output);
@@ -81,8 +81,8 @@ async function select(arr, { columns }) {
 	const args = arr.length > 1 ? arr : arr[0].replace(/;| /g, '\n').split('\n');
 	if (columns) {
 		const writeFile = require('util').promisify(require('fs').writeFile);
-		const state = await require('./lib/state');
-		await state.set('selectedColumns', args);
+		const settings = await require('./lib/settings');
+		await settings.set('selectedColumns', args);
 		return;
 	}
 	const ins = await require('./lib/getInstruments')(true, true);
@@ -98,13 +98,13 @@ async function select(arr, { columns }) {
 async function cacheDirHandler(_newPath) {
 	const newPath = _newPath === true ? undefined : _newPath;
 	const { join } = require('path');
-	const state = require('./lib/state');
-	const cacheDir = await state.get('cacheDir');
+	const settings = require('./lib/settings');
+	const cacheDir = await settings.get('cacheDir');
 	if (newPath) {
 		const moveDir = require('./lib/moveDir');
 		const moved = await moveDir(cacheDir, newPath);
 		if (moved) {
-			await state.set('cacheDir', newPath);
+			await settings.set('cacheDir', newPath);
 			console.log(`${'cacheDir'.yellow} changed from ${join(__dirname, cacheDir).redBold} to ${join(__dirname, newPath).greenBold}.`);
 		} else {
 			console.log('directory not empty: '.redBold + join(__dirname, newPath).yellow);

@@ -7,17 +7,15 @@ const writeFile = promisify(fs.writeFile);
 const access = promisify(fs.access);
 const log = console.log;
 
-const defaultSettings = require('./defaultSettings');
+const settings = require('./lib/settings');
 const rq = require('./lib/request.v2');
 const getInstruments = require('./lib/getInstruments');
 const getShares = require('./lib/getShares');
 const util = require('./lib/util');
-const state = require('./lib/state');
 
-module.exports = async function (userSettings) {
-	const settings = Object.assign({}, defaultSettings, userSettings);
-	const _state = await state.get();
-	const { cacheDir, lastInstrumentUpdate: lastUpdate } = _state;
+
+module.exports = async function () {
+	const { cacheDir, lastInstrumentUpdate: lastUpdate } = await settings.get();
 	const insFile    = join(cacheDir, 'instruments.csv');
 	const sharesFile = join(cacheDir, 'shares.csv');
 	
@@ -53,5 +51,5 @@ module.exports = async function (userSettings) {
 		await writeFile(sharesFile, shares.replace(/;/g, '\n').slice(0, -1) );
 	}
 	
-	await state.set('lastInstrumentUpdate', util.dateToStr(new Date()));
+	await settings.set('lastInstrumentUpdate', util.dateToStr(new Date()));
 };
