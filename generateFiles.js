@@ -74,7 +74,7 @@ module.exports = async function () {
 	await access(dir).catch(err => dir = allSettings.defaultExport.outDir);
 	dir = dir.endsWith(sep) ? dir : dir+sep;
 	ext = ext.startsWith('.') ? ext : '.'+ext;
-	const bom = settings.encoding === 1 ? '' : '\ufeff';
+	const bom = settings.encoding === 'utf8' ? '' : '\ufeff';
 	for (write of writes) {
 		await writeFile(dir+write[0]+ext, bom+write[1]);
 	}
