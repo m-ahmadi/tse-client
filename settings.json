@@ -44,16 +44,16 @@
   "selectedInstruments": [
     "9211775239375291"
   ],
-	"defaultExport": {
-		"fileName": 4,
-		"fileExtension": "csv",
-		"delimiter": ",",
-		"adjustPrices": 0,
-		"encoding": "utf8",
-		"daysWithoutTrade": false,
-		"startDate": "1380/01/01",
-		"showHeaders": true,
-		"outDir": "."
-	},
-	"selectedExport": {}
+  "defaultExport": {
+    "fileName": 4,
+    "fileExtension": "csv",
+    "delimiter": ",",
+    "adjustPrices": 0,
+    "encoding": "utf8",
+    "daysWithoutTrade": false,
+    "startDate": "1380/01/01",
+    "showHeaders": true,
+    "outDir": "."
+  },
+  "selectedExport": {}
 }
