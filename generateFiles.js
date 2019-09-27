@@ -175,7 +175,8 @@ function getFilename(filename, instrument, adjustPrices) {
 			str = instrument.Symbol + suffix(y, a, true);
 			break;
 		default:
-			str = instrument.CIsin + suffix(y, a);
+			// str = instrument.CIsin + suffix(y, a);
+			str = instrument.Symbol + suffix(y, a, true);
 			break;
 	}
 	return str;
