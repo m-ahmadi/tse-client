@@ -45,7 +45,7 @@
     "9211775239375291"
   ],
 	"defaultExport": {
-		"filename": 4,
+		"fileName": 4,
 		"fileExtension": "csv",
 		"delimiter": ",",
 		"adjustPrices": 0,
@@ -54,6 +54,6 @@
 		"startDate": "1380/01/01",
 		"showHeaders": true,
 		"outDir": "."
-	}
+	},
 	"selectedExport": {}
 }

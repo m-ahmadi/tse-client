@@ -65,7 +65,7 @@ module.exports = async function () {
 	});
 	
 	const writes = selectedInstruments.map( (instrument, i) => {
-		const filename = getFilename(settings.filename, instrument, adjustPrices);
+		const filename = getFilename(settings.fileName, instrument, adjustPrices);
 		const content = files[i];
 		return [filename, content];
 	});
