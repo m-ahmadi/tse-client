@@ -1,6 +1,9 @@
 const fs = require('fs');
-const { cacheDir } = require('../state');
 
-if ( !fs.existsSync(cacheDir) ) {
-	fs.mkdirSync(cacheDir);
-}
+(async function () {
+  const cacheDir = await require('../lib/settings').get('cacheDir');
+  
+  if ( !fs.existsSync(cacheDir) ) {
+    fs.mkdirSync(cacheDir);
+  }
+})();
