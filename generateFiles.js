@@ -19,6 +19,8 @@ module.exports = async function (userSettings) {
   const defaultSettings = await _settings.get('defaultExport');
   const settings = Object.assign({}, defaultSettings, userSettings);
   const { adjustPrices, delimiter } = settings;
+  let { startDate } = settings;
+  startDate = util.shamsiToGreg(startDate);
   
   const selectedInstruments = await getSelectedInstruments(true);
   const prices = {};
@@ -51,6 +53,7 @@ module.exports = async function (userSettings) {
     const instrument = selectedInstruments.find(v => v.InsCode === closingPrices[0].InsCode);
     let str = headerRow;
     closingPrices.forEach(closingPrice => {
+      if ( Big(closingPrice.DEven).lt(startDate) ) return;
       for (column of columns) {
         if (!Big(closingPrice.ZTotTran).eq(0) || settings.daysWithoutTrade) {
           str += getCell(column.name, instrument, closingPrice, adjustPrices);
