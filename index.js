@@ -119,3 +119,31 @@ async function cacheDirHandler(_newPath) {
   console.log( 'cacheDir: '.yellow + join(__dirname, cacheDir).cyan );
 }
 
+async function xport({ fileName, fileExtension, delimiter, adjustPrices, encoding, daysWithoutTrade, startDate, showHeaders, outDir, save }) {
+  const log = console.log;
+  if ( fileName     && !(/^[0-4]$/).test(fileName) )                { log('Invalid fileName.'.redBold);     return; }
+  if ( adjustPrices && !(/^[0-2]$/).test(adjustPrices) )            { log('Invalid adjustPrices.'.redBold); return; }
+  if ( encoding     && !(/^utf8$|^utf8bom$/).test(encoding) )       { log('Invalid encoding.'.redBold);     return; }
+  if ( startDate    && !(/^\d{4}\/\d{2}\/\d{2}$/).test(startDate) ) { log('Invalid startDate.'.redBold);    return; }
+  if (outDir) {
+    const fs = require('fs');
+    const { resolve } = require('path');
+    if (!fs.existsSync(outDir))              { log('Invalid outDir.'.redBold+' directory doesn\'t exist: '.red + resolve(outDir)); return; }
+    if (!fs.lstatSync(outDir).isDirectory()) { log('Invalid outDir.'.redBold+' path is not a directory: '.red + resolve(outDir));  return; }
+  }
+  const userSettings = { 
+    ...fileName         && {fileName: parseInt(fileName, 10)},
+    ...fileExtension    && {fileExtension},
+    ...delimiter        && {delimiter},
+    ...adjustPrices     && {adjustPrices: parseInt(adjustPrices, 10)},
+    ...encoding         && {encoding},
+    ...daysWithoutTrade && {daysWithoutTrade},
+    ...startDate        && {startDate},
+    ...showHeaders      && {showHeaders},
+    ...outDir           && {outDir}
+  };
+  const _settings = require('./lib/settings');
+  const selectedExport = await _settings.get('selectedExport');
+  if (save) await _settings.set('selectedExport', Object.assign({}, selectedExport, userSettings));
+  await require('./generateFiles')(userSettings);
+}
