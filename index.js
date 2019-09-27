@@ -6,8 +6,10 @@ cmd
   .helpOption('-h, --help', 'Show help.')
   .usage('[command] [options]\n  tc search faSymbol -b symbol\n  tc select faSymbol1 faSymbol2 [faSymbol3 ...]\n  tc update\n  tc data')
   .description('A client for receiving Tehran Securities Exchange (TSETMC) data.')
-  .option('-v, --view [value]', 'View current settings. options: selins|selcols|cols|lastupdate|export. \n\t\t\t\t  default: selins\n\t\t\t\t  selins:  selected instruments\n\t\t\t\t  selcols: selected columns\n\t\t\t\t  cols:    list of valid column indexes\n\t\t\t\t  export:  current export settings')
-  .option('--cache-dir [path]', 'Show or change the location of cacheDir.\n\t\t\t\t  if [path] is provided, new location is set and\n\t\t\t\t  existing content is moved to the new location.')
+  .option('-v, --view [value]',       'View current settings. options: selins|selcols|cols|lastupdate|export. \n\t\t\t\t  default: selins\n\t\t\t\t  selins:  selected instruments\n\t\t\t\t  selcols: selected columns\n\t\t\t\t  cols:    list of valid column indexes\n\t\t\t\t  export:  current export settings')
+  .option('--cache-dir [path]',       'Show or change the location of cacheDir.\n\t\t\t\t  if [path] is provided, new location is set and\n\t\t\t\t  existing content is moved to the new location.')
+  .option('-p, --update-prices',      'Update the data of selected instruments.')
+  .option('-i, --update-instruments', 'Update the list of instruments.')
   .version(''+JSON.parse(require('fs').readFileSync(require('path').join(__dirname, 'package.json'), 'utf8')).version, '-V, --version', 'Show version number.');
 cmd.command('search <query>').description('Search in instrument symbols or names. (or both)\n\t\t\t\t  specify which with -b option. default: both')
   .option('-b, --search-in [what]>', 'Specify search criteria.\n\t\t\t\toptions: symbol|name|both', 'both')
@@ -15,10 +17,6 @@ cmd.command('search <query>').description('Search in instrument symbols or names
 cmd.command('select <string...>').description('Select instruments or columns.\n\t\t\t\t  default action: select instruments.\n\t\t\t\t  pass -c option to select columns.')
   .option('-c, --columns', 'Select specified columns. (semicolons & spaces are replaced with newline)')
   .action(select);
-cmd.command('update').description('Update the data of selected instruments or the instrument list.\n\t\t\t\t  pass -p option to update selected instruments.\n\t\t\t\t  pass -i option to update instrument list.')
-  .option('-p, --prices', 'Update the data of selected instruments.')
-  .option('-i, --instrument-list', 'Update the list of instruments.')
-  .action(update);
 cmd.command('export').description('Create file(s) for current selected instrument(s).\n\t\t\t\t  see options: tc export -h')
   .option('-n, --file-name <num>',       'The filename used for the generated files. options: 0|1|2|3|4 default: 4\n\t\t\t\t0: isin code\n\t\t\t\t1: latin name\n\t\t\t\t2: latin symbol\n\t\t\t\t3: farsi name\n\t\t\t\t4: farsi symbol')
   .option('-x, --file-extension <str>',  'The extension used for the generated files. default: "csv"')
@@ -36,6 +34,8 @@ cmd.parse(process.argv);
 (async function () {
   if (cmd.view) await show(cmd.view);
   if (cmd.cacheDir) await cacheDirHandler(cmd.cacheDir);
+  if (cmd.updatePrices) await update({ prices: true });
+  if (cmd.updateInstruments) await update({ instruments: true });
 })();
 
 async function show(_str) {
@@ -119,6 +119,11 @@ async function cacheDirHandler(_newPath) {
   console.log( 'cacheDir: '.yellow + join(__dirname, cacheDir).cyan );
 }
 
+async function update({ prices, instruments }) {
+  if (prices) await require('./updateClosingPrices')();
+  if (instruments) await require('./updateInstruments')();
+}
+
 async function xport({ fileName, fileExtension, delimiter, adjustPrices, encoding, daysWithoutTrade, startDate, showHeaders, outDir, save }) {
   const log = console.log;
   if ( fileName     && !(/^[0-4]$/).test(fileName) )                { log('Invalid fileName.'.redBold);     return; }
@@ -147,3 +152,4 @@ async function xport({ fileName, fileExtension, delimiter, adjustPrices, encodin
   if (save) await _settings.set('selectedExport', Object.assign({}, selectedExport, userSettings));
   await require('./generateFiles')(userSettings);
 }
+
