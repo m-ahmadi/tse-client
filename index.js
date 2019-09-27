@@ -19,16 +19,17 @@ cmd.command('update').description('Update the data of selected instruments or th
   .option('-p, --prices', 'Update the data of selected instruments.')
   .option('-i, --instrument-list', 'Update the list of instruments.')
   .action(update);
-cmd.command('export').description('Create file(s) for current selected instrument(s).')
-  .option('-f, --file-name',          'The filename used for the generated files.')
-  .option('-x, --file-extension',     'The extension used for the generated files.')
-  .option('-l, --delimiter',          'The delimiter used for the generated files.')
-  .option('-a, --adjust-prices',      'Specify the type of prices for the generated files.')
-  .option('-n, --encoding',           'Encoding of the generated files.')
-  .option('-t, --days-without-trade', 'Wheater or not to include days without trade in the generated files.')
-  .option('-d, --start-date',         'Specify the starting date for the generated files.')
-  .option('-e, --show-headers',       'Wheater or not to generate the header row.')
-  .option('-o, --out-dir',            'Location of the generated files.')
+cmd.command('export').description('Create file(s) for current selected instrument(s).\n\t\t\t\t  see options: tc export -h')
+  .option('-n, --file-name <num>',       'The filename used for the generated files. options: 0|1|2|3|4 default: 4\n\t\t\t\t0: isin code\n\t\t\t\t1: latin name\n\t\t\t\t2: latin symbol\n\t\t\t\t3: farsi name\n\t\t\t\t4: farsi symbol')
+  .option('-x, --file-extension <str>',  'The extension used for the generated files. default: "csv"')
+  .option('-d, --delimiter <char>',      'The delimiter used for the generated files. default: ","')
+  .option('-a, --adjust-prices <num>',   'Type of price adjustment for the generated files. options: 0|1|2 default: 0\n\t\t\t\t0: none\n\t\t\t\t1: share increase\n\t\t\t\t2: share increase and dividends')
+  .option('-e, --encoding <str>',        'Encoding of the generated files. options: utf8|utf8bom default: utf8bom')
+  .option('-t, --days-without-trade',    'Boolean. Wheater or not to include days without trade in the generated files. default: false')
+  .option('-b, --start-date <date>',     'Starting date of the generated files. default: "1380/01/01"\n\t\t\t\tmust be a shamsi/jalali date and forward-slash separated.\n\t\t\t\tinvalid: "13800101" | "1380-01-01"')
+  .option('-f, --show-headers',          'Boolean. Wheater or not to generate the header row. default: true')
+  .option('-o, --out-dir <path>',        'Location of the generated files. default: ./')
+  .option('--save',                      'Boolean. Save the passed options for future use.')
   .action(xport);
 cmd.parse(process.argv);
 
