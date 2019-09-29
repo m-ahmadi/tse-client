@@ -1,59 +1,61 @@
 {
-  "cacheDir": "data",
-  "lastInstrumentUpdate": "never",
-  "defaultColumns": [
-    2,
-    "<TICKER>",
-    4,
-    "<DTYYYYMMDD>",
-    6,
-    "<OPEN>",
-    7,
-    "<HIGH>",
-    8,
-    "<LOW>",
-    10,
-    "<CLOSE>",
-    12,
-    "<VOL>",
-    11,
-    "<PRICE>",
-    13,
-    "<COUNT>",
-    14,
-    "<YESTERDAY>"
-  ],
-  "selectedColumns": [
-    4,
-    "<DTYYYYMMDD>",
-    5,
-    "<DTYYYYMMDD>",
-    6,
-    "<OPEN>",
-    8,
-    "<LOW>",
-    7,
-    "<HIGH>",
-    9,
-    "<LAST>",
-    10,
-    "<CLOSE>",
-    14,
-    "<YESTERDAY>"
-  ],
-  "selectedInstruments": [
-    "9211775239375291"
-  ],
-  "defaultExport": {
-    "fileName": 4,
-    "fileExtension": "csv",
-    "delimiter": ",",
-    "adjustPrices": 0,
-    "encoding": "utf8",
-    "daysWithoutTrade": false,
-    "startDate": "1380/01/01",
-    "showHeaders": true,
-    "outDir": "."
-  },
-  "selectedExport": {}
+\t"cacheDir": "data",
+\t"lastInstrumentUpdate": "never",
+\t"defaultColumns": [
+\t\t2,
+\t\t"<TICKER>",
+\t\t4,
+\t\t"<DTYYYYMMDD>",
+\t\t6,
+\t\t"<OPEN>",
+\t\t7,
+\t\t"<HIGH>",
+\t\t8,
+\t\t"<LOW>",
+\t\t10,
+\t\t"<CLOSE>",
+\t\t12,
+\t\t"<VOL>",
+\t\t11,
+\t\t"<PRICE>",
+\t\t13,
+\t\t"<COUNT>",
+\t\t14,
+\t\t"<YESTERDAY>"
+\t],
+\t"selectedColumns": [
+\t\t4,
+\t\t"<DTYYYYMMDD>",
+\t\t5,
+\t\t"<DTYYYYMMDD>",
+\t\t6,
+\t\t"<OPEN>",
+\t\t8,
+\t\t"<LOW>",
+\t\t7,
+\t\t"<HIGH>",
+\t\t9,
+\t\t"<LAST>",
+\t\t10,
+\t\t"<CLOSE>",
+\t\t14,
+\t\t"<YESTERDAY>"
+\t],
+\t"selectedInstruments": [
+\t\t"9211775239375291"
+\t],
+\t"defaultExport": {
+\t\t"fileName": 4,
+\t\t"fileExtension": "csv",
+\t\t"delimiter": ",",
+\t\t"adjustPrices": 0,
+\t\t"encoding": "utf8",
+\t\t"daysWithoutTrade": false,
+\t\t"startDate": "1380/01/01",
+\t\t"showHeaders": true,
+\t\t"outDir": "."
+\t},
+\t"selectedExport": {}
 }
+
+
