@@ -12,10 +12,10 @@ cmd
   .option('-i, --update-instruments', 'Update the list of instruments.')
   .version(''+JSON.parse(require('fs').readFileSync(require('path').join(__dirname, 'package.json'), 'utf8')).version, '-V, --version', 'Show version number.');
 cmd.command('search <query>').description('Search in instrument symbols or names. (or both)\n\t\t\t\t  specify which with -b option. default: both')
-  .option('-b, --search-in [what]>', 'Specify search criteria.\n\t\t\t\toptions: symbol|name|both', 'both')
+  .option('-t, --search-in <what>',  'Specify search criteria.\n\t\t\t\toptions: symbol|name|both', 'both')
   .action(search);
 cmd.command('select <string...>').description('Select instruments or columns.\n\t\t\t\t  default action: select instruments.\n\t\t\t\t  pass -c option to select columns.')
-  .option('-c, --columns', 'Select specified columns. (semicolons & spaces are replaced with newline)')
+  .option('-c, --columns',            'Select specified columns. (semicolons & spaces are replaced with newline)')
   .action(select);
 cmd.command('export').description('Create file(s) for current selected instrument(s).\n\t\t\t\t  see options: tc export -h')
   .option('-n, --file-name <num>',       'The filename used for the generated files. options: 0|1|2|3|4 default: 4\n\t\t\t\t0: isin code\n\t\t\t\t1: latin name\n\t\t\t\t2: latin symbol\n\t\t\t\t3: farsi name\n\t\t\t\t4: farsi symbol')
@@ -23,7 +23,7 @@ cmd.command('export').description('Create file(s) for current selected instrumen
   .option('-d, --delimiter <char>',      'The delimiter used for the generated files. default: ","')
   .option('-a, --adjust-prices <num>',   'Type of price adjustment for the generated files. options: 0|1|2 default: 0\n\t\t\t\t0: none\n\t\t\t\t1: share increase\n\t\t\t\t2: share increase and dividends')
   .option('-e, --encoding <str>',        'Encoding of the generated files. options: utf8|utf8bom default: utf8bom')
-  .option('-t, --days-without-trade',    'Boolean. Wheater or not to include days without trade in the generated files. default: false')
+  .option('-m, --days-without-trade',    'Boolean. Wheater or not to include days without trade in the generated files. default: false')
   .option('-b, --start-date <date>',     'Starting date of the generated files. default: "1380/01/01"\n\t\t\t\tmust be a shamsi/jalali date and forward-slash separated.\n\t\t\t\tinvalid: "13800101" | "1380-01-01"')
   .option('-f, --show-headers',          'Boolean. Wheater or not to generate the header row. default: true')
   .option('-o, --out-dir <path>',        'Location of the generated files. default: ./')
@@ -126,10 +126,10 @@ async function update({ prices, instruments }) {
 
 async function xport({ fileName, fileExtension, delimiter, adjustPrices, encoding, daysWithoutTrade, startDate, showHeaders, outDir, save }) {
   const log = console.log;
-  if ( fileName     && !(/^[0-4]$/).test(fileName) )                { log('Invalid fileName.'.redBold);     return; }
-  if ( adjustPrices && !(/^[0-2]$/).test(adjustPrices) )            { log('Invalid adjustPrices.'.redBold); return; }
-  if ( encoding     && !(/^utf8$|^utf8bom$/).test(encoding) )       { log('Invalid encoding.'.redBold);     return; }
-  if ( startDate    && !(/^\d{4}\/\d{2}\/\d{2}$/).test(startDate) ) { log('Invalid startDate.'.redBold);    return; }
+  if ( fileName     && !/^[0-4]$/.test(fileName) )                { log('Invalid fileName.'.redBold);     return; }
+  if ( adjustPrices && !/^[0-2]$/.test(adjustPrices) )            { log('Invalid adjustPrices.'.redBold); return; }
+  if ( encoding     && !/^utf8$|^utf8bom$/.test(encoding) )       { log('Invalid encoding.'.redBold);     return; }
+  if ( startDate    && !/^\d{4}\/\d{2}\/\d{2}$/.test(startDate) ) { log('Invalid startDate.'.redBold);    return; }
   if (outDir) {
     const fs = require('fs');
     const { resolve } = require('path');
