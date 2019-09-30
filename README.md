@@ -1,13 +1,13 @@
 # TSE Client
-## A client for receiving stock data from the Tehran Stock Exchange (TSE).
+A client for receiving stock data from the Tehran Stock Exchange (TSE).
 
 ### Install
-```bash
+```shell
 npm install tse-client -g
 ```
 
-### CLI usage:
-```bash
+### CLI usage
+```shell
 
 tc --update-instruments
 tc select فولاد ذوب
