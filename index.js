@@ -6,16 +6,16 @@ cmd
   .helpOption('-h, --help', 'Show help.')
   .usage('[command] [options]\n  tc search faSymbol -b symbol\n  tc select faSymbol1 faSymbol2 [faSymbol3 ...]\n  tc update\n  tc data')
   .description('A client for receiving Tehran Securities Exchange (TSETMC) data.')
-  .option('-v, --view [value]',       'View current settings. options: selins|selcols|cols|lastupdate|export. \n\t\t\t\t  default: selins\n\t\t\t\t  selins:  selected instruments\n\t\t\t\t  selcols: selected columns\n\t\t\t\t  cols:    list of valid column indexes\n\t\t\t\t  export:  current export settings')
-  .option('--cache-dir [path]',       'Show or change the location of cacheDir.\n\t\t\t\t  if [path] is provided, new location is set and\n\t\t\t\t  existing content is moved to the new location.')
-  .option('-p, --update-prices',      'Update the data of selected instruments.')
-  .option('-i, --update-instruments', 'Update the list of instruments.')
+  .option('-v, --view [value]',          'View current settings. options: selins|selcols|cols|lastupdate|export. \n\t\t\t\t  default: selins\n\t\t\t\t  selins:  selected instruments\n\t\t\t\t  selcols: selected columns\n\t\t\t\t  cols:    list of valid column indexes\n\t\t\t\t  export:  current export settings')
+  .option('--cache-dir [path]',          'Show or change the location of cacheDir.\n\t\t\t\t  if [path] is provided, new location is set and\n\t\t\t\t  existing content is moved to the new location.')
+  .option('-p, --update-prices',         'Update the data of selected instruments.')
+  .option('-i, --update-instruments',    'Update the list of instruments.')
   .version(''+JSON.parse(require('fs').readFileSync(require('path').join(__dirname, 'package.json'), 'utf8')).version, '-V, --version', 'Show version number.');
 cmd.command('search <query>').description('Search in instrument symbols or names. (or both)\n\t\t\t\t  specify which with -b option. default: both')
-  .option('-t, --search-in <what>',  'Specify search criteria.\n\t\t\t\toptions: symbol|name|both', 'both')
+  .option('-t, --search-in <what>',      'Specify search criteria.\n\t\t\t\toptions: symbol|name|both', 'both')
   .action(search);
 cmd.command('select <string...>').description('Select instruments or columns.\n\t\t\t\t  default action: select instruments.\n\t\t\t\t  pass -c option to select columns.')
-  .option('-c, --columns',            'Select specified columns. (semicolons & spaces are replaced with newline)')
+  .option('-c, --columns',               'Select specified columns. (semicolons & spaces are replaced with newline)')
   .action(select);
 cmd.command('export').description('Create file(s) for current selected instrument(s).\n\t\t\t\t  see options: tc export -h')
   .option('-n, --file-name <num>',       'The filename used for the generated files. options: 0|1|2|3|4 default: 4\n\t\t\t\t0: isin code\n\t\t\t\t1: latin name\n\t\t\t\t2: latin symbol\n\t\t\t\t3: farsi name\n\t\t\t\t4: farsi symbol')
