@@ -1,7 +1,8 @@
 const fs = require('fs');
+const { join } = require('path');
 
 const defaultSettings = {
-  cacheDir: 'data',
+  cacheDir: join(__dirname, '../data'),
   lastInstrumentUpdate: 'never',
   selectedInstruments: [],
   selectedColumns: [],
@@ -27,7 +28,7 @@ const defaultSettings = {
     daysWithoutTrade: false,
     startDate: '1380/01/01',
     showHeaders: true,
-    outDir: '.'
+    outDir: join(__dirname, '../')
   }
 };
 
