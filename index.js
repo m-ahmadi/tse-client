@@ -33,7 +33,6 @@ cmd.command('export').description('Create file(s) for current selected instrumen
 cmd.parse(process.argv);
 
 (async function () {
-  if (!cmd.args.length) cmd.help();
   if (cmd.view) await show(cmd.view);
   if (cmd.cacheDir) await cacheDirHandler(cmd.cacheDir);
   if (cmd.updatePrices) await update({ prices: true });
