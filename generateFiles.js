@@ -60,8 +60,10 @@ module.exports = async function (userSettings) {
           str += delimiter;
         }
       }
-      str = str.slice(0, -1);
-      str += '\n';
+      if (str !== '') {
+        str = str.slice(0, -1);
+        str += '\n';
+      }
     });
     str = str.slice(0, -1);
     return str;
