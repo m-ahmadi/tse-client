@@ -25,7 +25,7 @@ cmd.command('export').description('Create file(s) for current selected instrumen
   .option('-e, --encoding <str>',        'Encoding of the generated files. options: utf8|utf8bom default: utf8bom')
   .option('-m, --days-without-trade',    'Boolean. Wheater or not to include days without trade in the generated files. default: false')
   .option('-b, --start-date <date>',     'Starting date of the generated files. default: "1380/01/01"\n\t\t\t\tmust be a shamsi/jalali date and forward-slash separated.\n\t\t\t\tinvalid: "13800101" | "1380-01-01"')
-  .option('-f, --show-headers',          'Boolean. Wheater or not to generate the header row. default: true')
+  .option('-r, --no-headers',            'Boolean. Do not generate the header row. default: false')
   .option('-o, --out-dir <path>',        'Location of the generated files. default: ./')
   .option('--save',                      'Boolean. Save the passed options for future use.')
   .action(xport);
@@ -125,7 +125,7 @@ async function update({ prices, instruments }) {
   if (instruments) await require('./updateInstruments')();
 }
 
-async function xport({ fileName, fileExtension, delimiter, adjustPrices, encoding, daysWithoutTrade, startDate, showHeaders, outDir, save }) {
+async function xport({ fileName, fileExtension, delimiter, adjustPrices, encoding, daysWithoutTrade, startDate, headers, outDir, save }) {
   const log = console.log;
   if ( fileName     && !/^[0-4]$/.test(fileName) )                { log('Invalid fileName.'.redBold);     return; }
   if ( adjustPrices && !/^[0-2]$/.test(adjustPrices) )            { log('Invalid adjustPrices.'.redBold); return; }
@@ -145,7 +145,7 @@ async function xport({ fileName, fileExtension, delimiter, adjustPrices, encodin
     ...encoding         && {encoding},
     ...daysWithoutTrade && {daysWithoutTrade},
     ...startDate        && {startDate},
-    ...showHeaders      && {showHeaders},
+    ...!headers         && {showHeaders: headers},
     ...outDir           && {outDir}
   };
   const _settings = require('./lib/settings');
