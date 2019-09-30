@@ -57,7 +57,7 @@ module.exports = async function () {
     const { path, oldContent } = validSelection[k];
     const newContent = data[i].split(';');
     const content = oldContent ? oldContent.concat(newContent) : newContent;
-    return [path, content];
+    return [path, content.join('\n')];
   });
   
   for (write of writes) await writeFile(write[0], write[1]);
