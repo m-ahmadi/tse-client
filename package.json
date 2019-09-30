@@ -1,7 +1,7 @@
 {
   "name": "tse-client",
   "version": "0.0.1",
-  "description": "",
+  "description": "A client for receiving stock data from the Tehran Stock Exchange (TSE).",
   "main": "index.js",
   "bin": {
     "tc": "index.js"

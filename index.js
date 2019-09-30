@@ -5,7 +5,7 @@ require('./lib/colors');
 cmd
   .helpOption('-h, --help', 'Show help.')
   .usage('[command] [options]\n  tc search faSymbol -b symbol\n  tc select faSymbol1 faSymbol2 [faSymbol3 ...]\n  tc update\n  tc data')
-  .description('A client for receiving Tehran Securities Exchange (TSETMC) data.')
+  .description('A client for receiving stock data from the Tehran Stock Exchange (TSE).')
   .option('-v, --view [value]',          'View current settings. options: selins|selcols|cols|lastupdate|export. \n\t\t\t\t  default: selins\n\t\t\t\t  selins:  selected instruments\n\t\t\t\t  selcols: selected columns\n\t\t\t\t  cols:    list of valid column indexes\n\t\t\t\t  export:  current export settings')
   .option('--cache-dir [path]',          'Show or change the location of cacheDir.\n\t\t\t\t  if [path] is provided, new location is set and\n\t\t\t\t  existing content is moved to the new location.')
   .option('-p, --update-prices',         'Update the data of selected instruments.')
