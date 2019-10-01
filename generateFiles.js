@@ -16,13 +16,15 @@ const getClosingPrices = require('./lib/getClosingPrices');
 const util = require('./lib/util');
 
 module.exports = async function (userSettings) {
+  const selectedInstruments = await getSelectedInstruments(true);
+  if (!selectedInstruments.length) { console.log('No selected instruments.'.redBold + ' \naborted'.red); return; }
+  
   const defaultSettings = await _settings.get('defaultExport');
   const settings = Object.assign({}, defaultSettings, userSettings);
   const { adjustPrices, delimiter } = settings;
   let { startDate } = settings;
   startDate = util.shamsiToGreg(startDate);
   
-  const selectedInstruments = await getSelectedInstruments(true);
   const prices = {};
   for (v of selectedInstruments) {
     prices[v.InsCode] = await getClosingPrices(v.InsCode);
