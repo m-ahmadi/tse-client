@@ -6,7 +6,6 @@ const Big = require('big.js');
 
 const writeFile = promisify(fs.writeFile);
 const access = promisify(fs.access);
-const log = console.log;
 
 require('./lib/colors');
 const settings = require('./lib/settings');
@@ -19,12 +18,14 @@ const ClosingPrice = require('./struct/ClosingPrice');
 const startDeven = '20010321';
 
 module.exports = async function () {
-  const cacheDir = await settings.get('cacheDir');
   const selection = await getSelectedInstruments(true);
+  if (!selection.length)            { msg('No selected instruments.'); return; }
+  
+  const cacheDir = await settings.get('cacheDir');
   let error;
   const { data: res } = await rq.LastPossibleDeven().catch(err => error = err);
-  if (error)                        { log('Failed request: '.redBold          +'LastPossibleDeven: '+error.code.red+' \nOperation aborted.'.red); return; }
-  if ( !/^\d{8};\d{8}$/.test(res) ) { log('Invalid server response: '.redBold +'LastPossibleDeven'                 +' \nOperation aborted.'.red); return; }
+  if (error)                        { msg('Failed request: ',          'LastPossibleDeven: '+ getErrMsg(error)); return; }
+  if ( !/^\d{8};\d{8}$/.test(res) ) { msg('Invalid server response: ', 'LastPossibleDeven'); return; }
   const lastPossibleDeven = res.split(';')[0] || res.split(';')[1];
   
   const validSelection = {};
@@ -46,11 +47,13 @@ module.exports = async function () {
     }
   }
   insCodes = insCodes.map(i => i.join(',')).join(';');
+  if (insCodes === '')              { msg('Already updated.'); return; }
   
   let { data } = await rq.ClosingPrices(insCodes).catch(err => error = err);
-  if (error)                        { log('Failed request: '.redBold          +'ClosingPrices: '+error.code.red+' \nOperation aborted.'.red); return; }
-  if ( !/^[\d\.,;@]*$/.test(data) ) { log('Invalid server response: '.redBold +'ClosingPrices'                 +' \nOperation aborted.'.red); return; }
-  if (data === '') return;
+  if (error)                        { msg('Failed request: ',          'ClosingPrices: ', getErrMsg(error)); return; }
+  if ( !/^[\d\.,;@]*$/.test(data) ) { msg('Invalid server response: ', 'ClosingPrices'); return; }
+  if (data === '')                  { msg('Unknown Error.'); return; }
+  
   data = data.split('@');
   
   const writes = Object.keys(validSelection).map((k, i) => {
@@ -69,3 +72,13 @@ async function pathExists(path) {
   return res;
 }
 
+function msg(...m) {
+  let str = '';
+  m.forEach((v, i) => str += i === 0 ? v.redBold : v)
+  str += ' \naborted'.red;
+  console.log(str);
+}
+
+function getErrMsg(error) {
+  return error.code ? error.code.red : (error.response.status +' '+ error.response.statusText).red;
+}
