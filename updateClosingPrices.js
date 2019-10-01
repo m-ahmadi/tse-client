@@ -48,8 +48,8 @@ module.exports = async function () {
   insCodes = insCodes.map(i => i.join(',')).join(';');
   
   let { data } = await rq.ClosingPrices(insCodes).catch(err => error = err);
-  if (error)                                  { log('Failed request: '.redBold          +'ClosingPrices: '+error.code.red+' \nOperation aborted.'.red); return; }
-  if ( !/^[\d\.,;]*@?[\d\.,;]*$/.test(data) ) { log('Invalid server response: '.redBold +'ClosingPrices'                 +' \nOperation aborted.'.red); return; }
+  if (error)                        { log('Failed request: '.redBold          +'ClosingPrices: '+error.code.red+' \nOperation aborted.'.red); return; }
+  if ( !/^[\d\.,;@]*$/.test(data) ) { log('Invalid server response: '.redBold +'ClosingPrices'                 +' \nOperation aborted.'.red); return; }
   if (data === '') return;
   data = data.split('@');
   
@@ -68,3 +68,4 @@ async function pathExists(path) {
   await access(path).catch(err => res = false);
   return res;
 }
+
