@@ -24,7 +24,7 @@ const defaultSettings = {
     fileExtension: 'csv',
     delimiter: ',',
     adjustPrices: 0,
-    encoding: 'utf8',
+    encoding: 'utf8bom',
     daysWithoutTrade: false,
     startDate: '1380/01/01',
     showHeaders: true,
@@ -43,3 +43,4 @@ const defaultSettings = {
     fs.mkdirSync(cacheDir);
   }
 })();
+
