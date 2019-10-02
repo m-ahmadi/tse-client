@@ -7,7 +7,7 @@ cmd
   .name('tc')
   .usage('[command] [options]\n  tc --update-instruments\n  tc search faSymbol -b symbol\n  tc select faSymbol1 faSymbol2 [faSymbol3 ...]\n  tc --update-prices\n  tc export --out-dir /tsedata')
   .description('A client for receiving stock data from the Tehran Stock Exchange (TSE).')
-  .option('-v, --view [value]',          'View current settings. options: selins|selcols|cols|lastup|export. \n\t\t\t\t  default: selins\n\t\t\t\t  selins:  selected instruments\n\t\t\t\t  selcols: selected columns\n\t\t\t\t  cols:    list of valid column indexes\n\t\t\t\t  lastup:  last update of the instruments list\n\t\t\t\t  export:  current export settings')
+  .option('-v, --view [value]',          'View current settings. options: selins|selcols|cols|last|export. \n\t\t\t\t  default: selins\n\t\t\t\t  selins:  selected instruments\n\t\t\t\t  selcols: selected columns\n\t\t\t\t  cols:    list of valid column indexes\n\t\t\t\t  last:    last update of the instruments list\n\t\t\t\t  export:  current export settings')
   .option('--cache-dir [path]',          'Show or change the location of cacheDir.\n\t\t\t\t  if [path] is provided, new location is set and\n\t\t\t\t  existing content is moved to the new location.')
   .option('-p, --update-prices',         'Update the data of selected instruments.')
   .option('-i, --update-instruments',    'Update the list of instruments.')
@@ -43,29 +43,31 @@ cmd.parse(process.argv);
 
 async function show(_str) {
   const str = _str === true ? 'selins' : _str;
-  const settings = require('./lib/settings');
+  const settings = await require('./lib/settings').get();
   const getColumns = require('./lib/getColumns');
+  const { log, table } = console;
   if (str === 'selins') {
+    const last = settings.lastInstrumentUpdate;
+    if (last === 'never') return;
     const ins = await require('./lib/getInstruments')(true);
-    let selins = await settings.get('selectedInstruments');
+    let selins = settings.selectedInstruments;
     selins = selins.map(i => ins[i].Symbol).join('\n');
-    console.table( selins.length ? selins.yellowBold : 'none'.yellow );
+    table( selins.length ? selins.yellowBold : 'none'.yellow );
   } else if (str === 'selcols') {
     const selcols = await getColumns()();
-    console.table(selcols);
+    table(selcols);
   } else if (str === 'cols') {
     const colstr = [...Array(15)].map((i,j)=>j).join(',');
     const cols = getColumns(colstr).map( i => ({name: i.name, fname: i.fname}) );
-    console.table(cols);
-  } else if (str === 'lastup') {
-    const date = await settings.get('lastInstrumentUpdate');
+    table(cols);
+  } else if (str === 'last') {
+    const last = settings.lastInstrumentUpdate;
     const { gregToShamsi: toShamsi, formatDateStr: format } = require('./lib/util');
-    const output = date === 'never' ? date.yellow : `${format(date).yellow} (${format(toShamsi(date)).cyan})`;
-    console.log(output);
+    const output = last === 'never' ? last.yellow : `${format(last).yellow} (${format(toShamsi(last)).cyan})`;
+    log(output);
   } else if (str === 'export') {
-    const all = await settings.get();
-    const toShow = Object.assign({}, all.defaultExport, all.selectedExport);
-    console.table(toShow);
+    const toShow = Object.assign({}, settings.defaultExport, settings.selectedExport);
+    table(toShow);
   }
 }
 
