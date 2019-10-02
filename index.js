@@ -15,8 +15,10 @@ cmd
 cmd.command('search <query>').description('Search in instrument symbols or names. (or both)\n\t\t\t\t  specify which with -b option. default: both')
   .option('-t, --search-in <what>',      'Specify search criteria.\n\t\t\t\toptions: symbol|name|both', 'both')
   .action(search);
-cmd.command('select <string...>').description('Select instruments or columns.\n\t\t\t\t  default action: select instruments.\n\t\t\t\t  pass -c option to select columns.')
-  .option('-c, --columns',               'Select specified columns. (semicolons & spaces are replaced with newline)')
+cmd.command('select [values...]').description('Select instruments or columns.\n\t\t\t\t  default action: select instruments.\n\t\t\t\t  pass -c option to select columns.')
+  .option('-c, --columns',               'Boolean. if true, then the selection is for columns. (semicolons & spaces are replaced with newline)')
+  .option('-d, --remove',                'Boolean. if true, then deselect the specified selected instrument(s).')
+  .option('--all',                       'Boolean. if true, then select/deselect all instruments.')
   .action(select);
 cmd.command('export').description('Create file(s) for current selected instrument(s).\n\t\t\t\t  see options: tc export -h')
   .option('-n, --file-name <num>',       'The filename used for the generated files. options: 0|1|2|3|4 default: 4\n\t\t\t\t0: isin code\n\t\t\t\t1: latin name\n\t\t\t\t2: latin symbol\n\t\t\t\t3: farsi name\n\t\t\t\t4: farsi symbol')
@@ -84,22 +86,34 @@ async function search(str, { searchIn }) {
   console.log(res ? res : 'No match for: '.redBold + str.white);
 }
 
-async function select(arr, { columns }) {
-  const args = arr.length > 1 ? arr : arr[0].replace(/;| /g, '\n').split('\n');
+async function select(arr, { columns, remove, all }) {
+  let args = arr.filter(i => i ? i : undefined);
+  args = args.length === 1 ? args[0].replace(/;| /g, '\n').split('\n') : args;
+  if (!args.length && !all) return;
+  
+  const settings = require('./lib/settings');
   if (columns) {
-    const writeFile = require('util').promisify(require('fs').writeFile);
-    const settings = await require('./lib/settings');
     await settings.set('selectedColumns', args);
     return;
   }
   const ins = await require('./lib/getInstruments')(true, true);
+  const currentSelection = await settings.get('selectedInstruments');
   
-  let insCodes = args.map(i => {
+  let newSelection = args.map(i => {
     const found = ins.find(j => j.Symbol === i);
-    return found ? found.InsCode : console.log('No such instrument: '.redBold + i.white);
-  });
-  insCodes = insCodes.filter(i => i ? i : undefined).join('\n');
-  await require('./lib/selectInstrument')(insCodes);
+    if (!found) console.log('No such instrument: '.redBold + i.white);
+    return found.InsCode;
+  })
+  .filter(i => i ? i : undefined);
+  
+  if (remove) newSelection = currentSelection.filter(i => newSelection.indexOf(i) === -1)
+  if (all)    newSelection = remove ? [] : ins.map(i => i.InsCode);
+  if (!remove && !all && currentSelection.length > 0) {
+    newSelection = newSelection.filter(i => currentSelection.indexOf(i) === -1);
+    newSelection = currentSelection.concat(newSelection);
+  }
+  
+  await settings.set('selectedInstruments', newSelection);
 }
 
 async function cacheDirHandler(_newPath) {
