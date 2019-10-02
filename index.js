@@ -16,7 +16,7 @@ cmd.command('search <query>').description('Search in instrument symbols or names
   .option('-t, --search-in <what>',      'Specify search criteria.\n\t\t\t\toptions: symbol|name|both', 'both')
   .action(search);
 cmd.command('select [values...]').description('Select instruments or columns.\n\t\t\t\t  default action: select instruments.\n\t\t\t\t  pass -c option to select columns.')
-  .option('-c, --columns',               'Boolean. if true, then the selection is for columns. (semicolons & spaces are replaced with newline)')
+  .option('-c, --columns',               'Boolean. if true, then the selection is for columns. (space/comma separated string of columns)')
   .option('-d, --remove',                'Boolean. if true, then deselect the specified selected instrument(s).')
   .option('--all',                       'Boolean. if true, then select/deselect all instruments.')
   .action(select);
@@ -88,12 +88,13 @@ async function search(str, { searchIn }) {
 
 async function select(arr, { columns, remove, all }) {
   let args = arr.filter(i => i ? i : undefined);
-  args = args.length === 1 ? args[0].replace(/;| /g, '\n').split('\n') : args;
+  args = args.length === 1 ? args[0].split(' ') : args;
   if (!args.length && !all) return;
   
   const settings = require('./lib/settings');
   if (columns) {
-    await settings.set('selectedColumns', args);
+    const cols = args.join(',').split(',').map(i => i.match(/^\d$|^\d\d$/) ? parseInt(i) : i);
+    await settings.set('selectedColumns', cols);
     return;
   }
   const ins = await require('./lib/getInstruments')(true, true);
