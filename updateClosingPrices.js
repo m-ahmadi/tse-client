@@ -14,6 +14,7 @@ const getSelectedInstruments = require('./lib/getSelectedInstruments');
 const readFileIntoArray = require('./lib/readFileIntoArray');
 const Instrument = require('./struct/Instrument');
 const ClosingPrice = require('./struct/ClosingPrice');
+const { msg, getRqErrMsg } = require('./lib/util');
 
 const startDeven = '20010321';
 
@@ -50,7 +51,7 @@ module.exports = async function () {
   if (insCodes === '')              { msg('Already updated.'); return; }
   
   let { data } = await rq.ClosingPrices(insCodes).catch(err => error = err);
-  if (error)                        { msg('Failed request: ',          'ClosingPrices: ', getErrMsg(error)); return; }
+  if (error)                        { msg('Failed request: ',          'ClosingPrices: ', getRqErrMsg(error)); return; }
   if ( !/^[\d\.,;@]*$/.test(data) ) { msg('Invalid server response: ', 'ClosingPrices'); return; }
   if (data === '')                  { msg('Unknown Error.'); return; }
   
@@ -70,15 +71,4 @@ async function pathExists(path) {
   let res = true;
   await access(path).catch(err => res = false);
   return res;
-}
-
-function msg(...m) {
-  let str = '';
-  m.forEach((v, i) => str += i === 0 ? v.redBold : v);
-  str += ' \naborted'.red;
-  console.log(str);
-}
-
-function getErrMsg(error) {
-  return error.code ? error.code.red : (error.response.status +' '+ error.response.statusText).red;
 }
