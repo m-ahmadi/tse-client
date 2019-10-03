@@ -18,7 +18,7 @@ const util = require('./lib/util');
 
 module.exports = async function (userSettings) {
   const selectedInstruments = await getSelectedInstruments(true);
-  if (!selectedInstruments.length) { console.log('No selected instruments.'.redBold + ' \naborted'.red); return; }
+  if (!selectedInstruments.length) { util.msg('No selected instruments.'); return; }
   
   const defaultSettings = await _settings.get('defaultExport');
   const settings = Object.assign({}, defaultSettings, userSettings);
