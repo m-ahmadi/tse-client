@@ -74,7 +74,7 @@ async function pathExists(path) {
 
 function msg(...m) {
   let str = '';
-  m.forEach((v, i) => str += i === 0 ? v.redBold : v)
+  m.forEach((v, i) => str += i === 0 ? v.redBold : v);
   str += ' \naborted'.red;
   console.log(str);
 }
