@@ -38,7 +38,7 @@ module.exports = async function () {
   
   let error;
   const { data } = await rq.InstrumentAndShare(lastDeven, lastId).catch(err => error = err);
-  if (error) { msg('Failed request: ', 'InstrumentAndShare: ', getRqErrMsg(error)); process.exitCode = 1; return; }
+  if (error) { msg('Failed request: ', 'InstrumentAndShare: ', getRqErrMsg(error)); return; }
   
   let instruments = data.split('@')[0];
   let shares      = data.split('@')[1];
