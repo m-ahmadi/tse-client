@@ -23,7 +23,7 @@ module.exports = async function () {
   const cacheDir = await settings.get('cacheDir');
   let error;
   const { data: res } = await rq.LastPossibleDeven().catch(err => error = err);
-  if (error)                        { msg('Failed request: ',          'LastPossibleDeven: '+ getErrMsg(error)); return; }
+  if (error)                        { msg('Failed request: ',          'LastPossibleDeven: ', getErrMsg(error).red); return; }
   if ( !/^\d{8};\d{8}$/.test(res) ) { msg('Invalid server response: ', 'LastPossibleDeven'); return; }
   const lastPossibleDeven = res.split(';')[0] || res.split(';')[1];
   
@@ -46,10 +46,10 @@ module.exports = async function () {
     }
   }
   insCodes = insCodes.map(i => i.join(',')).join(';');
-  if (insCodes === '')              { msg('Already updated.'); return; }
+  if (insCodes === '')              { msg('Already updated.', true); return; }
   
   let { data } = await rq.ClosingPrices(insCodes).catch(err => error = err);
-  if (error)                        { msg('Failed request: ',          'ClosingPrices: ', getRqErrMsg(error)); return; }
+  if (error)                        { msg('Failed request: ',          'ClosingPrices: ', getRqErrMsg(error).red); return; }
   if ( !/^[\d\.,;@]*$/.test(data) ) { msg('Invalid server response: ', 'ClosingPrices'); return; }
   if (data === '')                  { msg('Unknown Error.'); return; }
   
