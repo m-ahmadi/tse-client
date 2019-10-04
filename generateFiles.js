@@ -29,16 +29,19 @@ module.exports = async function (userSettings) {
   const prices = {};
   for (v of selectedInstruments) {
     prices[v.InsCode] = await getClosingPrices(v.InsCode);
+    if (!prices[v.InsCode].length) { util.msg('Missing instrument data.'); return; }
   }
   const columns = await getColumns();
   
   let headerRow = '';
   if (settings.showHeaders) {
     for (column of columns) {
-      headerRow += column.header + ',';
+      headerRow += column.header ? column.header + ',' : '';
     }
-    headerRow = headerRow.slice(0, -1);
-    headerRow += '\n';
+    if (headerRow !== '') {
+      headerRow = headerRow.slice(0, -1);
+      headerRow += '\n';
+    }
   }
   const shares = await getShares(true);
   
