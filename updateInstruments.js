@@ -1,10 +1,8 @@
 const fs = require('fs');
 const { join } = require('path');
 const { promisify } = require('util');
-
 const readFile = promisify(fs.readFile);
 const writeFile = promisify(fs.writeFile);
-const log = console.log;
 
 require('./lib/colors');
 const settings = require('./lib/settings');
@@ -38,14 +36,14 @@ module.exports = async function () {
   
   let error;
   const { data } = await rq.InstrumentAndShare(lastDeven, lastId).catch(err => error = err);
-  if (error) { msg('Failed request: ', 'InstrumentAndShare: ', getRqErrMsg(error)); return; }
+  if (error) { msg('Failed request: ', 'InstrumentAndShare: ', getRqErrMsg(error).red); return; }
   
   let instruments = data.split('@')[0];
   let shares      = data.split('@')[1];
   
-  if (instruments === '*') log('Cannot update during trading session hours.');
-  if (instruments === '')  log('No new instruments to update.');
-  if (shares === '')       log('No new shares to update.');
+  if (instruments === '*') msg('Cannot update during trading session hours.', true);
+  if (instruments === '')  msg('Already updated: ', 'Instruments', true);
+  if (shares === '')       msg('Already updated: ', 'Shares', true);
   
   if (instruments !== '' && instruments !== '*') {
     if (currentInstruments && Object.keys(currentInstruments).length) {
@@ -66,6 +64,8 @@ module.exports = async function () {
     await writeFile(sharesFile, shares);
   }
   
-  await settings.set('lastInstrumentUpdate', dateToStr(new Date()));
+  if ((instruments !== '' && instruments !== '*') || shares !== '') {
+    await settings.set('lastInstrumentUpdate', dateToStr(new Date()));
+  }
 };
 
