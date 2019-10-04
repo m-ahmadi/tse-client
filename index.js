@@ -8,9 +8,9 @@ cmd
   .usage('[command] [options]\n  tc --update-instruments\n  tc search faSymbol -b symbol\n  tc select faSymbol1 faSymbol2 [faSymbol3 ...]\n  tc --update-prices\n  tc export --out-dir /tsedata')
   .description('A client for receiving stock data from the Tehran Stock Exchange (TSE).')
   .option('-v, --view [value]',          'View current settings. options: selins|selcols|cols|last|export. \n\t\t\t\t  default: selins\n\t\t\t\t  selins:  selected instruments\n\t\t\t\t  selcols: selected columns\n\t\t\t\t  cols:    list of valid column indexes\n\t\t\t\t  last:    last update of the instruments list\n\t\t\t\t  export:  current export settings')
-  .option('--cache-dir [path]',          'Show or change the location of cacheDir.\n\t\t\t\t  if [path] is provided, new location is set and\n\t\t\t\t  existing content is moved to the new location.')
   .option('-p, --update-prices',         'Update the data of selected instruments.')
   .option('-i, --update-instruments',    'Update the list of instruments.')
+  .option('--cache-dir [path]',          'Show or change the location of cacheDir.\n\t\t\t\t  if [path] is provided, new location is set and\n\t\t\t\t  existing content is moved to the new location.')
   .version(''+JSON.parse(require('fs').readFileSync(require('path').join(__dirname, 'package.json'), 'utf8')).version, '-V, --version', 'Show version number.');
 cmd.command('search <query>').description('Search in instrument symbols or names. (or both)\n\t\t\t\t  specify which with -b option. default: both')
   .option('-t, --search-in <what>',      'Specify search criteria.\n\t\t\t\toptions: symbol|name|both', 'both')
@@ -121,7 +121,7 @@ async function select(arr, { columns, remove, all }) {
 
 async function cacheDirHandler(_newPath) {
   const newPath = _newPath === true ? undefined : _newPath;
-  const { join } = require('path');
+  const log = console.log;
   const settings = require('./lib/settings');
   const cacheDir = await settings.get('cacheDir');
   if (newPath) {
@@ -129,13 +129,13 @@ async function cacheDirHandler(_newPath) {
     const moved = await moveDir(cacheDir, newPath);
     if (moved) {
       await settings.set('cacheDir', newPath);
-      console.log(`${'cacheDir'.yellow} changed from ${join(__dirname, cacheDir).redBold} to ${join(__dirname, newPath).greenBold}.`);
+      log(`${'cacheDir'.yellow} changed from ${cacheDir.redBold} to ${newPath.greenBold}.`);
     } else {
-      console.log('directory not empty: '.redBold + join(__dirname, newPath).yellow);
+      log('Directory not empty: '.redBold + newPath.yellow);
     }
     return;
   }
-  console.log( 'cacheDir: '.yellow + join(__dirname, cacheDir).cyan );
+  log('cacheDir: '.yellow + cacheDir.cyan);
 }
 
 async function update({ prices, instruments }) {
