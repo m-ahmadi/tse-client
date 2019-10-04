@@ -92,22 +92,26 @@ async function select(arr, { columns, remove, all }) {
   let args = arr.filter(i => i ? i : undefined);
   args = args.length === 1 ? args[0].split(' ') : args;
   if (!args.length && !all) return;
-  
   const settings = require('./lib/settings');
+  const currentSettings = await settings.get();
+  if (currentSettings.lastInstrumentUpdate === 'never') return;
   if (columns) {
     const cols = args.join(',').split(',').map(i => i.match(/^\d$|^\d\d$/) ? parseInt(i) : i);
     await settings.set('selectedColumns', cols);
     return;
   }
   const ins = await require('./lib/getInstruments')(true, true);
-  const currentSelection = await settings.get('selectedInstruments');
+  const currentSelection = currentSettings.selectedInstruments;
   
-  let newSelection = args.map(i => {
+  let newSelection = args.filter(i => {
     const found = ins.find(j => j.Symbol === i);
-    if (!found) console.log('No such instrument: '.redBold + i.white);
-    return found.InsCode;
-  })
-  .filter(i => i ? i : undefined);
+    if (found) {
+      return found.InsCode;
+    } else {
+      console.log('No such instrument: '.redBold + i.white);
+    }
+  });
+  if (!newSelection.length) return;
   
   if (remove) newSelection = currentSelection.filter(i => newSelection.indexOf(i) === -1)
   if (all)    newSelection = remove ? [] : ins.map(i => i.InsCode);
