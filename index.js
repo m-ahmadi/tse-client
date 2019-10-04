@@ -73,7 +73,7 @@ async function show(_str) {
 
 async function search(str, { searchIn }) {
   if (str.length < 2) {
-    console.log('at least 2 characters'.redBold);
+    console.log('At least 2 characters'.redBold);
     return;
   }
   const both = searchIn === 'both' ? true : false;
@@ -125,7 +125,7 @@ async function select(arr, { columns, remove, all }) {
 
 async function cacheDirHandler(_newPath) {
   const newPath = _newPath === true ? undefined : _newPath;
-  const log = console.log;
+  const { msg } = require('./lib/util');
   const settings = require('./lib/settings');
   const cacheDir = await settings.get('cacheDir');
   if (newPath) {
@@ -133,13 +133,13 @@ async function cacheDirHandler(_newPath) {
     const moved = await moveDir(cacheDir, newPath);
     if (moved) {
       await settings.set('cacheDir', newPath);
-      log(`${'cacheDir'.yellow} changed from ${cacheDir.redBold} to ${newPath.greenBold}.`);
+      msg('cacheDir ', `changed from ${cacheDir.redBold} to ${newPath.greenBold}.`, true);
     } else {
-      log('Directory not empty: '.redBold + newPath.yellow);
+      msg('Directory not empty: ', newPath);
     }
     return;
   }
-  log('cacheDir: '.yellow + cacheDir.cyan);
+  msg('cacheDir: ', cacheDir.cyan, true);
 }
 
 async function update({ prices, instruments }) {
@@ -148,16 +148,16 @@ async function update({ prices, instruments }) {
 }
 
 async function xport({ fileName, fileExtension, delimiter, adjustPrices, encoding, daysWithoutTrade, startDate, headers, outDir, save }) {
-  const log = console.log;
-  if ( fileName     && !/^[0-4]$/.test(fileName) )                { log('Invalid fileName.'.redBold);     return; }
-  if ( adjustPrices && !/^[0-2]$/.test(adjustPrices) )            { log('Invalid adjustPrices.'.redBold); return; }
-  if ( encoding     && !/^utf8$|^utf8bom$/.test(encoding) )       { log('Invalid encoding.'.redBold);     return; }
-  if ( startDate    && !/^\d{4}\/\d{2}\/\d{2}$/.test(startDate) ) { log('Invalid startDate.'.redBold);    return; }
+  const { msg } = require('./lib/util');
+  if ( fileName     && !/^[0-4]$/.test(fileName) )                { msg('Invalid fileName.');     return; }
+  if ( adjustPrices && !/^[0-2]$/.test(adjustPrices) )            { msg('Invalid adjustPrices.'); return; }
+  if ( encoding     && !/^utf8$|^utf8bom$/.test(encoding) )       { msg('Invalid encoding.');     return; }
+  if ( startDate    && !/^\d{4}\/\d{2}\/\d{2}$/.test(startDate) ) { msg('Invalid startDate.');    return; }
   if (outDir) {
     const fs = require('fs');
     const { resolve } = require('path');
-    if (!fs.existsSync(outDir))              { log('Invalid outDir.'.redBold+' directory doesn\'t exist: '.red + resolve(outDir)); return; }
-    if (!fs.lstatSync(outDir).isDirectory()) { log('Invalid outDir.'.redBold+' path is not a directory: '.red + resolve(outDir));  return; }
+    if (!fs.existsSync(outDir))              { msg('Invalid outDir.', ' directory doesn\'t exist: '.red, resolve(outDir)); return; }
+    if (!fs.lstatSync(outDir).isDirectory()) { msg('Invalid outDir.', ' path is not a directory: '.red, resolve(outDir));  return; }
   }
   const userSettings = { 
     ...fileName         && {fileName: parseInt(fileName, 10)},
