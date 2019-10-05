@@ -111,7 +111,6 @@ async function select(arr, { columns, remove, all }) {
       console.log('No such instrument: '.redBold + i.white);
     }
   }).filter(i => i ? i : undefined);
-  if (!newSelection.length) return;
   
   if (remove) newSelection = currentSelection.filter(i => newSelection.indexOf(i) !== -1);
   if (all)    newSelection = remove ? [] : ins.map(i => i.InsCode);
