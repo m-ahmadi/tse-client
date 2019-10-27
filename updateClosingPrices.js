@@ -29,7 +29,7 @@ module.exports = async function () {
   
   const validSelection = {};
   let insCodes = [];
-  for (instrument of selection) {
+  for (const instrument of selection) {
     const insCode = instrument.InsCode;
     const market = instrument.YMarNSC === 'NO' ? 0 : 1;
     const filePath = join(cacheDir, `${insCode}.csv`);
@@ -62,7 +62,7 @@ module.exports = async function () {
     return [path, content.join('\n')];
   });
   
-  for (write of writes) await writeFile(write[0], write[1]);
+  for (const write of writes) await writeFile(write[0], write[1]);
 };
 
 async function pathExists(path) {

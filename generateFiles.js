@@ -27,7 +27,7 @@ module.exports = async function (userSettings) {
   startDate = util.shamsiToGreg(startDate);
   
   const prices = {};
-  for (v of selectedInstruments) {
+  for (const v of selectedInstruments) {
     prices[v.InsCode] = await getClosingPrices(v.InsCode);
     if (!prices[v.InsCode].length) { util.msg('Missing instrument data.'); return; }
   }
@@ -35,7 +35,7 @@ module.exports = async function (userSettings) {
   
   let headerRow = '';
   if (settings.showHeaders) {
-    for (column of columns) {
+    for (const column of columns) {
       headerRow += column.header ? column.header + ',' : '';
     }
     if (headerRow !== '') {
@@ -60,7 +60,7 @@ module.exports = async function (userSettings) {
     let str = headerRow;
     closingPrices.forEach(closingPrice => {
       if ( Big(closingPrice.DEven).lt(startDate) ) return;
-      for (column of columns) {
+      for (const column of columns) {
         if (!Big(closingPrice.ZTotTran).eq(0) || settings.daysWithoutTrade) {
           str += getCell(column.name, instrument, closingPrice, adjustPrices);
           str += delimiter;
@@ -86,7 +86,7 @@ module.exports = async function (userSettings) {
   dir = dir.endsWith(sep) ? dir : dir+sep;
   ext = ext.startsWith('.') ? ext : '.'+ext;
   const bom = settings.encoding === 'utf8bom' ? '\ufeff' : '';
-  for (write of writes) {
+  for (const write of writes) {
     await writeFile(dir+write[0]+ext, bom+write[1]);
   }
 };
