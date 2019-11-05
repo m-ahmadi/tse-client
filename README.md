@@ -1,3 +1,4 @@
+[![NPM](https://nodei.co/npm/tse-client.png)](https://nodei.co/npm/tse-client/)  
 # TSE Client
 A client for receiving stock data from the Tehran Stock Exchange (TSE).
 
