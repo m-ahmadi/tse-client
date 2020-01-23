@@ -1,6 +1,7 @@
 [![NPM](https://nodei.co/npm/tse-client.png)](https://nodei.co/npm/tse-client/)  
 # TSE Client
-A client for receiving stock data from the Tehran Stock Exchange (TSE).
+A client for receiving stock data from the Tehran Stock Exchange (TSE).  
+This is a port of the [official Windows app](http://cdn.tsetmc.com/Site.aspx?ParTree=111A11).
 
 ### Install
 ```shell
