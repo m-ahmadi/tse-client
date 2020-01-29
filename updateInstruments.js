@@ -38,8 +38,9 @@ module.exports = async function () {
   const { data } = await rq.InstrumentAndShare(lastDeven, lastId).catch(err => error = err);
   if (error) { msg('Failed request: ', 'InstrumentAndShare: ', getRqErrMsg(error).red); return; }
   
-  let instruments = data.split('@')[0];
-  let shares      = data.split('@')[1];
+  const splitted  = data.split('@');
+  let instruments = splitted[0];
+  let shares      = splitted[1];
   
   if (instruments === '*') msg('Cannot update during trading session hours.', true);
   if (instruments === '')  msg('Already updated: ', 'Instruments', true);
@@ -68,4 +69,3 @@ module.exports = async function () {
     await settings.set('lastInstrumentUpdate', dateToStr(new Date()));
   }
 };
-
