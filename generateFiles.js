@@ -167,83 +167,40 @@ function suffix(YMarNSC, adjustPrices, fa=false) {
 function getFilename(filename, instrument, adjustPrices) {
   const y = instrument.YMarNSC;
   const a = adjustPrices;
+  const f = filename;
   
-  let str = '';
-  switch (filename) {
-    case 0:
-      str = instrument.CIsin + suffix(y, a);
-      break;
-    case 1:
-      str = instrument.LatinName + suffix(y, a);
-      break;
-    case 2:
-      str = instrument.LatinSymbol + suffix(y, a);
-      break;
-    case 3:
-      str = instrument.Name + suffix(y, a, true);
-      break;
-    case 4:
-      str = instrument.Symbol + suffix(y, a, true);
-      break;
-    default:
-      // str = instrument.CIsin + suffix(y, a);
-      str = instrument.Symbol + suffix(y, a, true);
-      break;
-  }
+  const str = ''
+    f === 0 ? instrument.CIsin       + suffix(y, a) :
+    f === 1 ? instrument.LatinName   + suffix(y, a) :
+    f === 2 ? instrument.LatinSymbol + suffix(y, a) :
+    f === 3 ? instrument.Name        + suffix(y, a, true) :
+    f === 4 ? instrument.Symbol      + suffix(y, a, true) :
+    instrument.Symbol + suffix(y, a, true); // instrument.CIsin + suffix(y, a)
+  
   return str;
 }
 
 function getCell(columnName, instrument, closingPrice, adjustPrices) {
   const y = instrument.YMarNSC;
   const a = adjustPrices;
+  const c = columnName;
   
-  let str = '';
-  switch (columnName) {
-    case 'CompanyCode':
-      str += instrument.CompanyCode;
-      break;
-    case 'LatinName':
-      str += instrument.LatinName + suffix(y, a);
-      break;
-    case 'Symbol':
-      str += instrument.Symbol.replace(' ', '_') + suffix(y, a, true);
-      break;
-    case 'Name':
-      str += instrument.Name.replace(' ', '_') + suffix(y, a, true);
-      break;
-    case 'Date':
-      str += closingPrice.DEven;
-      break;
-    case 'ShamsiDate':
-      str += util.gregToShamsi(closingPrice.DEven);
-      break;
-    case 'PriceFirst':
-      str += closingPrice.PriceFirst;
-      break;
-    case 'PriceMax':
-      str += closingPrice.PriceMax;
-      break;
-    case 'PriceMin':
-      str += closingPrice.PriceMin;
-      break;
-    case 'LastPrice':
-      str += closingPrice.PDrCotVal;
-      break;
-    case 'ClosingPrice':
-      str += closingPrice.PClosing;
-      break;
-    case 'Price':
-      str += closingPrice.QTotCap;
-      break;
-    case 'Volume':
-      str += closingPrice.QTotTran5J;
-      break;
-    case 'Count':
-      str += closingPrice.ZTotTran;
-      break;
-    case 'PriceYesterday':
-      str += closingPrice.PriceYesterday;
-      break;
-  }
+  const str = 
+    c === 'CompanyCode'    ? instrument.CompanyCode :
+    c === 'LatinName'      ? instrument.LatinName + suffix(y, a) :
+    c === 'Symbol'         ? instrument.Symbol.replace(' ', '_') + suffix(y, a, true) :
+    c === 'Name'           ? instrument.Name.replace(' ', '_') + suffix(y, a, true) :
+    c === 'Date'           ? closingPrice.DEven :
+    c === 'ShamsiDate'     ? util.gregToShamsi(closingPrice.DEven) :
+    c === 'PriceFirst'     ? closingPrice.PriceFirst :
+    c === 'PriceMax'       ? closingPrice.PriceMax :
+    c === 'PriceMin'       ? closingPrice.PriceMin :
+    c === 'LastPrice'      ? closingPrice.PDrCotVal :
+    c === 'ClosingPrice'   ? closingPrice.PClosing :
+    c === 'Price'          ? closingPrice.QTotCap:
+    c === 'Volume'         ? closingPrice.QTotTran5J :
+    c === 'Count'          ? closingPrice.ZTotTran :
+    c === 'PriceYesterday' ? closingPrice.PriceYesterday : '';
+  
   return str;
 }
