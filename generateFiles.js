@@ -169,7 +169,7 @@ function getFilename(filename, instrument, adjustPrices) {
   const a = adjustPrices;
   const f = filename;
   
-  const str = ''
+  const str =
     f === 0 ? instrument.CIsin       + suffix(y, a) :
     f === 1 ? instrument.LatinName   + suffix(y, a) :
     f === 2 ? instrument.LatinSymbol + suffix(y, a) :
@@ -185,7 +185,7 @@ function getCell(columnName, instrument, closingPrice, adjustPrices) {
   const a = adjustPrices;
   const c = columnName;
   
-  const str = 
+  const str =
     c === 'CompanyCode'    ? instrument.CompanyCode :
     c === 'LatinName'      ? instrument.LatinName + suffix(y, a) :
     c === 'Symbol'         ? instrument.Symbol.replace(' ', '_') + suffix(y, a, true) :
