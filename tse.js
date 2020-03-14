@@ -409,5 +409,10 @@ async function getPrices(symbols=[], settings={}) {
 	return res;
 }
 
-return { getPrices, updateInstruments };
+return {
+	getPrices, updateInstruments,
+	get columnList() {
+		return [...Array(15)].map((v,i) => ({name: cols[i], fname: colsFa[i]}))
+	}
+};
 })();
