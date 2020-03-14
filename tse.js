@@ -44,79 +44,78 @@ const rq = {
 		}); */
 	}
 };
-
-const structs = {
-	ClosingPrice: class ClosingPrice {
-		constructor(_row='') {
-			const row = _row.split(',');
-			if (row.length !== 11) throw new Error('Invalid ClosingPrice data!');
-			this.InsCode        = row[0];  // int64
-			this.DEven          = row[1];  // int32 (the rest are all decimal)
-			this.PClosing       = row[2];  // close
-			this.PDrCotVal      = row[3];  // last
-			this.ZTotTran       = row[4];  // count
-			this.QTotTran5J     = row[5];  // volume
-			this.QTotCap        = row[6];  // price
-			this.PriceMin       = row[7];  // low
-			this.PriceMax       = row[8];  // high
-			this.PriceYesterday = row[9];  // yesterday
-			this.PriceFirst     = row[10]; // open
-		}
-	},
-	Column: class Column {
-		constructor(row=[]) {	
-			const len = row.length;
-			if (len > 2 || len < 1) throw new Error('Invalid Column data!');
-			const names  = ['CompanyCode', 'LatinName', 'Symbol', 'Name', 'Date', 'ShamsiDate', 'PriceFirst', 'PriceMax', 'PriceMin', 'LastPrice', 'ClosingPrice', 'Price', 'Volume', 'Count', 'PriceYesterday'];
-			const fnames = ['کد شرکت', 'نام لاتین', 'نماد', 'نام', 'تاریخ میلادی', 'تاریخ شمسی', 'اولین قیمت', 'بیشترین قیمت', 'کمترین قیمت', 'آخرین قیمت', 'قیمت پایانی', 'ارزش', 'حجم', 'تعداد معاملات', 'قیمت دیروز'];
-			this.name   = names[ row[0] ];
-			this.fname  = fnames[ row[0] ];
-			this.header = row[1];
-		}
-	},
-	Instrument: class Instrument {
-		constructor(_row='') {
-			const row = _row.split(',');
-			if (row.length !== 18) throw new Error('Invalid Instrument data!');
-			this.InsCode      = row[0];  // int64 (long)
-			this.InstrumentID = row[1];
-			this.LatinSymbol  = row[2];
-			this.LatinName    = row[3];
-			this.CompanyCode  = row[4];
-			this.Symbol       = cleanFa(row[5]);
-			this.Name         = row[6];
-			this.CIsin        = row[7];
-			this.DEven        = row[8];  // int32 (int)
-			this.Flow         = row[9];  // 0,1,2,3,4,5,6,7 بازار byte
-			this.LSoc30       = row[10]; // نام 30 رقمي فارسي شرکت
-			this.CGdSVal      = row[11]; // A,I,O نوع نماد
-			this.CGrValCot    = row[12]; // 00,11,1A,...25 کد گروه نماد
-			this.YMarNSC      = row[13]; // NO,OL,BK,BY,ID,UI کد بازار
-			this.CComVal      = row[14]; // 1,3,4,5,6,7,8,9 کد تابلو
-			this.CSecVal      = row[15]; // []62 کد گروه صنعت
-			this.CSoSecVal    = row[16]; // []177 کد زير گروه صنعت
-			this.YVal         = parseInt(row[17], 10);
-		}
-	},
-	Share: class Share {
-		constructor(_row='') {
-			const row = _row.split(',');
-			if (row.length !== 5) throw new Error('Invalid Share data!');
-			this.Idn              = row[0];      // long
-			this.InsCode          = row[1];      // long
-			this.DEven            = row[2];      // int
-			this.NumberOfShareNew = parseInt( row[3] ); // Decimal
-			this.NumberOfShareOld = parseInt( row[4] ); // Decimal
-		}
+//@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+// structs
+class ClosingPrice {
+	constructor(_row='') {
+		const row = _row.split(',');
+		if (row.length !== 11) throw new Error('Invalid ClosingPrice data!');
+		this.InsCode        = row[0];  // int64
+		this.DEven          = row[1];  // int32 (the rest are all decimal)
+		this.PClosing       = row[2];  // close
+		this.PDrCotVal      = row[3];  // last
+		this.ZTotTran       = row[4];  // count
+		this.QTotTran5J     = row[5];  // volume
+		this.QTotCap        = row[6];  // price
+		this.PriceMin       = row[7];  // low
+		this.PriceMax       = row[8];  // high
+		this.PriceYesterday = row[9];  // yesterday
+		this.PriceFirst     = row[10]; // open
 	}
-};
+}
+class Column {
+	constructor(row=[]) {	
+		const len = row.length;
+		if (len > 2 || len < 1) throw new Error('Invalid Column data!');
+		const names  = ['CompanyCode', 'LatinName', 'Symbol', 'Name', 'Date', 'ShamsiDate', 'PriceFirst', 'PriceMax', 'PriceMin', 'LastPrice', 'ClosingPrice', 'Price', 'Volume', 'Count', 'PriceYesterday'];
+		const fnames = ['کد شرکت', 'نام لاتین', 'نماد', 'نام', 'تاریخ میلادی', 'تاریخ شمسی', 'اولین قیمت', 'بیشترین قیمت', 'کمترین قیمت', 'آخرین قیمت', 'قیمت پایانی', 'ارزش', 'حجم', 'تعداد معاملات', 'قیمت دیروز'];
+		this.name   = names[ row[0] ];
+		this.fname  = fnames[ row[0] ];
+		this.header = row[1];
+	}
+}
+class Instrument {
+	constructor(_row='') {
+		const row = _row.split(',');
+		if (row.length !== 18) throw new Error('Invalid Instrument data!');
+		this.InsCode      = row[0];  // int64 (long)
+		this.InstrumentID = row[1];
+		this.LatinSymbol  = row[2];
+		this.LatinName    = row[3];
+		this.CompanyCode  = row[4];
+		this.Symbol       = cleanFa(row[5]);
+		this.Name         = row[6];
+		this.CIsin        = row[7];
+		this.DEven        = row[8];  // int32 (int)
+		this.Flow         = row[9];  // 0,1,2,3,4,5,6,7 بازار byte
+		this.LSoc30       = row[10]; // نام 30 رقمي فارسي شرکت
+		this.CGdSVal      = row[11]; // A,I,O نوع نماد
+		this.CGrValCot    = row[12]; // 00,11,1A,...25 کد گروه نماد
+		this.YMarNSC      = row[13]; // NO,OL,BK,BY,ID,UI کد بازار
+		this.CComVal      = row[14]; // 1,3,4,5,6,7,8,9 کد تابلو
+		this.CSecVal      = row[15]; // []62 کد گروه صنعت
+		this.CSoSecVal    = row[16]; // []177 کد زير گروه صنعت
+		this.YVal         = parseInt(row[17], 10);
+	}
+}
+class Share {
+	constructor(_row='') {
+		const row = _row.split(',');
+		if (row.length !== 5) throw new Error('Invalid Share data!');
+		this.Idn              = row[0];      // long
+		this.InsCode          = row[1];      // long
+		this.DEven            = row[2];      // int
+		this.NumberOfShareNew = parseInt( row[3] ); // Decimal
+		this.NumberOfShareOld = parseInt( row[4] ); // Decimal
+	}
+}
 //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 // utils
 function parseInstruments(struct=false, arr=false) {
 	const rows = localStorage.getItem('sigman.instruments').split(';');
 	const instruments = arr ? [] : {};
 	for (const row of rows) {
-		const item = struct ? new structs.Instrument(row) : row;
+		const item = struct ? new Instrument(row) : row;
 		if (arr) {
 			instruments.push(item);
 		} else {
@@ -326,7 +325,7 @@ async function updatePrices(instruments=[]) {
 			updateNeeded.push( {insCode} );
 		} else { // has data
 			const rows = insData.split(';');
-			const lastRow = new structs.ClosingPrice( rows[rows.length-1] );
+			const lastRow = new ClosingPrice( rows[rows.length-1] );
 			const lastRowDEven = +lastRow.DEven;
 			if (lastPossibleDeven > lastRowDEven) { // outdated
 				insCodes.push( [insCode, lastRowDEven, market] );
@@ -381,11 +380,11 @@ async function getPrices(symbols=[], settings={}) {
 	const prices = {};
 	for (const v of selection) {
 		const insCode = v.InsCode;
-		prices[insCode] = (await localforage.getItem('sigman.'+insCode)).split(';').map(i => new structs.ClosingPrice(i));
+		prices[insCode] = (await localforage.getItem('sigman.'+insCode)).split(';').map(i => new ClosingPrice(i));
 	}
-	const columns = settings.columns.map( i => new structs.Column(!Array.isArray(i) ? [i] : i) );
+	const columns = settings.columns.map( i => new Column(!Array.isArray(i) ? [i] : i) );
 	
-  const shares = localStorage.getItem('sigman.shares').split(';').map(i => new structs.Share(i));
+  const shares = localStorage.getItem('sigman.shares').split(';').map(i => new Share(i));
 	
 	const { adjustPrices, startDate, daysWithoutTrade } = settings;
 	const res = selection.map(instrument => {
