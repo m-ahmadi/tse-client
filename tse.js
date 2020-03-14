@@ -239,7 +239,7 @@ function getCell(columnName, instrument, closingPrice, adjustPrices) {
 	const a = adjustPrices;
 	const c = columnName;
 	
-	const str = 
+	const str =
 		c === 'CompanyCode'    ? instrument.CompanyCode :
 		c === 'LatinName'      ? instrument.LatinName :
 		c === 'Symbol'         ? instrument.Symbol.replace(' ', '_') :
@@ -334,7 +334,7 @@ async function updatePrices(instruments=[]) {
 	for (const instrument of instruments) {
 		const insCode = instrument.InsCode;
 		const market = instrument.YMarNSC === 'NO' ? 0 : 1;
-		const insData = localStorage.getItem('sigman.'+insCode);
+		const insData = await localforage.getItem('sigman.'+insCode);
 		if (!insData) { // doesn't have data
 			insCodes.push( [insCode, startDeven, market] );
 			updateNeeded.push( {insCode} );
@@ -359,12 +359,13 @@ async function updatePrices(instruments=[]) {
 	if (res === '')                  { warn('Unknown Error.');                         return; }
 	
 	const newData = res.split('@');
-	updateNeeded.forEach((v, i) => {
+	const writes = updateNeeded.map((v, i) => {
 		const { insCode, oldContent } = v;
 		const newContent = newData[i].split(';');
 		const content = oldContent ? oldContent.concat(newContent) : newContent;
-		localStorage.setItem('sigman.'+insCode, content.join(';'));
+		return ['sigman.'+insCode, content.join(';')]
 	});
+	for (const write of writes) await localforage.setItem(write[0], write[1]);
 }
 
 const defaultSettings = {
@@ -394,7 +395,7 @@ async function getPrices(symbols=[], settings={}) {
 	const prices = {};
 	for (const v of selection) {
 		const insCode = v.InsCode;
-		prices[insCode] = localStorage.getItem('sigman.'+insCode).split(';').map(i => new structs.ClosingPrice(i));
+		prices[insCode] = (await localforage.getItem('sigman.'+insCode)).split(';').map(i => new structs.ClosingPrice(i));
 	}
 	const columns = settings.columns.map(i => new structs.Column(i));
 	
