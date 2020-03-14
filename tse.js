@@ -74,20 +74,6 @@ const structs = {
 			this.header = row[1];
 		}
 	},
-	Day: class Day {
-		constructor(_row='') {
-			let row = _row.split(',');
-			if (row.length !== 7) throw new Error('Invalid Day data!');
-			row = row.map(i => /^[\d\.]+$/.test(i) ? parseInt(i) : i);
-			this.date  = row[0];
-			this.open  = row[1];
-			this.high  = row[2];
-			this.low   = row[3];
-			this.last  = row[4];
-			this.close = row[5];
-			this.vol   = row[6];
-		}
-	},
 	Instrument: class Instrument {
 		constructor(_row='') {
 			const row = _row.split(',');
@@ -397,7 +383,7 @@ async function getPrices(symbols=[], settings={}) {
 		const insCode = v.InsCode;
 		prices[insCode] = (await localforage.getItem('sigman.'+insCode)).split(';').map(i => new structs.ClosingPrice(i));
 	}
-	const columns = settings.columns.map(i => new structs.Column(i));
+	const columns = settings.columns.map( i => new structs.Column(!Array.isArray(i) ? [i] : i) );
 	
   const shares = localStorage.getItem('sigman.shares').split(';').map(i => new structs.Share(i));
 	
@@ -413,10 +399,10 @@ async function getPrices(symbols=[], settings={}) {
 			.map(closingPrice => {
 				if ( Big(closingPrice.DEven).lt(startDate) ) return;
 				if ( Big(closingPrice.ZTotTran).eq(0) && !daysWithoutTrade ) return;
-				const row = columns
-					.map( column => getCell(column.name, instrument, closingPrice, adjustPrices) )
-					.join(',');
-				return new structs.Day(row);
+				
+				return columns
+					.map( ({name,header}) => [header || name, getCell(name, instrument, closingPrice, adjustPrices)] )
+					.reduce((a,c) => (a[c[0]] = /^[\d\.]+$/.test(c[1]) ? parseInt(c[1]) : c[1]) && a, {});
 			})
 			.filter(i=>!!i);
   });
