@@ -112,7 +112,7 @@ class Share {
 //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 // utils
 function parseInstruments(struct=false, arr=false) {
-	const rows = localStorage.getItem('sigman.instruments').split(';');
+	const rows = localStorage.getItem('tse.instruments').split(';');
 	const instruments = arr ? [] : {};
 	for (const row of rows) {
 		const item = struct ? new Instrument(row) : row;
@@ -125,7 +125,7 @@ function parseInstruments(struct=false, arr=false) {
 	return instruments;
 };
 function parseShares(arr=false) {
-	const rows = localStorage.getItem('sigman.shares').split(';')
+	const rows = localStorage.getItem('tse.shares').split(';')
 	const shares = arr ? [] : {};
 	for (const row of rows) {
 		const item = new Share(row);
@@ -248,7 +248,7 @@ const startDeven = '20010321';
 const { log, warn } = console;
 
 async function updateInstruments() {
-	const lastUpdate = localStorage.getItem('sigman.lastInstrumentUpdate');
+	const lastUpdate = localStorage.getItem('tse.lastInstrumentUpdate');
 	let lastDeven;
 	let lastId;
 	let currentInstruments;
@@ -285,28 +285,28 @@ async function updateInstruments() {
 		} else {
 			instruments = instruments.replace(/;/g, ';');
 		}
-		localStorage.setItem('sigman.instruments', instruments);
+		localStorage.setItem('tse.instruments', instruments);
 	}
 	
 	if (shares !== '') {
 		if (currentShares && currentShares.length) {
 			shares = currentShares.concat( shares.split(';') ).join(';');
 		}
-		localStorage.setItem('sigman.shares', shares);
+		localStorage.setItem('tse.shares', shares);
 	}
 	
 	if ((instruments !== '' && instruments !== '*') || shares !== '') {
-		localStorage.setItem('sigman.lastInstrumentUpdate', dateToStr(new Date()));
+		localStorage.setItem('tse.lastInstrumentUpdate', dateToStr(new Date()));
 	}
 }
 async function getLastPossibleDeven() {
-	let lastPossibleDeven = localStorage.getItem('sigman.lastPossibleDeven');
+	let lastPossibleDeven = localStorage.getItem('tse.lastPossibleDeven');
 	const today = new Date();
 	if ( !lastPossibleDeven || (dateToStr(today) !== lastPossibleDeven && ![4,5].includes(today.getDay())) ) {
 		const res = await rq.LastPossibleDeven()
 		if ( !/^\d{8};\d{8}$/.test(res) ) throw new Error('Invalid server response: LastPossibleDeven');
 		lastPossibleDeven = res.split(';')[0] || res.split(';')[1];
-		localStorage.setItem('sigman.lastPossibleDeven', lastPossibleDeven)
+		localStorage.setItem('tse.lastPossibleDeven', lastPossibleDeven)
 	}
 	return +lastPossibleDeven;
 }
@@ -319,7 +319,7 @@ async function updatePrices(instruments=[]) {
 	for (const instrument of instruments) {
 		const insCode = instrument.InsCode;
 		const market = instrument.YMarNSC === 'NO' ? 0 : 1;
-		const insData = await localforage.getItem('sigman.'+insCode);
+		const insData = await localforage.getItem('tse.'+insCode);
 		if (!insData) { // doesn't have data
 			insCodes.push( [insCode, startDeven, market] );
 			updateNeeded.push( {insCode} );
@@ -348,7 +348,7 @@ async function updatePrices(instruments=[]) {
 		const { insCode, oldContent } = v;
 		const newContent = newData[i];
 		const content = oldContent ? oldContent+';'+newContent : newContent;
-		return ['sigman.'+insCode, content]
+		return ['tse.'+insCode, content]
 	});
 	for (const write of writes) await localforage.setItem(write[0], write[1]);
 }
@@ -380,11 +380,11 @@ async function getPrices(symbols=[], settings={}) {
 	const prices = {};
 	for (const v of selection) {
 		const insCode = v.InsCode;
-		prices[insCode] = (await localforage.getItem('sigman.'+insCode)).split(';').map(i => new ClosingPrice(i));
+		prices[insCode] = (await localforage.getItem('tse.'+insCode)).split(';').map(i => new ClosingPrice(i));
 	}
 	const columns = settings.columns.map( i => new Column(!Array.isArray(i) ? [i] : i) );
 	
-  const shares = localStorage.getItem('sigman.shares').split(';').map(i => new Share(i));
+  const shares = localStorage.getItem('tse.shares').split(';').map(i => new Share(i));
 	
 	const { adjustPrices, startDate, daysWithoutTrade } = settings;
 	const res = selection.map(instrument => {
