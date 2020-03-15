@@ -308,7 +308,7 @@ async function getLastPossibleDeven() {
 		lastPossibleDeven = res.split(';')[0] || res.split(';')[1];
 		localStorage.setItem('sigman.lastPossibleDeven', lastPossibleDeven)
 	}
-	return lastPossibleDeven;
+	return +lastPossibleDeven;
 }
 async function updatePrices(instruments=[]) {
 	if (!instruments.length) return;
