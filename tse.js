@@ -329,7 +329,7 @@ async function updatePrices(instruments=[]) {
 			const lastRowDEven = +lastRow.DEven;
 			if (lastPossibleDeven > lastRowDEven) { // outdated
 				insCodes.push( [insCode, lastRowDEven, market] );
-				updateNeeded.push( {insCode, oldContent: content} );
+				updateNeeded.push( {insCode, oldContent: rows} );
 			}
 		}
 	}
