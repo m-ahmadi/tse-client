@@ -329,7 +329,7 @@ async function updatePrices(instruments=[]) {
 			const lastRowDEven = +lastRow.DEven;
 			if (lastPossibleDeven > lastRowDEven) { // outdated
 				insCodes.push( [insCode, lastRowDEven, market] );
-				updateNeeded.push( {insCode, oldContent: rows} );
+				updateNeeded.push( {insCode, oldContent: insData} );
 			}
 		}
 	}
@@ -346,9 +346,9 @@ async function updatePrices(instruments=[]) {
 	const newData = res.split('@');
 	const writes = updateNeeded.map((v, i) => {
 		const { insCode, oldContent } = v;
-		const newContent = newData[i].split(';');
-		const content = oldContent ? oldContent.concat(newContent) : newContent;
-		return ['sigman.'+insCode, content.join(';')]
+		const newContent = newData[i];
+		const content = oldContent ? oldContent+';'+newContent : newContent;
+		return ['sigman.'+insCode, content]
 	});
 	for (const write of writes) await localforage.setItem(write[0], write[1]);
 }
