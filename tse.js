@@ -302,7 +302,7 @@ async function updateInstruments() {
 async function getLastPossibleDeven() {
 	let lastPossibleDeven = localStorage.getItem('tse.lastPossibleDeven');
 	const today = new Date();
-	if ( !lastPossibleDeven || (dateToStr(today) !== lastPossibleDeven && ![4,5].includes(today.getDay())) ) {
+	if ( !lastPossibleDeven || (+dateToStr(today)-lastPossibleDeven > 1 && ![4,5].includes(today.getDay())) ) {
 		const res = await rq.LastPossibleDeven()
 		if ( !/^\d{8};\d{8}$/.test(res) ) throw new Error('Invalid server response: LastPossibleDeven');
 		lastPossibleDeven = res.split(';')[0] || res.split(';')[1];
