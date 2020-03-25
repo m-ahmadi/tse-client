@@ -66,8 +66,8 @@ index | name | fname
     const data = await tse.getPrices(['ذوب', 'فولاد']);
     const adjustedData = await tse.getPrices(['خساپا'], {adjustPrices: 1});
 	
-    const customCols1= await tse.getPrices(['شپنا'], {columns: [4,7,8]}); // default names
-    const customCols2= await tse.getPrices(['شپنا'], {columns: [[4,'DATE'],[7,'MAX'],[8,'MIN']]}); // custom names
+    const customCols1 = await tse.getPrices(['شپنا'], {columns: [4,7,8]}); // default names
+    const customCols2 = await tse.getPrices(['شپنا'], {columns: [[4,'DATE'],[7,'MAX'],[8,'MIN']]}); // custom names
 		
     console.table(tse.columnList); // view column indexes and their names
   })()
