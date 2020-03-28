@@ -34,6 +34,13 @@ _ | Default settings:
   startDate: '20010321'
 }
 ```
+
+adjustPrices | desc | desc fa
+-------------|------|---------
+0 | None | بدون تعدیل
+1 | Share increase and dividends | افزایش سرمایه + سود
+2 | Share increase | افزایش سرمایه
+
 ### Column indexes
 index | name | fname
 ------|------|------------------
