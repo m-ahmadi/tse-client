@@ -245,6 +245,7 @@ function getCell(columnName, instrument, closingPrice, adjustPrices) {
 }
 //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 const startDeven = '20010321';
+const UPDATE_INTERVAL = 1;
 const { log, warn } = console;
 
 async function updateInstruments() {
@@ -302,7 +303,7 @@ async function updateInstruments() {
 async function getLastPossibleDeven() {
 	let lastPossibleDeven = localStorage.getItem('tse.lastPossibleDeven');
 	const today = new Date();
-	if ( !lastPossibleDeven || (+dateToStr(today)-lastPossibleDeven > 1 && ![4,5].includes(today.getDay())) ) {
+	if ( !lastPossibleDeven || (+dateToStr(today)-lastPossibleDeven > UPDATE_INTERVAL && ![4,5].includes(today.getDay())) ) {
 		const res = await rq.LastPossibleDeven()
 		if ( !/^\d{8};\d{8}$/.test(res) ) throw new Error('Invalid server response: LastPossibleDeven');
 		lastPossibleDeven = res.split(';')[0] || res.split(';')[1];
@@ -327,7 +328,7 @@ async function updatePrices(instruments=[]) {
 			const rows = insData.split(';');
 			const lastRow = new ClosingPrice( rows[rows.length-1] );
 			const lastRowDEven = +lastRow.DEven;
-			if (lastPossibleDeven > lastRowDEven) { // outdated
+			if (lastPossibleDeven - lastRowDEven > UPDATE_INTERVAL) { // outdated
 				insCodes.push( [insCode, lastRowDEven, market] );
 				updateNeeded.push( {insCode, oldContent: insData} );
 			}
