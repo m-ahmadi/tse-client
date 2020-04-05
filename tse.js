@@ -283,8 +283,6 @@ async function updateInstruments() {
 		if (currentInstruments && Object.keys(currentInstruments).length) {
 			instruments.split(';').forEach(i => currentInstruments[ i.match(/^\d+\b/)[0] ] = i);
 			instruments = Object.keys(currentInstruments).map(k => currentInstruments[k]).join(';');
-		} else {
-			instruments = instruments.replace(/;/g, ';');
 		}
 		localStorage.setItem('tse.instruments', instruments);
 	}
