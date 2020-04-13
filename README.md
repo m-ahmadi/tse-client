@@ -3,7 +3,7 @@
 - Storing `InstrumentAndShare` data in `localStorage`.  
 - Storing `ClosingPrices` data in `indexedDB`.  
 - `Instrument.Symbol` characters are [cleaned](https://github.com/m-ahmadi/tse-browser-client/blob/master/tse.js#L143) from `zero-width` characters, `ك` and  `ي`.
-- The price adjustment algorithm was ported from the [official Windows app](http://cdn.tsetmc.com/Site.aspx?ParTree=111A11).
+- The [price adjustment algorithm](https://github.com/m-ahmadi/tse-browser-client/blob/master/tse.js#L163) was ported from the [official Windows app](http://cdn.tsetmc.com/Site.aspx?ParTree=111A11).
 
 Dependency | Why
 -------|-------------
