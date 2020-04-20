@@ -34,7 +34,7 @@ const rq = {
 		url.search = new URLSearchParams(params).toString();
 		
 		return new Promise((resolve, reject) => {
-			fetch(url).then(async res => resolve(await res.text()) ).catch(err => reject(err))
+			fetch(url).then( async res => resolve(await res.text()) ).catch(err => reject(err))
 		});
 		
 		/* return $.ajax({
@@ -138,7 +138,7 @@ function parseShares(arr=false) {
 	return shares;
 };
 function dateToStr(d) {
-  return (d.getFullYear()*10000) + ( (d.getMonth()+1)*100 ) + d.getDate() + '';
+	return (d.getFullYear()*10000) + ( (d.getMonth()+1)*100 ) + d.getDate() + '';
 }
 function cleanFa(str) {
 	return str
@@ -151,12 +151,12 @@ function cleanFa(str) {
 		.replace(/ي/g,'ی');
 }
 function gregToShamsi(s) {
-  const { jy, jm, jd } = jalaali.toJalaali(+s.slice(0, 4), +s.slice(4, 6), +s.slice(6, 8));
-  return (jy*10000) + (jm*100) + jd + '';
+	const { jy, jm, jd } = jalaali.toJalaali(+s.slice(0, 4), +s.slice(4, 6), +s.slice(6, 8));
+	return (jy*10000) + (jm*100) + jd + '';
 }
 function shamsiToGreg(s) {
-  const { gy, gm, gd } = jalaali.toGregorian(+s.slice(0, 4), +s.slice(4, 6), +s.slice(6, 8));
-  return (gy*10000) + (gm*100) + gd + '';
+	const { gy, gm, gd } = jalaali.toGregorian(+s.slice(0, 4), +s.slice(4, 6), +s.slice(6, 8));
+	return (gy*10000) + (gm*100) + gd + '';
 }
 //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 // price helpers
@@ -354,14 +354,14 @@ async function updatePrices(instruments=[]) {
 
 const defaultSettings = {
 	columns: [
-    [4, 'date'],
-    [6, 'open'],
-    [7, 'high'],
-    [8, 'low'],
-    [9, 'last'],
-    [10, 'close'],
-    [12, 'vol']
-  ],
+		[4, 'date'],
+		[6, 'open'],
+		[7, 'high'],
+		[8, 'low'],
+		[9, 'last'],
+		[10, 'close'],
+		[12, 'vol']
+	],
 	adjustPrices: 0,
 	daysWithoutTrade: false,
 	startDate: '20010321'
@@ -383,17 +383,17 @@ async function getPrices(symbols=[], settings={}) {
 	}
 	const columns = settings.columns.map( i => new Column(!Array.isArray(i) ? [i] : i) );
 	
-  const shares = localStorage.getItem('tse.shares').split(';').map(i => new Share(i));
+	const shares = localStorage.getItem('tse.shares').split(';').map(i => new Share(i));
 	
 	const { adjustPrices, startDate, daysWithoutTrade } = settings;
 	const res = selection.map(instrument => {
-    const insCode = instrument.InsCode;
-    const cond = adjustPrices;
-    const closingPrices = cond === 1 || cond === 2
+		const insCode = instrument.InsCode;
+		const cond = adjustPrices;
+		const closingPrices = cond === 1 || cond === 2
 			? adjust(cond, prices[insCode], shares, insCode)
 			: prices[insCode];
 		
-    return closingPrices
+		return closingPrices
 			.map(closingPrice => {
 				if ( Big(closingPrice.DEven).lt(startDate) ) return;
 				if ( Big(closingPrice.ZTotTran).eq(0) && !daysWithoutTrade ) return;
@@ -403,7 +403,7 @@ async function getPrices(symbols=[], settings={}) {
 					.reduce((a,c) => (a[c[0]] = /^[\d\.]+$/.test(c[1]) ? parseFloat(c[1]) : c[1]) && a, {});
 			})
 			.filter(i=>!!i);
-  });
+	});
 	
 	return res;
 }
