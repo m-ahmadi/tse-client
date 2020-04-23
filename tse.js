@@ -244,7 +244,6 @@ function getCell(columnName, instrument, closingPrice, adjustPrices) {
 	return str;
 }
 //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-const startDeven = '20010321';
 const UPDATE_INTERVAL = 1;
 const { log, warn } = console;
 
@@ -309,7 +308,7 @@ async function getLastPossibleDeven() {
 	}
 	return +lastPossibleDeven;
 }
-async function updatePrices(instruments=[]) {
+async function updatePrices(instruments=[], startDeven) {
 	if (!instruments.length) return;
 	const lastPossibleDeven = await getLastPossibleDeven();
 	
@@ -369,12 +368,13 @@ const defaultSettings = {
 Big.DP = 40
 Big.RM = 2;
 async function getPrices(symbols=[], settings={}) {
-	settings = Object.assign(defaultSettings, settings);
 	const instruments = parseInstruments(true, true);
 	const selection = instruments.filter(i => symbols.includes(i.Symbol));
 	if (!selection.length) return;
+	settings = Object.assign(defaultSettings, settings);
+	const { adjustPrices, startDate, daysWithoutTrade } = settings;
 	
-	await updatePrices(selection);
+	await updatePrices(selection, startDate);
 	
 	const prices = {};
 	for (const v of selection) {
@@ -385,7 +385,6 @@ async function getPrices(symbols=[], settings={}) {
 	
 	const shares = localStorage.getItem('tse.shares').split(';').map(i => new Share(i));
 	
-	const { adjustPrices, startDate, daysWithoutTrade } = settings;
 	const res = selection.map(instrument => {
 		const insCode = instrument.InsCode;
 		const cond = adjustPrices;
