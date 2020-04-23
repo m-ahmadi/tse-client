@@ -286,7 +286,7 @@ async function updateInstruments() {
 	
 	let error;
 	const res = await rq.InstrumentAndShare(lastDeven, lastId).catch(err => error = err);
-	if (error) { warn('Failed request: InstrumentAndShare'); return; } // TODO: better handling
+	if (error) { warn('Failed request: InstrumentAndShare', `(${error})`); return; } // TODO: better handling
 	
 	const splitted  = res.split('@');
 	let instruments = splitted[0];
@@ -355,9 +355,9 @@ async function updatePrices(instruments=[], startDeven) {
 	
 	let error;
 	const res = await rq.ClosingPrices(insCodes).catch(err => error = err);
-	if (error)                       { warn('Failed request: ClosingPrices', error);   return; }
-	if ( !/^[\d\.,;@]*$/.test(res) ) { warn('Invalid server response: ClosingPrices'); return; }
-	if (res === '')                  { warn('Unknown Error.');                         return; }
+	if (error)                       { warn('Failed request: ClosingPrices', `(${error})`);   return; }
+	if ( !/^[\d\.,;@]*$/.test(res) ) { warn('Invalid server response: ClosingPrices');        return; }
+	if (res === '')                  { warn('Unknown Error.');                                return; }
 	
 	const newData = res.split('@');
 	const writes = updateNeeded.map((v, i) => {
