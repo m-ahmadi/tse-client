@@ -160,6 +160,8 @@ function shamsiToGreg(s) {
 }
 //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 // price helpers
+Big.DP = 40; // max decimal places
+Big.RM = 2;  // rounding mode: http://mikemcl.github.io/big.js/#rm
 function adjust(cond, closingPrices, shares, insCode) {
 	const cp = closingPrices;
 	const len = closingPrices.length;
@@ -245,7 +247,21 @@ function getCell(columnName, instrument, closingPrice, adjustPrices) {
 }
 //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 const UPDATE_INTERVAL = 1;
-const { log, warn } = console;
+const defaultSettings = {
+	columns: [
+		[4, 'date'],
+		[6, 'open'],
+		[7, 'high'],
+		[8, 'low'],
+		[9, 'last'],
+		[10, 'close'],
+		[12, 'vol']
+	],
+	adjustPrices: 0,
+	daysWithoutTrade: false,
+	startDate: '20010321'
+};
+const { warn } = console;
 
 async function updateInstruments() {
 	const lastUpdate = localStorage.getItem('tse.lastInstrumentUpdate');
@@ -325,7 +341,7 @@ async function updatePrices(instruments=[], startDeven) {
 			const rows = insData.split(';');
 			const lastRow = new ClosingPrice( rows[rows.length-1] );
 			const lastRowDEven = +lastRow.DEven;
-			if (lastPossibleDeven - lastRowDEven > UPDATE_INTERVAL) { // outdated
+			if (lastPossibleDeven - lastRowDEven > UPDATE_INTERVAL) { // but outdated
 				insCodes.push( [insCode, lastRowDEven, market] );
 				updateNeeded.push( {insCode, oldContent: insData} );
 			}
@@ -350,23 +366,6 @@ async function updatePrices(instruments=[], startDeven) {
 	});
 	for (const write of writes) await localforage.setItem(write[0], write[1]);
 }
-
-const defaultSettings = {
-	columns: [
-		[4, 'date'],
-		[6, 'open'],
-		[7, 'high'],
-		[8, 'low'],
-		[9, 'last'],
-		[10, 'close'],
-		[12, 'vol']
-	],
-	adjustPrices: 0,
-	daysWithoutTrade: false,
-	startDate: '20010321'
-};
-Big.DP = 40
-Big.RM = 2;
 async function getPrices(symbols=[], settings={}) {
 	const instruments = parseInstruments(true, true);
 	const selection = instruments.filter(i => symbols.includes(i.Symbol));
@@ -381,9 +380,8 @@ async function getPrices(symbols=[], settings={}) {
 		const insCode = v.InsCode;
 		prices[insCode] = (await localforage.getItem('tse.'+insCode)).split(';').map(i => new ClosingPrice(i));
 	}
-	const columns = settings.columns.map( i => new Column(!Array.isArray(i) ? [i] : i) );
-	
 	const shares = localStorage.getItem('tse.shares').split(';').map(i => new Share(i));
+	const columns = settings.columns.map( i => new Column(!Array.isArray(i) ? [i] : i) );
 	
 	const res = selection.map(instrument => {
 		const insCode = instrument.InsCode;
