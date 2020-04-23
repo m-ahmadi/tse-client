@@ -34,7 +34,9 @@ const rq = {
 		url.search = new URLSearchParams(params).toString();
 		
 		return new Promise((resolve, reject) => {
-			fetch(url).then( async res => resolve(await res.text()) ).catch(err => reject(err))
+			fetch(url).then(async res => {
+				res.status === 200 ? resolve(await res.text()) : reject(res.status +' '+ res.statusText);
+			}).catch(err => reject(err));
 		});
 		
 		/* return $.ajax({
