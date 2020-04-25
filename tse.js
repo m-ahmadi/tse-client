@@ -30,7 +30,7 @@ const rq = {
 		return this.makeRequest(params);
 	},
 	makeRequest(params) {
-		const url = new URL('http://service.tsetmc.com/tsev2/data/TseClient2.aspx')
+		const url = new URL('http://service.tsetmc.com/tsev2/data/TseClient2.aspx');
 		url.search = new URLSearchParams(params).toString();
 		
 		return new Promise((resolve, reject) => {
@@ -125,9 +125,9 @@ function parseInstruments(struct=false, arr=false) {
 		}
 	}
 	return instruments;
-};
+}
 function parseShares(arr=false) {
-	const rows = localStorage.getItem('tse.shares').split(';')
+	const rows = localStorage.getItem('tse.shares').split(';');
 	const shares = arr ? [] : {};
 	for (const row of rows) {
 		const item = new Share(row);
@@ -138,7 +138,7 @@ function parseShares(arr=false) {
 		}
 	}
 	return shares;
-};
+}
 function dateToStr(d) {
 	return (d.getFullYear()*10000) + ( (d.getMonth()+1)*100 ) + d.getDate() + '';
 }
@@ -223,11 +223,8 @@ function adjust(cond, closingPrices, shares, insCode) {
 	return res.reverse();
 	// return res;
 }
-function getCell(columnName, instrument, closingPrice, adjustPrices) {
-	const y = instrument.YMarNSC;
-	const a = adjustPrices;
+function getCell(columnName, instrument, closingPrice) {
 	const c = columnName;
-	
 	const str =
 		c === 'CompanyCode'    ? instrument.CompanyCode :
 		c === 'LatinName'      ? instrument.LatinName :
@@ -319,10 +316,10 @@ async function getLastPossibleDeven() {
 	let lastPossibleDeven = localStorage.getItem('tse.lastPossibleDeven');
 	const today = new Date();
 	if ( !lastPossibleDeven || (+dateToStr(today)-lastPossibleDeven > UPDATE_INTERVAL && ![4,5].includes(today.getDay())) ) {
-		const res = await rq.LastPossibleDeven()
+		const res = await rq.LastPossibleDeven();
 		if ( !/^\d{8};\d{8}$/.test(res) ) throw new Error('Invalid server response: LastPossibleDeven');
 		lastPossibleDeven = res.split(';')[0] || res.split(';')[1];
-		localStorage.setItem('tse.lastPossibleDeven', lastPossibleDeven)
+		localStorage.setItem('tse.lastPossibleDeven', lastPossibleDeven);
 	}
 	return +lastPossibleDeven;
 }
@@ -364,7 +361,7 @@ async function updatePrices(instruments=[], startDeven) {
 		const { insCode, oldContent } = v;
 		const newContent = newData[i];
 		const content = oldContent ? oldContent+';'+newContent : newContent;
-		return ['tse.'+insCode, content]
+		return ['tse.'+insCode, content];
 	});
 	for (const write of writes) await localforage.setItem(write[0], write[1]);
 }
@@ -398,7 +395,7 @@ async function getPrices(symbols=[], settings={}) {
 				if ( Big(closingPrice.ZTotTran).eq(0) && !daysWithoutTrade ) return;
 				
 				return columns
-					.map( ({name,header}) => [header || name, getCell(name, instrument, closingPrice, adjustPrices)] )
+					.map( ({name,header}) => [header || name, getCell(name, instrument, closingPrice)] )
 					.reduce((a,c) => (a[c[0]] = /^[\d\.]+$/.test(c[1]) ? parseFloat(c[1]) : c[1]) && a, {});
 			})
 			.filter(i=>!!i);
@@ -410,7 +407,7 @@ async function getPrices(symbols=[], settings={}) {
 return {
 	getPrices, updateInstruments,
 	get columnList() {
-		return [...Array(15)].map((v,i) => ({name: cols[i], fname: colsFa[i]}))
+		return [...Array(15)].map((v,i) => ({name: cols[i], fname: colsFa[i]}));
 	}
 };
 })();
