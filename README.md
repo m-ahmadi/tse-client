@@ -80,3 +80,7 @@ index | name | fname
   })()
 </script>
 ```
+Get `jalaali-js` for browser: (win)
+```
+mkdir tmp && cd tmp && npm i jalaali-js && echo module.exports = require('jalaali-js'); > x.js && npx browserify x.js -o ../jalaali-js.js -s jalaali && del x.js && cd ../ && rmdir tmp /s /q
+```
