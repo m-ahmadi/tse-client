@@ -113,7 +113,7 @@ class Share {
 }
 //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 // utils
-function parseInstruments(struct=false, arr=false) {
+function parseInstruments(struct=false, arr=false, structKey='InsCode') {
 	const rows = localStorage.getItem('tse.instruments').split(';');
 	const instruments = arr ? [] : {};
 	for (const row of rows) {
@@ -121,7 +121,7 @@ function parseInstruments(struct=false, arr=false) {
 		if (arr) {
 			instruments.push(item);
 		} else {
-			instruments[ row.match(/^\d+\b/)[0] ] = item;
+			instruments[ item[structKey] ] = item;
 		}
 	}
 	return instruments;
@@ -366,9 +366,12 @@ async function updatePrices(instruments=[], startDeven) {
 	for (const write of writes) await localforage.setItem(write[0], write[1]);
 }
 async function getPrices(symbols=[], settings={}) {
-	const instruments = parseInstruments(true, true);
-	const selection = instruments.filter(i => symbols.includes(i.Symbol));
-	if (!selection.length) return;
+	if (!symbols.length) return;
+	const instruments = parseInstruments(true, undefined, 'Symbol');
+	const selection = symbols.map(i => instruments[i]);
+	const notFounds = symbols.filter((v,i) => !selection[i]);
+	if (notFounds.length) { console.error('Incorrect symbol names:', notFounds); return; }
+	
 	settings = Object.assign(defaultSettings, settings);
 	const { adjustPrices, startDate, daysWithoutTrade } = settings;
 	
