@@ -121,7 +121,8 @@ function parseInstruments(struct=false, arr=false, structKey='InsCode') {
 		if (arr) {
 			instruments.push(item);
 		} else {
-			instruments[ item[structKey] ] = item;
+			const key = struct ? item[structKey] : row.match(/^\d+\b/)[0];
+			instruments[key] = item;
 		}
 	}
 	return instruments;
