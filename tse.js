@@ -400,7 +400,7 @@ async function getPrices(symbols=[], settings={}) {
 				
 				return columns
 					.map( ({name,header}) => [header || name, getCell(name, instrument, closingPrice)] )
-					.reduce((a,c) => (a[c[0]] = /^[\d\.]+$/.test(c[1]) ? parseFloat(c[1]) : c[1]) && a, {});
+					.reduce((a,c) => {a[c[0]] = /^\d+(\.?\d+)?$/.test(c[1]) ? parseFloat(c[1]) : c[1]; return a;}, {});
 			})
 			.filter(i=>!!i);
 	});
