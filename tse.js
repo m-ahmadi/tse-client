@@ -68,7 +68,7 @@ class ClosingPrice {
 const cols  = ['CompanyCode', 'LatinName', 'Symbol', 'Name', 'Date', 'ShamsiDate', 'PriceFirst', 'PriceMax', 'PriceMin', 'LastPrice', 'ClosingPrice', 'Price', 'Volume', 'Count', 'PriceYesterday'];
 const colsFa = ['کد شرکت', 'نام لاتین', 'نماد', 'نام', 'تاریخ میلادی', 'تاریخ شمسی', 'اولین قیمت', 'بیشترین قیمت', 'کمترین قیمت', 'آخرین قیمت', 'قیمت پایانی', 'ارزش', 'حجم', 'تعداد معاملات', 'قیمت دیروز'];
 class Column {
-	constructor(row=[]) {	
+	constructor(row=[]) { 
 		const len = row.length;
 		if (len > 2 || len < 1) throw new Error('Invalid Column data!');
 		this.name   = cols[ row[0] ];
@@ -127,15 +127,16 @@ function parseInstruments(struct=false, arr=false, structKey='InsCode') {
 	}
 	return instruments;
 }
-function parseShares(arr=false) {
+function parseShares(struct=false, arr=false, structKey='InsCode') {
 	const rows = localStorage.getItem('tse.shares').split(';');
 	const shares = arr ? [] : {};
 	for (const row of rows) {
-		const item = new Share(row);
+		const item = struct ? new Share(row) : row;
 		if (arr) {
 			shares.push(item);
 		} else {
-			shares[ row.split(',', 2)[1] ] = item;
+			const key = struct ? item[structKey] : row.split(',', 2)[1];
+			shares[key] = item;
 		}
 	}
 	return shares;
@@ -275,9 +276,9 @@ async function updateInstruments() {
 		lastId = 0;
 	} else {
 		currentInstruments = parseInstruments();
-		currentShares      = parseShares(true);
+		currentShares      = parseShares();
 		const insDevens = Object.keys(currentInstruments).map( k => parseInt(currentInstruments[k].match(/\b\d{8}\b/)[0]) );
-		const shareIds = currentShares.map( i => parseInt(i.Idn) );
+		const shareIds = Object.keys(currentShares).map( k => parseInt(currentShares[k].split(',',1)[0]) );
 		lastDeven = Math.max.apply(Math, insDevens);
 		lastId    = Math.max.apply(Math, shareIds);
 	}
@@ -304,7 +305,8 @@ async function updateInstruments() {
 	
 	if (shares !== '') {
 		if (currentShares && currentShares.length) {
-			shares = currentShares.concat( shares.split(';') ).join(';');
+			shares.split(';').forEach(i => currentShares[ i.split(',',1)[0] ] = i);
+			shares = Object.keys(currentShares).map(k => currentShares[k]).join(';');
 		}
 		localStorage.setItem('tse.shares', shares);
 	}
