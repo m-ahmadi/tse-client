@@ -247,7 +247,7 @@ function getCell(columnName, instrument, closingPrice) {
 	return str;
 }
 //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-const UPDATE_INTERVAL = 1;
+let UPDATE_INTERVAL = 1;
 const defaultSettings = {
 	columns: [
 		[4, 'date'],
@@ -412,6 +412,11 @@ async function getPrices(symbols=[], settings={}) {
 
 return {
 	getPrices, updateInstruments,
+	set UPDATE_INTERVAL(v) {
+		if ( Number.isInteger(v) ) {
+			UPDATE_INTERVAL = v;
+		}
+	},
 	get columnList() {
 		return [...Array(15)].map((v,i) => ({name: cols[i], fname: colsFa[i]}));
 	}
