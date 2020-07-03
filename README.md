@@ -2,19 +2,20 @@
 - Used [fetch](https://github.com/m-ahmadi/tse-browser-client/blob/master/tse.js#L32) for `Http` requests.  
 - Storing `InstrumentAndShare` data in `localStorage`.  
 - Storing `ClosingPrices` data in `indexedDB`.  
-- `Instrument.Symbol` characters are [cleaned](https://github.com/m-ahmadi/tse-browser-client/blob/master/tse.js#L145) from `zero-width` characters, `ك` and  `ي`.
-- The [price adjustment algorithm](https://github.com/m-ahmadi/tse-browser-client/blob/master/tse.js#L167) was ported from the [official Windows app](http://cdn.tsetmc.com/Site.aspx?ParTree=111A11).
+- `Instrument.Symbol` characters are [cleaned](https://github.com/m-ahmadi/tse-browser-client/blob/master/tse.js#L147) from `zero-width` characters, `ك` and  `ي`.
+- The [price adjustment algorithm](https://github.com/m-ahmadi/tse-browser-client/blob/master/tse.js#L169) was ported from the [official Windows app](http://cdn.tsetmc.com/Site.aspx?ParTree=111A11).
 
 Dependency | Why
 -------|-------------
 `big.js` | For price adjustment calculations.
-`jalaali-js` | Only needed due to the [ShamsiDate](https://github.com/m-ahmadi/tse-browser-client/blob/master/tse.js#L237) column.
+`jalaali-js` | Only needed due to the [ShamsiDate](https://github.com/m-ahmadi/tse-browser-client/blob/master/tse.js#L236) column.
 `localforage` | For storing in `indexedDB`.
 ---
 
 ### API
 Method | Description
 -------|-------------
+`tse.UPDATE_INTERVAL` | Set update interval. Only integers. Default: 1
 `tse.updateInstruments()` | Update instrument list. (InstrumentAndShare)
 `tse.getPrices(symbols=[], ?settings={...})` | Update (if needed) and return prices of instruments.
 _ | Default settings:
