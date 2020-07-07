@@ -411,11 +411,15 @@ async function getPrices(symbols=[], settings={}) {
 }
 
 return {
-	getPrices, updateInstruments,
+	getPrices,
+	updateInstruments,
 	set UPDATE_INTERVAL(v) {
 		if ( Number.isInteger(v) ) {
 			UPDATE_INTERVAL = v;
 		}
+	},
+	getInstruments() {
+		return parseInstruments(true, true);
 	},
 	get columnList() {
 		return [...Array(15)].map((v,i) => ({name: cols[i], fname: colsFa[i]}));
