@@ -97,7 +97,7 @@ class Instrument {
 		this.CComVal      = row[14]; // 1,3,4,5,6,7,8,9 کد تابلو
 		this.CSecVal      = row[15]; // []62 کد گروه صنعت
 		this.CSoSecVal    = row[16]; // []177 کد زير گروه صنعت
-		this.YVal         = parseInt(row[17], 10);
+		this.YVal         = row[17]; // string نوع نماد
 	}
 }
 class Share {
