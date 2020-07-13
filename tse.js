@@ -418,8 +418,8 @@ return {
 			UPDATE_INTERVAL = v;
 		}
 	},
-	getInstruments() {
-		return parseInstruments(true, true);
+	getInstruments(struct=true, arr=true, structKey='InsCode') {
+		return parseInstruments(struct, arr, structKey);
 	},
 	get columnList() {
 		return [...Array(15)].map((v,i) => ({name: cols[i], fname: colsFa[i]}));
