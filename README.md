@@ -3,12 +3,12 @@
 - Storing `InstrumentAndShare` data in `localStorage`.  
 - Storing `ClosingPrices` data in `indexedDB`.  
 - `Instrument.Symbol` characters are [cleaned](https://github.com/m-ahmadi/tse-browser-client/blob/master/tse.js#L147) from `zero-width` characters, `ك` and  `ي`.
-- The [price adjustment algorithm](https://github.com/m-ahmadi/tse-browser-client/blob/master/tse.js#L169) was ported from the [official Windows app](http://cdn.tsetmc.com/Site.aspx?ParTree=111A11).
+- The [price adjustment algorithm](https://github.com/m-ahmadi/tse-browser-client/blob/master/tse.js#L177) was ported from the [official Windows app](http://cdn.tsetmc.com/Site.aspx?ParTree=111A11).
 
 Dependency | Why
 -------|-------------
 `big.js` | For price adjustment calculations.
-`jalaali-js` | Only needed due to the [ShamsiDate](https://github.com/m-ahmadi/tse-browser-client/blob/master/tse.js#L236) column.
+`jalaali-js` | Only needed due to the [ShamsiDate](https://github.com/m-ahmadi/tse-browser-client/blob/master/tse.js#L244) column.
 `localforage` | For storing in `indexedDB`.
 ---
 

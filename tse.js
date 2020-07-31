@@ -162,6 +162,14 @@ function shamsiToGreg(s) {
 	const { gy, gm, gd } = jalaali.toGregorian(+s.slice(0, 4), +s.slice(4, 6), +s.slice(6, 8));
 	return (gy*10000) + (gm*100) + gd + '';
 }
+function dayDiff(s1, s2) {
+	const date1 = +new Date(+s1.slice(0,4), +s1.slice(4,6)-1, +s1.slice(6,8));
+	const date2 = +new Date(+s2.slice(0,4), +s2.slice(4,6)-1, +s2.slice(6,8));
+	const diffTime = Math.abs(date2 - date1);
+	const msPerDay = (1000 * 60 * 60 * 24);
+	const diffDays = Math.ceil(diffTime / msPerDay);
+	return diffDays;
+}
 //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 // price helpers
 Big.DP = 40; // max decimal places
@@ -318,7 +326,7 @@ async function updateInstruments() {
 async function getLastPossibleDeven() {
 	let lastPossibleDeven = localStorage.getItem('tse.lastPossibleDeven');
 	const today = new Date();
-	if ( !lastPossibleDeven || (+dateToStr(today)-lastPossibleDeven > UPDATE_INTERVAL && ![4,5].includes(today.getDay())) ) {
+	if ( !lastPossibleDeven || (dayDiff(dateToStr(today), lastPossibleDeven) > UPDATE_INTERVAL && ![4,5].includes(today.getDay())) ) {
 		const res = await rq.LastPossibleDeven();
 		if ( !/^\d{8};\d{8}$/.test(res) ) throw new Error('Invalid server response: LastPossibleDeven');
 		lastPossibleDeven = res.split(';')[0] || res.split(';')[1];
