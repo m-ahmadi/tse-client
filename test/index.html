@@ -28,9 +28,9 @@
 	makeChart(customCols2[0], 'شپنا (کمترین)', {date:'DATE',price:'MIN'});
 	
 	// view column indexes and their names
-	document.getElementById('content').append(
-		new DOMParser().parseFromString('<div class="box"><table>'+tse.columnList.map(i=>'<tr><td>'+i.name+'</td> <td>'+i.fname+'</td></tr>').join('\n')+'</table></div>', 'text/html').children[0]
-	);
+	const _x = document.createElement('div');
+	_x.innerHTML = '<div class="box"><table>'+tse.columnList.map(i=>'<tr><td>'+i.name+'</td> <td>'+i.fname+'</td></tr>').join('\n')+'</table></div>';
+	document.getElementById('content').append( _x.children[0] );
 })();
 
 function makeChart(_data, title, customProps={}) {
