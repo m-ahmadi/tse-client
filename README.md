@@ -1,21 +1,22 @@
 ### Notes
-- Used [fetch](https://github.com/m-ahmadi/tse-browser-client/blob/master/tse.js#L32) for `Http` requests.  
+- Used [fetch](https://github.com/m-ahmadi/tse-browser-client/blob/master/tse.js#L34) for `HTTP` requests.  
 - Storing `InstrumentAndShare` data in `localStorage`.  
 - Storing `ClosingPrices` data in `indexedDB`.  
-- `Instrument.Symbol` characters are [cleaned](https://github.com/m-ahmadi/tse-browser-client/blob/master/tse.js#L147) from `zero-width` characters, `ك` and  `ي`.
-- The [price adjustment algorithm](https://github.com/m-ahmadi/tse-browser-client/blob/master/tse.js#L177) was ported from the [official Windows app](http://cdn.tsetmc.com/Site.aspx?ParTree=111A11).
+- `Instrument.Symbol` characters are [cleaned](https://github.com/m-ahmadi/tse-browser-client/blob/master/tse.js#L149) from `zero-width` characters, `ك` and  `ي`.
+- The [price adjustment algorithm](https://github.com/m-ahmadi/tse-browser-client/blob/master/tse.js#L179) was ported from the [official Windows app](http://cdn.tsetmc.com/Site.aspx?ParTree=111A11).
 
 Dependency | Why
 -------|-------------
 `big.js` | For price adjustment calculations.
-`jalaali-js` | Only needed due to the [ShamsiDate](https://github.com/m-ahmadi/tse-browser-client/blob/master/tse.js#L244) column.
+`jalaali-js` | Only needed due to the [ShamsiDate](https://github.com/m-ahmadi/tse-browser-client/blob/master/tse.js#L246) column.
 `localforage` | For storing in `indexedDB`.
 ---
 
 ### API
-Method | Description
+Member | Description
 -------|-------------
-`tse.UPDATE_INTERVAL` | Set update interval. Only integers. Default: 1
+`tse.API_URL` | The API URL to use for HTTP requests. Only string and valid URL. Default: 'http://service.tsetmc.com/tsev2/data/TseClient2.aspx'
+`tse.UPDATE_INTERVAL` | Update data only if these many days have passed since the last update. Only integers. Default: 1
 `tse.updateInstruments()` | Update instrument list. (InstrumentAndShare)
 `tse.getPrices(symbols=[], ?settings={...})` | Update (if needed) and return prices of instruments.
 _ | Default settings:
@@ -81,7 +82,7 @@ index | name | fname
   })()
 </script>
 ```
-Get `jalaali-js` for browser: (win)
+Get `jalaali-js` for browser: (Windows)
 ```
 mkdir tmp && cd tmp && npm i jalaali-js && echo module.exports = require('jalaali-js'); > x.js && npx browserify x.js -o ../jalaali-js.js -s jalaali && del x.js && cd ../ && rmdir tmp /s /q
 ```

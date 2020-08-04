@@ -1,5 +1,7 @@
 const tse = (function () {
 
+let API_URL = 'http://service.tsetmc.com/tsev2/data/TseClient2.aspx';
+
 const rq = {
 	Instrument(DEven) {
 		const params = {
@@ -30,7 +32,7 @@ const rq = {
 		return this.makeRequest(params);
 	},
 	makeRequest(params) {
-		const url = new URL('http://service.tsetmc.com/tsev2/data/TseClient2.aspx');
+		const url = new URL(API_URL);
 		url.search = new URLSearchParams(params).toString();
 		
 		return new Promise((resolve, reject) => {
@@ -40,7 +42,7 @@ const rq = {
 		});
 		
 		/* return $.ajax({
-			url: 'http://service.tsetmc.com/tsev2/data/TseClient2.aspx',
+			url: API_URL,
 			method: 'GET',
 			data: params
 		}); */
@@ -421,14 +423,21 @@ async function getPrices(symbols=[], settings={}) {
 return {
 	getPrices,
 	updateInstruments,
-	set UPDATE_INTERVAL(v) {
-		if ( Number.isInteger(v) ) {
-			UPDATE_INTERVAL = v;
-		}
-	},
 	getInstruments(struct=true, arr=true, structKey='InsCode') {
 		return parseInstruments(struct, arr, structKey);
 	},
+	
+	get API_URL() { return API_URL; },
+	set API_URL(v) {
+		if (typeof v !== 'string') return;
+		let bad;
+		try { new URL(v); } catch (e) { bad = true; throw e; }
+		if (!bad) API_URL = v;
+	},
+	
+	get UPDATE_INTERVAL() { return UPDATE_INTERVAL; },
+	set UPDATE_INTERVAL(v) { if (Number.isInteger(v)) UPDATE_INTERVAL = v; },
+	
 	get columnList() {
 		return [...Array(15)].map((v,i) => ({name: cols[i], fname: colsFa[i]}));
 	}
