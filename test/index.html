@@ -42,11 +42,11 @@ function makeChart(_data, title, customProps={}) {
 	new uPlot({...opts, title}, data, document.getElementById('content'));
 }
 function convertDate(day) {
-	let [s,y,m,d] = [];
-  s = ''+day;
-  y = parseInt( s.slice(0, 4) );
-  m = parseInt( s.slice(4, 6) );
-  d = parseInt( s.slice(6, 8) );
-  return Date.UTC(y, m-1, d) / 1000;
+	let s,y,m,d;
+	s = ''+day;
+	y = parseInt( s.slice(0, 4) );
+	m = parseInt( s.slice(4, 6) );
+	d = parseInt( s.slice(6, 8) );
+	return Date.UTC(y, m-1, d) / 1000;
 }
 </script>
