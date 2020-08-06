@@ -4,7 +4,7 @@
   "description": "A client for receiving stock data from the Tehran Stock Exchange (TSE).",
   "main": "index.js",
   "bin": {
-    "tc": "index.js"
+    "tse": "index.js"
   },
   "scripts": {
     "postinstall": "node scripts/postinstall.js",
