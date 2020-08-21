@@ -388,7 +388,7 @@ async function getPrices(symbols=[], settings={}) {
 	const notFounds = symbols.filter((v,i) => !selection[i]);
 	if (notFounds.length) { console.error('Incorrect symbol names:', notFounds); return; }
 	
-	settings = Object.assign(defaultSettings, settings);
+	settings = {...defaultSettings, ...settings};
 	const { adjustPrices, startDate, daysWithoutTrade } = settings;
 	
 	await updatePrices(selection, startDate);
