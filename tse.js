@@ -274,6 +274,17 @@ const defaultSettings = {
 };
 const { warn } = console;
 
+async function getLastPossibleDeven() {
+	let lastPossibleDeven = localStorage.getItem('tse.lastPossibleDeven');
+	const today = new Date();
+	if ( !lastPossibleDeven || (dayDiff(dateToStr(today), lastPossibleDeven) > UPDATE_INTERVAL && ![4,5].includes(today.getDay())) ) {
+		const res = await rq.LastPossibleDeven();
+		if ( !/^\d{8};\d{8}$/.test(res) ) throw new Error('Invalid server response: LastPossibleDeven');
+		lastPossibleDeven = res.split(';')[0] || res.split(';')[1];
+		localStorage.setItem('tse.lastPossibleDeven', lastPossibleDeven);
+	}
+	return +lastPossibleDeven;
+}
 async function updateInstruments() {
 	const lastUpdate = localStorage.getItem('tse.lastInstrumentUpdate');
 	let lastDeven;
@@ -327,17 +338,6 @@ async function updateInstruments() {
 	if ((instruments !== '' && instruments !== '*') || shares !== '') {
 		localStorage.setItem('tse.lastInstrumentUpdate', dateToStr(new Date()));
 	}
-}
-async function getLastPossibleDeven() {
-	let lastPossibleDeven = localStorage.getItem('tse.lastPossibleDeven');
-	const today = new Date();
-	if ( !lastPossibleDeven || (dayDiff(dateToStr(today), lastPossibleDeven) > UPDATE_INTERVAL && ![4,5].includes(today.getDay())) ) {
-		const res = await rq.LastPossibleDeven();
-		if ( !/^\d{8};\d{8}$/.test(res) ) throw new Error('Invalid server response: LastPossibleDeven');
-		lastPossibleDeven = res.split(';')[0] || res.split(';')[1];
-		localStorage.setItem('tse.lastPossibleDeven', lastPossibleDeven);
-	}
-	return +lastPossibleDeven;
 }
 async function updatePrices(instruments=[], startDeven) {
 	if (!instruments.length) return;
