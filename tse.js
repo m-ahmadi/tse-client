@@ -293,6 +293,9 @@ async function updateInstruments() {
 		lastId    = Math.max(...shareIds);
 	}
 	
+	const lastPossibleDeven = await getLastPossibleDeven();
+	if (dayDiff(''+lastDeven, ''+lastPossibleDeven) <= UPDATE_INTERVAL) return;
+	
 	let error;
 	const res = await rq.InstrumentAndShare(lastDeven, lastId).catch(err => error = err);
 	if (error) { warn('Failed request: InstrumentAndShare', `(${error})`); return; } // TODO: better handling
