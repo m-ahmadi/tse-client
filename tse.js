@@ -353,7 +353,7 @@ async function updatePrices(instruments=[], startDeven) {
 			const rows = insData.split(';');
 			const lastRow = new ClosingPrice( rows[rows.length-1] );
 			const lastRowDEven = +lastRow.DEven;
-			if (lastPossibleDeven - lastRowDEven > UPDATE_INTERVAL) { // but outdated
+			if (dayDiff(''+lastRowDEven, ''+lastPossibleDeven) > UPDATE_INTERVAL) { // but outdated
 				insCodes.push( [insCode, lastRowDEven, market] );
 				updateNeeded.push( {insCode, oldContent: insData} );
 			}
