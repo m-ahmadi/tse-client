@@ -17,7 +17,7 @@ Member | Description
 -------|-------------
 `tse.API_URL` | The API URL to use for HTTP requests. Only string and valid URL. Default: 'http://service.tsetmc.com/tsev2/data/TseClient2.aspx'
 `tse.UPDATE_INTERVAL` | Update data only if these many days have passed since the last update. Only integers. Default: 1
-`tse.updateInstruments()` | Update instrument list. (InstrumentAndShare)
+`tse.getInstruments()` | Update (if needed) and return list of instruments. (InstrumentAndShare)
 `tse.getPrices(symbols=[], ?settings={...})` | Update (if needed) and return prices of instruments.
 _ | Default settings:
 ```javascript
@@ -71,7 +71,6 @@ index | name | fname
 
 <script>
   (async function () {
-    await tse.updateInstruments(); // only needed once in a trading day.
     const data = await tse.getPrices(['ذوب', 'فولاد']);
     const adjustedData = await tse.getPrices(['خساپا'], {adjustPrices: 1});
 	

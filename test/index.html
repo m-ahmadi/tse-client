@@ -13,7 +13,6 @@
 
 <script>
 (async function () {
-	await tse.updateInstruments(); // only needed once in a trading day.
 	const data = await tse.getPrices(['ذوب', 'فولاد']);
 	const adjustedData = await tse.getPrices(['خساپا'], {adjustPrices: 1});
 
