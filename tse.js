@@ -381,8 +381,14 @@ async function updatePrices(instruments=[], startDeven) {
 	});
 	for (const write of writes) await localforage.setItem(write[0], write[1]);
 }
+async function getInstruments(struct=true, arr=true, structKey='InsCode') {
+	await updateInstruments();
+	return parseInstruments(struct, arr, structKey);
+}
 async function getPrices(symbols=[], settings={}) {
 	if (!symbols.length) return;
+	
+	await updateInstruments();
 	const instruments = parseInstruments(true, undefined, 'Symbol');
 	const selection = symbols.map(i => instruments[i]);
 	const notFounds = symbols.filter((v,i) => !selection[i]);
@@ -424,11 +430,8 @@ async function getPrices(symbols=[], settings={}) {
 }
 
 return {
+	getInstruments,
 	getPrices,
-	updateInstruments,
-	getInstruments(struct=true, arr=true, structKey='InsCode') {
-		return parseInstruments(struct, arr, structKey);
-	},
 	
 	get API_URL() { return API_URL; },
 	set API_URL(v) {
