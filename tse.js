@@ -289,8 +289,8 @@ async function updateInstruments() {
 		currentShares      = parseShares();
 		const insDevens = Object.keys(currentInstruments).map( k => parseInt(currentInstruments[k].match(/\b\d{8}\b/)[0]) );
 		const shareIds = Object.keys(currentShares).map( k => parseInt(currentShares[k].split(',',1)[0]) );
-		lastDeven = Math.max.apply(Math, insDevens);
-		lastId    = Math.max.apply(Math, shareIds);
+		lastDeven = Math.max(...insDevens);
+		lastId    = Math.max(...shareIds);
 	}
 	
 	let error;
