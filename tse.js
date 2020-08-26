@@ -172,6 +172,14 @@ function dayDiff(s1, s2) {
 	const diffDays = Math.ceil(diffTime / msPerDay);
 	return diffDays;
 }
+function splitArr(arr, size){
+	return arr
+		.map( (v, i) => i % size === 0 ? arr.slice(i, i+size) : undefined )
+		.filter(i => i);
+}
+function sleep(ms) {
+	return new Promise(resolve => setTimeout(resolve, ms));
+}
 //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 // price helpers
 Big.DP = 40; // max decimal places
@@ -257,7 +265,11 @@ function getCell(columnName, instrument, closingPrice) {
 	return str;
 }
 //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-let UPDATE_INTERVAL = 1;
+let UPDATE_INTERVAL           = 1;
+let PRICES_UPDATE_CHUNK       = 10;
+let PRICES_UPDATE_CHUNK_DELAY = 500;
+let PRICES_UPDATE_RETRY_COUNT = 3;
+let PRICES_UPDATE_RETRY_DELAY = 5000;
 const defaultSettings = {
 	columns: [
 		[4, 'date'],
@@ -339,47 +351,94 @@ async function updateInstruments() {
 		localStorage.setItem('tse.lastInstrumentUpdate', dateToStr(new Date()));
 	}
 }
+async function updatePricesRequester(chunk=[]) {
+	let res;
+	const mkRes = (result, error, reqError) => ({ result, error, reqError });
+	
+	const insCodes = chunk.map(i => i.uriSegs.join(',')).join(';');
+	
+	let error;
+	const resp = await rq.ClosingPrices(insCodes).catch(r => error = r);
+	if (error)                          { res = mkRes(chunk, 'Failed request: ClosingPrices', error);   return res; }
+	if ( !/^[\d\.,;@\-]*$/.test(resp) ) { res = mkRes(chunk, 'Invalid server response: ClosingPrices'); return res; }
+	if (resp === '')                    { res = mkRes(chunk, 'Unknown Error.');                         return res; }
+	
+	const o = {};
+	resp.split('@').forEach((v,i)=> o[chunk[i].insCode] = v);
+	res = mkRes(o)
+	
+	return res;
+}
+async function updatePricesRetrier(updateNeeded={}, count=0, result={}) {
+	const keys = Object.keys(updateNeeded);
+	const chunks = splitArr(keys, PRICES_UPDATE_CHUNK).map( i => i.map(k=> updateNeeded[k]) );
+	
+	const proms = [];
+	for (const chunk of chunks) {
+		proms.push( updatePricesRequester(chunk) );
+		await sleep(PRICES_UPDATE_CHUNK_DELAY);
+	}
+	const settled = await Promise.allSettled(proms);
+	const res = settled.map(i => i.value);
+	
+	const fails = res.filter(i => i.error).reduce((a,{result:c})=> c.forEach(i=> a[i.insCode] = i) || a, {});
+	const succs = res.filter(i => !i.error).reduce((a,{result:c}) => Object.keys(c).forEach(k=> a[k] = c[k]) || a, {});
+	
+	result.succs = {...result.succs, ...succs};
+	result.fails = {...fails};
+	
+	count++;
+	if (count > PRICES_UPDATE_RETRY_COUNT) return result;
+	
+	if (Object.keys(fails).length) {
+		result = await new Promise(async (resolve, reject) => {
+			await sleep(PRICES_UPDATE_RETRY_DELAY);
+			const r = await updatePricesRetrier(fails, count, result);
+			resolve(r);
+		});
+	}
+	
+	return result;
+}
 async function updatePrices(instruments=[], startDeven) {
 	if (!instruments.length) return;
 	const lastPossibleDeven = await getLastPossibleDeven();
 	
-	const updateNeeded = [];
-	let insCodes = [];
+	const updateNeeded = {}; // redundant insCode needed due to splitArr & updatePricesRequester
 	for (const instrument of instruments) {
 		const insCode = instrument.InsCode;
 		const market = instrument.YMarNSC === 'NO' ? 0 : 1;
 		const insData = await localforage.getItem('tse.'+insCode);
 		if (!insData) { // doesn't have data
-			insCodes.push( [insCode, startDeven, market] );
-			updateNeeded.push( {insCode} );
+			updateNeeded[insCode] = {
+				uriSegs: [insCode, startDeven, market],
+				insCode
+			};
 		} else { // has data
 			const rows = insData.split(';');
 			const lastRow = new ClosingPrice( rows[rows.length-1] );
 			const lastRowDEven = +lastRow.DEven;
 			if (dayDiff(''+lastRowDEven, ''+lastPossibleDeven) > UPDATE_INTERVAL) { // but outdated
-				insCodes.push( [insCode, lastRowDEven, market] );
-				updateNeeded.push( {insCode, oldContent: insData} );
+				updateNeeded[insCode] = {
+					uriSegs: [insCode, lastRowDEven, market],
+					insCode,
+					oldContent: insData
+				};
 			}
 		}
 	}
-	insCodes = insCodes.map(i => i.join(',')).join(';');
 	
-	if (insCodes === '') return;
+	const { succs, fails } = await updatePricesRetrier(updateNeeded);
 	
-	let error;
-	const res = await rq.ClosingPrices(insCodes).catch(err => error = err);
-	if (error)                       { warn('Failed request: ClosingPrices', `(${error})`);   return; }
-	if ( !/^[\d\.,;@]*$/.test(res) ) { warn('Invalid server response: ClosingPrices');        return; }
-	if (res === '')                  { warn('Unknown Error.');                                return; }
-	
-	const newData = res.split('@');
-	const writes = updateNeeded.map((v, i) => {
-		const { insCode, oldContent } = v;
-		const newContent = newData[i];
+	const suckeys = Object.keys(succs);
+	for (const k of suckeys) {
+		const { oldContent } = updateNeeded[k];
+		const newContent = succs[k];
 		const content = oldContent ? oldContent+';'+newContent : newContent;
-		return ['tse.'+insCode, content];
-	});
-	for (const write of writes) await localforage.setItem(write[0], write[1]);
+		await localforage.setItem('tse.'+k, content);
+	}
+	
+	return {succs, fails};
 }
 async function getInstruments(struct=true, arr=true, structKey='InsCode') {
 	await updateInstruments();
@@ -397,17 +456,28 @@ async function getPrices(symbols=[], settings={}) {
 	settings = {...defaultSettings, ...settings};
 	const { adjustPrices, startDate, daysWithoutTrade } = settings;
 	
-	await updatePrices(selection, startDate);
+	const { succs, fails } = await updatePrices(selection, startDate);
+	const [ slen, flen ] = [succs, fails].map(i => Object.keys(i).length);
+	
+	if (flen) {
+		warn(`Incomplete Price Update:  Failed: ${flen} - Updated: ${slen} (after ${PRICES_UPDATE_RETRY_COUNT} retries)`);
+		const failKeys = Object.keys(fails);
+		selection.forEach((v,i,a) => failKeys.includes(v.InsCode) ? a[i] = undefined : 0);
+	}
 	
 	const prices = {};
-	for (const v of selection) {
-		const insCode = v.InsCode;
-		prices[insCode] = (await localforage.getItem('tse.'+insCode)).split(';').map(i => new ClosingPrice(i));
+	for (const i of selection) {
+		if (!i) continue;
+		const insCode = i.InsCode;
+		const strPrices = await localforage.getItem('tse.'+insCode);
+		if (!strPrices) throw new Error('Unkown Error');
+		prices[insCode] = strPrices.split(';').map(i => new ClosingPrice(i));
 	}
 	const shares = localStorage.getItem('tse.shares').split(';').map(i => new Share(i));
 	const columns = settings.columns.map( i => new Column(!Array.isArray(i) ? [i] : i) );
 	
 	const res = selection.map(instrument => {
+		if (!instrument) return;
 		const insCode = instrument.InsCode;
 		const cond = adjustPrices;
 		const closingPrices = cond === 1 || cond === 2
@@ -443,6 +513,18 @@ return {
 	
 	get UPDATE_INTERVAL() { return UPDATE_INTERVAL; },
 	set UPDATE_INTERVAL(v) { if (Number.isInteger(v)) UPDATE_INTERVAL = v; },
+	
+	get PRICES_UPDATE_CHUNK() { return PRICES_UPDATE_CHUNK; },
+	set PRICES_UPDATE_CHUNK(v) { if (Number.isInteger(v) && v > 0 && v < 60) PRICES_UPDATE_CHUNK = v; },
+	
+	get PRICES_UPDATE_CHUNK_DELAY() { return PRICES_UPDATE_CHUNK_DELAY; },
+	set PRICES_UPDATE_CHUNK_DELAY(v) { if (Number.isInteger(v)) PRICES_UPDATE_CHUNK_DELAY = v; },
+	
+	get PRICES_UPDATE_RETRY_COUNT() { return PRICES_UPDATE_RETRY_COUNT; },
+	set PRICES_UPDATE_RETRY_COUNT(v) { if (Number.isInteger(v)) PRICES_UPDATE_RETRY_COUNT = v; },
+	
+	get PRICES_UPDATE_RETRY_DELAY() { return PRICES_UPDATE_RETRY_DELAY; },
+	set PRICES_UPDATE_RETRY_DELAY(v) { if (Number.isInteger(v)) PRICES_UPDATE_RETRY_DELAY = v; },
 	
 	get columnList() {
 		return [...Array(15)].map((v,i) => ({name: cols[i], fname: colsFa[i]}));
