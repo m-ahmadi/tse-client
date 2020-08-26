@@ -81,7 +81,26 @@ index | name | fname
   })()
 </script>
 ```
+
 Get `jalaali-js` for browser: (Windows)
 ```
 mkdir tmp && cd tmp && npm i jalaali-js && echo module.exports = require('jalaali-js'); > x.js && npx browserify x.js -o ../jalaali-js.js -s jalaali && del x.js && cd ../ && rmdir tmp /s /q
+```
+
+Simple PHP proxy example:
+```php
+// proxy.php
+<?php
+$t  = isset($_GET['t'])  ? $_GET['t']  : '';
+$a  = isset($_GET['a'])  ? $_GET['a']  : '';
+$a2 = isset($_GET['a2']) ? $_GET['a2'] : '';
+
+echo file_get_contents("http://service.tsetmc.com/tsev2/data/TseClient2.aspx?t=$t&a=$a&a2=$a2");
+?>
+```
+```javascript
+tse.API_URL = 'http://path/to/proxy.php';
+(async function () {
+  const data = await tse.getPrices(['فملی']);
+})();
 ```
