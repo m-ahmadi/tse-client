@@ -286,6 +286,19 @@ const defaultSettings = {
 };
 const { warn } = console;
 
+const storedPrices = {};
+
+async function parseStoredPrices() {
+	const storedStr = await localforage.getItem('tse.prices');
+	if (!storedStr) return storedPrices;
+	
+	const strs = storedStr.split('@');
+	for (let i=0, n=strs.length; i<n; i++) {
+		const str = strs[i];
+		storedPrices[ str.match(/^\b\d+\b/)[0] ] = str;
+	}
+}
+
 async function getLastPossibleDeven() {
 	let lastPossibleDeven = localStorage.getItem('tse.lastPossibleDeven');
 	const today = new Date();
@@ -297,6 +310,7 @@ async function getLastPossibleDeven() {
 	}
 	return +lastPossibleDeven;
 }
+
 async function updateInstruments() {
 	const lastUpdate = localStorage.getItem('tse.lastInstrumentUpdate');
 	let lastDeven;
@@ -351,6 +365,7 @@ async function updateInstruments() {
 		localStorage.setItem('tse.lastInstrumentUpdate', dateToStr(new Date()));
 	}
 }
+
 async function updatePricesRequester(chunk=[]) {
 	let res;
 	const mkRes = (result, error, reqError) => ({ result, error, reqError });
@@ -369,6 +384,7 @@ async function updatePricesRequester(chunk=[]) {
 	
 	return res;
 }
+
 async function updatePricesRetrier(updateNeeded={}, count=0, result={}) {
 	const keys = Object.keys(updateNeeded);
 	const chunks = splitArr(keys, PRICES_UPDATE_CHUNK).map( i => i.map(k=> updateNeeded[k]) );
@@ -400,6 +416,7 @@ async function updatePricesRetrier(updateNeeded={}, count=0, result={}) {
 	
 	return result;
 }
+
 async function updatePrices(instruments=[], startDeven) {
 	if (!instruments.length) return;
 	const lastPossibleDeven = await getLastPossibleDeven();
@@ -408,7 +425,7 @@ async function updatePrices(instruments=[], startDeven) {
 	for (const instrument of instruments) {
 		const insCode = instrument.InsCode;
 		const market = instrument.YMarNSC === 'NO' ? 0 : 1;
-		const insData = await localforage.getItem('tse.'+insCode);
+		const insData = storedPrices[insCode];
 		if (!insData) { // doesn't have data
 			updateNeeded[insCode] = {
 				uriSegs: [insCode, startDeven, market],
@@ -427,6 +444,8 @@ async function updatePrices(instruments=[], startDeven) {
 			}
 		}
 	}
+	let res = { succs: {}, fails: {} };
+	if (!Object.keys(updateNeeded).length) return res;
 	
 	const { succs, fails } = await updatePricesRetrier(updateNeeded);
 	
@@ -435,15 +454,24 @@ async function updatePrices(instruments=[], startDeven) {
 		const { oldContent } = updateNeeded[k];
 		const newContent = succs[k];
 		const content = oldContent ? oldContent+';'+newContent : newContent;
-		await localforage.setItem('tse.'+k, content);
+		storedPrices[k] = content;
 	}
 	
-	return {succs, fails};
+	let str = '';
+	const keys = Object.keys(storedPrices);
+	for (let i=0, n=keys.length; i<n; i++) str += storedPrices[ keys[i] ] + '@';
+	str = str.slice(0, -1);
+	
+	await localforage.setItem('tse.prices', str);
+	
+	return res;
 }
+
 async function getInstruments(struct=true, arr=true, structKey='InsCode') {
 	await updateInstruments();
 	return parseInstruments(struct, arr, structKey);
 }
+
 async function getPrices(symbols=[], settings={}) {
 	if (!symbols.length) return;
 	
@@ -455,6 +483,8 @@ async function getPrices(symbols=[], settings={}) {
 	
 	settings = {...defaultSettings, ...settings};
 	const { adjustPrices, startDate, daysWithoutTrade } = settings;
+	
+	await parseStoredPrices();
 	
 	const { succs, fails } = await updatePrices(selection, startDate);
 	const [ slen, flen ] = [succs, fails].map(i => Object.keys(i).length);
@@ -469,10 +499,11 @@ async function getPrices(symbols=[], settings={}) {
 	for (const i of selection) {
 		if (!i) continue;
 		const insCode = i.InsCode;
-		const strPrices = await localforage.getItem('tse.'+insCode);
-		if (!strPrices) throw new Error('Unkown Error');
+		const strPrices = storedPrices[insCode];
+		if (!strPrices) continue; // throw new Error('Unkown Error');
 		prices[insCode] = strPrices.split(';').map(i => new ClosingPrice(i));
 	}
+	
 	const shares = localStorage.getItem('tse.shares').split(';').map(i => new Share(i));
 	const columns = settings.columns.map( i => new Column(!Array.isArray(i) ? [i] : i) );
 	
