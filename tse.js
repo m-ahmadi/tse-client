@@ -146,6 +146,9 @@ function parseShares(struct=false, arr=false, structKey='InsCode') {
 function dateToStr(d) {
 	return (d.getFullYear()*10000) + ( (d.getMonth()+1)*100 ) + d.getDate() + '';
 }
+function strToDate(s) {
+	return new Date( +s.slice(0,4), +s.slice(4,6)-1, +s.slice(6,8) );
+}
 function cleanFa(str) {
 	return str
 		// .replace(/[\u200B-\u200D\uFEFF]/g, ' ')
@@ -301,13 +304,33 @@ async function parseStoredPrices() {
 
 async function getLastPossibleDeven() {
 	let lastPossibleDeven = localStorage.getItem('tse.lastPossibleDeven');
-	const today = new Date();
-	if ( !lastPossibleDeven || (dayDiff(dateToStr(today), lastPossibleDeven) > UPDATE_INTERVAL && ![4,5].includes(today.getDay())) ) {
+	
+	let shouldUpdate;
+	
+	if (lastPossibleDeven) {
+		const today = new Date();
+		const daysPassed = dayDiff(dateToStr(today), lastPossibleDeven);
+		const inWeekend = [4,5].includes( today.getDay() );
+		const lastUpdateWeekday = strToDate(lastPossibleDeven).getDay();
+		
+		shouldUpdate = daysPassed > UPDATE_INTERVAL && (
+			// no update needed if: we are in weekend but ONLY if last time we updated was on last day (wednesday) of THIS week
+			inWeekend &&
+			lastUpdateWeekday !== 3 && // not wednesday
+			daysPassed <= 3            // and wednesday of this week
+		);
+	} else {
+		// first time (never updated before)
+		shouldUpdate = true;
+	}
+	
+	if (shouldUpdate) {
 		const res = await rq.LastPossibleDeven();
 		if ( !/^\d{8};\d{8}$/.test(res) ) throw new Error('Invalid server response: LastPossibleDeven');
 		lastPossibleDeven = res.split(';')[0] || res.split(';')[1];
 		localStorage.setItem('tse.lastPossibleDeven', lastPossibleDeven);
 	}
+	
 	return +lastPossibleDeven;
 }
 
