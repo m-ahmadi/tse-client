@@ -313,7 +313,7 @@ async function getLastPossibleDeven() {
 		const inWeekend = [4,5].includes( today.getDay() );
 		const lastUpdateWeekday = strToDate(lastPossibleDeven).getDay();
 		
-		shouldUpdate = daysPassed > UPDATE_INTERVAL && (
+		shouldUpdate = daysPassed >= UPDATE_INTERVAL && (
 			// no update needed if: we are in weekend but ONLY if last time we updated was on last day (wednesday) of THIS week
 			inWeekend &&
 			lastUpdateWeekday !== 3 && // not wednesday
@@ -354,7 +354,7 @@ async function updateInstruments() {
 	}
 	
 	const lastPossibleDeven = await getLastPossibleDeven();
-	if (dayDiff(''+lastDeven, ''+lastPossibleDeven) <= UPDATE_INTERVAL) return;
+	if (dayDiff(''+lastDeven, ''+lastPossibleDeven) < UPDATE_INTERVAL) return;
 	
 	let error;
 	const res = await rq.InstrumentAndShare(lastDeven, lastId).catch(err => error = err);
@@ -458,7 +458,7 @@ async function updatePrices(instruments=[], startDeven) {
 			const rows = insData.split(';');
 			const lastRow = new ClosingPrice( rows[rows.length-1] );
 			const lastRowDEven = +lastRow.DEven;
-			if (dayDiff(''+lastRowDEven, ''+lastPossibleDeven) > UPDATE_INTERVAL) { // but outdated
+			if (dayDiff(''+lastRowDEven, ''+lastPossibleDeven) >= UPDATE_INTERVAL) { // but outdated
 				updateNeeded[insCode] = {
 					uriSegs: [insCode, lastRowDEven, market],
 					insCode,
