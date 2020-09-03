@@ -157,11 +157,11 @@ function cleanFa(str) {
 		.replace(/ي/g,'ی');
 }
 function gregToShamsi(s) {
-	const { jy, jm, jd } = jalaali.toJalaali(+s.slice(0, 4), +s.slice(4, 6), +s.slice(6, 8));
+	const { jy, jm, jd } = jalaali.toJalaali(+s.slice(0,4), +s.slice(4,6), +s.slice(6,8));
 	return (jy*10000) + (jm*100) + jd + '';
 }
 function shamsiToGreg(s) {
-	const { gy, gm, gd } = jalaali.toGregorian(+s.slice(0, 4), +s.slice(4, 6), +s.slice(6, 8));
+	const { gy, gm, gd } = jalaali.toGregorian(+s.slice(0,4), +s.slice(4,6), +s.slice(6,8));
 	return (gy*10000) + (gm*100) + gd + '';
 }
 function dayDiff(s1, s2) {
