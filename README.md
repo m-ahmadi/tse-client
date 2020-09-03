@@ -98,11 +98,11 @@ index | name | fname
 - Used [fetch](https://github.com/m-ahmadi/tse-browser-client/blob/master/tse.js#L34) for `HTTP` requests.  
 - Storing `InstrumentAndShare` data in `localStorage`.  
 - Storing `ClosingPrices` data in `indexedDB`.  
-- `Instrument.Symbol` characters are [cleaned](https://github.com/m-ahmadi/tse-browser-client/blob/master/tse.js#L149) from `zero-width` characters, `ك` and  `ي`.
-- The [price adjustment algorithm](https://github.com/m-ahmadi/tse-browser-client/blob/master/tse.js#L187) was ported from the [official Windows app](http://cdn.tsetmc.com/Site.aspx?ParTree=111A11).
+- `Instrument.Symbol` characters are [cleaned](https://github.com/m-ahmadi/tse-browser-client/blob/master/tse.js#L152) from `zero-width` characters, `ك` and  `ي`.
+- The [price adjustment algorithm](https://github.com/m-ahmadi/tse-browser-client/blob/master/tse.js#L190) was ported from the [official Windows app](http://cdn.tsetmc.com/Site.aspx?ParTree=111A11).
 
 Dependency | Why
 -------|-------------
 `big.js` | For price adjustment calculations.
-`jalaali-js` | Only needed due to the [ShamsiDate](https://github.com/m-ahmadi/tse-browser-client/blob/master/tse.js#L254) column.
+`jalaali-js` | Only needed due to the [ShamsiDate](https://github.com/m-ahmadi/tse-browser-client/blob/master/tse.js#L257) column.
 `localforage` | For storing in `indexedDB`.
