@@ -313,7 +313,7 @@ async function getLastPossibleDeven() {
 		const inWeekend = [4,5].includes( today.getDay() );
 		const lastUpdateWeekday = strToDate(lastPossibleDeven).getDay();
 		
-		shouldUpdate = daysPassed >= UPDATE_INTERVAL && (
+		shouldUpdate = daysPassed >= UPDATE_INTERVAL && !(
 			// no update needed if: we are in weekend but ONLY if last time we updated was on last day (wednesday) of THIS week
 			inWeekend &&
 			lastUpdateWeekday !== 3 && // not wednesday
