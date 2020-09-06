@@ -407,7 +407,6 @@ async function updatePricesRequester(chunk=[]) {
 	
 	return res;
 }
-
 async function updatePricesRetrier(updateNeeded={}, count=0, result={}) {
 	const keys = Object.keys(updateNeeded);
 	const chunks = splitArr(keys, PRICES_UPDATE_CHUNK).map( i => i.map(k=> updateNeeded[k]) );
@@ -439,7 +438,6 @@ async function updatePricesRetrier(updateNeeded={}, count=0, result={}) {
 	
 	return result;
 }
-
 async function updatePrices(instruments=[], startDeven) {
 	if (!instruments.length) return;
 	const lastPossibleDeven = await getLastPossibleDeven();
