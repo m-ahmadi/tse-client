@@ -9,10 +9,10 @@
   (async function () {
     const data = await tse.getPrices(['ذوب', 'فولاد']);
     const adjustedData = await tse.getPrices(['خساپا'], {adjustPrices: 1});
-	
+  
     const customCols1 = await tse.getPrices(['شپنا'], {columns: [4,7,8]}); // default names
     const customCols2 = await tse.getPrices(['شپنا'], {columns: [[4,'DATE'],[7,'MAX'],[8,'MIN']]}); // custom names
-		
+    
     console.table(tse.columnList); // view column indexes and their names
   })();
 </script>
@@ -52,9 +52,8 @@ Member | Description
 `tse.PRICES_UPDATE_RETRY_DELAY` | Amount of delay (in ms) to wait before making another retry. Only integers. Default: 5000
 `tse.getInstruments()` | Update (if needed) and return list of instruments. (InstrumentAndShare)
 `tse.getPrices(symbols=[], ?settings={...})` | Update (if needed) and return prices of instruments.
-_ | Default settings:
 ```javascript
-{
+const defaultSettings = {
   columns: [
     [4, 'date'],
     [6, 'open'],
@@ -67,7 +66,31 @@ _ | Default settings:
   adjustPrices: 0,
   daysWithoutTrade: false,
   startDate: '20010321'
-}
+};
+
+const prices = await tse.getPrices(symbols=['sym1', 'sym2', ...], defaultSettings);
+/*
+  prices: [
+    // sym1 prices
+    {
+      open:  [0, 0, ...],
+      high:  [0, 0, ...],
+      low:   [0, 0, ...],
+      last:  [0, 0, ...]
+      close: [0, 0, ...],
+      vol:   [0, 0, ...]
+    },
+    
+    // sym2 prices
+    {
+      open: [],
+      high: [],
+      ...
+    },
+    
+    ...
+  ]
+*/
 ```
 adjustPrices | desc | desc fa
 -------------|------|---------

@@ -35,8 +35,8 @@
 function makeChart(_data, title, customProps={}) {
 	const opts = { width:600, height:400, series:[{},{}], legend:{show:true}, class:'box' };
 	const data = [
-		_data.map(i => convertDate(i.date || i[customProps.date])),
-		_data.map(i => i.close || i[customProps.price]),
+		(_data.date || _data[customProps.date ]).map(convertDate),
+		_data.close || _data[customProps.price ]
 	];
 	new uPlot({...opts, title}, data, document.getElementById('content'));
 }

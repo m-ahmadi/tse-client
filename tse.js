@@ -536,16 +536,25 @@ async function getPrices(symbols=[], settings={}) {
 			? adjust(cond, prices[insCode], shares, insCode)
 			: prices[insCode];
 		
-		return closingPrices
-			.map(closingPrice => {
-				if ( Big(closingPrice.DEven).lt(startDate) ) return;
-				if ( Big(closingPrice.ZTotTran).eq(0) && !daysWithoutTrade ) return;
-				
-				return columns
-					.map( ({name,header}) => [header || name, getCell(name, instrument, closingPrice)] )
-					.reduce((a,c) => {a[c[0]] = /^\d+(\.?\d+)?$/.test(c[1]) ? parseFloat(c[1]) : c[1]; return a;}, {});
-			})
-			.filter(i=>!!i);
+		const res = {};
+		
+		const finalColumns = columns.map(col => {
+			const finalHeader = col.header || col.name;
+			res[finalHeader] = [];
+			return { ...col, header: finalHeader };
+		});
+		
+		for (const closingPrice of closingPrices) {
+			if ( Big(closingPrice.DEven).lt(startDate) ) continue;
+			if ( Big(closingPrice.ZTotTran).eq(0) && !daysWithoutTrade ) continue;
+			
+			for (const {header, name} of finalColumns) {
+				const cell = getCell(name, instrument, closingPrice);
+				res[header].push(/^\d+(\.?\d+)?$/.test(cell) ? parseFloat(cell) : cell);
+			}
+		}
+		
+		return res;
 	});
 	
 	return res;
