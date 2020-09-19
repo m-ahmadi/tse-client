@@ -298,6 +298,7 @@ async function parseStoredPrices() {
 	const strs = storedStr.split('@');
 	for (let i=0, n=strs.length; i<n; i++) {
 		const str = strs[i];
+		if (!str) continue;
 		storedPrices[ str.match(/^\b\d+\b/)[0] ] = str;
 	}
 }
@@ -474,7 +475,12 @@ async function updatePrices(instruments=[], startDeven) {
 	for (const k of suckeys) {
 		const { oldContent } = updateNeeded[k];
 		const newContent = succs[k];
-		const content = oldContent ? oldContent+';'+newContent : newContent;
+		
+		let content = oldContent || '';
+		if (newContent) {
+			content = oldContent ? oldContent+';'+newContent : newContent;
+		}
+		
 		storedPrices[k] = content;
 	}
 	
@@ -530,12 +536,6 @@ async function getPrices(symbols=[], settings={}) {
 	
 	const res = selection.map(instrument => {
 		if (!instrument) return;
-		const insCode = instrument.InsCode;
-		const cond = adjustPrices;
-		const closingPrices = cond === 1 || cond === 2
-			? adjust(cond, prices[insCode], shares, insCode)
-			: prices[insCode];
-		
 		const res = {};
 		
 		const finalColumns = columns.map(col => {
@@ -543,6 +543,13 @@ async function getPrices(symbols=[], settings={}) {
 			res[finalHeader] = [];
 			return { ...col, header: finalHeader };
 		});
+		
+		const insCode = instrument.InsCode;
+		if (!prices[insCode]) return res;
+		const cond = adjustPrices;
+		const closingPrices = cond === 1 || cond === 2
+			? adjust(cond, prices[insCode], shares, insCode)
+			: prices[insCode];
 		
 		for (const closingPrice of closingPrices) {
 			if ( Big(closingPrice.DEven).lt(startDate) ) continue;
