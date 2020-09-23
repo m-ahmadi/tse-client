@@ -1,14 +1,14 @@
-const fs = require('fs');
-const { join } = require('path');
+const fs            = require('fs');
+const { join }      = require('path');
 const { promisify } = require('util');
-const readFile = promisify(fs.readFile);
+const readFile  = promisify(fs.readFile);
 const writeFile = promisify(fs.writeFile);
 
 require('./lib/colors');
-const settings = require('./lib/settings');
-const rq = require('./lib/request.v2');
-const getInstruments = require('./lib/getInstruments');
-const getShares = require('./lib/getShares');
+const settings                        = require('./lib/settings');
+const rq                              = require('./lib/request.v2');
+const getInstruments                  = require('./lib/getInstruments');
+const getShares                       = require('./lib/getShares');
 const { dateToStr, msg, getRqErrMsg } = require('./lib/util');
 
 module.exports = async function () {
