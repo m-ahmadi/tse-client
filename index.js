@@ -4,8 +4,8 @@ require('./lib/colors');
 
 cmd
   .helpOption('-h, --help', 'Show help.')
-  .name('tc')
-  .usage('[command] [options]\n  tc --update-instruments\n  tc search faSymbol -b symbol\n  tc select faSymbol1 faSymbol2 [faSymbol3 ...]\n  tc --update-prices\n  tc export --out-dir /tsedata')
+  .name('tse')
+  .usage('[command] [options]\n  tse --update-instruments\n  tse search faSymbol -b symbol\n  tse select faSymbol1 faSymbol2 [faSymbol3 ...]\n  tse --update-prices\n  tse export --out-dir /tsedata')
   .description('A client for receiving stock data from the Tehran Stock Exchange (TSE).')
   .option('-v, --view [value]',          'View current settings. options: selins|selcols|cols|last|export. \n\t\t\t\t  default: selins\n\t\t\t\t  selins:  selected instruments\n\t\t\t\t  selcols: selected columns\n\t\t\t\t  cols:    list of valid column indexes\n\t\t\t\t  last:    last update of the instruments list\n\t\t\t\t  export:  current export settings')
   .option('-p, --update-prices',         'Update the data of selected instruments.')
@@ -20,7 +20,7 @@ cmd.command('select [values...]').description('Select instruments or columns.\n\
   .option('-d, --remove',                'Boolean. if true, then deselect the specified selected instrument(s).')
   .option('--all',                       'Boolean. if true, then select/deselect all instruments.')
   .action(select);
-cmd.command('export').description('Create file(s) for current selected instrument(s).\n\t\t\t\t  see options: tc export -h')
+cmd.command('export').description('Create file(s) for current selected instrument(s).\n\t\t\t\t  see options: tse export -h')
   .option('-n, --file-name <num>',       'The filename used for the generated files. options: 0|1|2|3|4 default: 4\n\t\t\t\t0: isin code\n\t\t\t\t1: latin name\n\t\t\t\t2: latin symbol\n\t\t\t\t3: farsi name\n\t\t\t\t4: farsi symbol')
   .option('-x, --file-extension <str>',  'The extension used for the generated files. default: "csv"')
   .option('-d, --delimiter <char>',      'The delimiter used for the generated files. default: ","')
