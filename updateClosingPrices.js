@@ -7,11 +7,11 @@ const writeFile = promisify(fs.writeFile);
 const access    = promisify(fs.access);
 
 require('./lib/colors');
-const settings               = require('./lib/settings');
-const rq                     = require('./lib/request.v2');
-const getSelectedInstruments = require('./lib/getSelectedInstruments');
-const readFileIntoArray      = require('./lib/readFileIntoArray');
-const ClosingPrice           = require('./struct/ClosingPrice');
+const settings                 = require('./lib/settings');
+const rq                       = require('./lib/request.v2');
+const getSelectedInstruments   = require('./lib/getSelectedInstruments');
+const readFileIntoArray        = require('./lib/readFileIntoArray');
+const ClosingPrice             = require('./struct/ClosingPrice');
 const { msg, splitArr, sleep } = require('./lib/util');
 
 const startDeven = '20010321';
@@ -62,7 +62,6 @@ module.exports = async function () {
   const t1 = performance.now();
   const { succs, fails } = await retrier(updateNeeded);
   
-  const suckeys = Object.keys(succs);
   const writes = Object.keys(updateNeeded).map((k, i) => {
     const { path, oldContent } = updateNeeded[k];
     const newContentStr = succs[k];
