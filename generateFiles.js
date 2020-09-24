@@ -1,27 +1,27 @@
-const fs = require('fs');
+const fs            = require('fs');
 const { promisify } = require('util');
-const sep = require('path').sep;
-const Big = require('big.js');
+const sep           = require('path').sep;
+const Big           = require('big.js');
 Big.DP = 40
 Big.RM = 2;
-const readFile = promisify(fs.readFile);
+const readFile  = promisify(fs.readFile);
 const writeFile = promisify(fs.writeFile);
-const access = promisify(fs.access);
+const access    = promisify(fs.access);
 
 require('./lib/colors');
-const _settings = require('./lib/settings');
+const _settings              = require('./lib/settings');
 const getSelectedInstruments = require('./lib/getSelectedInstruments');
-const getShares = require('./lib/getShares');
-const getColumns = require('./lib/getColumns')();
-const getClosingPrices = require('./lib/getClosingPrices');
-const util = require('./lib/util');
+const getShares              = require('./lib/getShares');
+const getColumns             = require('./lib/getColumns')();
+const getClosingPrices       = require('./lib/getClosingPrices');
+const util                   = require('./lib/util');
 
 module.exports = async function (userSettings) {
   const selectedInstruments = await getSelectedInstruments(true);
   if (!selectedInstruments.length) { util.msg('No selected instruments.'); return; }
   
   const defaultSettings = await _settings.get('defaultExport');
-  const settings = Object.assign({}, defaultSettings, userSettings);
+  const settings = {...defaultSettings, ...userSettings};
   const { adjustPrices, delimiter } = settings;
   let { startDate } = settings;
   startDate = util.shamsiToGreg(startDate);

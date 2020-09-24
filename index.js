@@ -66,7 +66,7 @@ async function show(_str) {
     const output = last === 'never' ? last.yellow : `${format(last).yellow} (${format(toShamsi(last)).cyan})`;
     log(output);
   } else if (str === 'export') {
-    const toShow = Object.assign({}, settings.defaultExport, settings.selectedExport);
+    const toShow = {...settings.defaultExport, ...settings.selectedExport};
     table(toShow);
   }
 }
@@ -142,7 +142,7 @@ async function cacheDirHandler(_newPath) {
 }
 
 async function update({ prices, instruments }) {
-  if (prices) await require('./updateClosingPrices')();
+  if (prices)      await require('./updateClosingPrices')();
   if (instruments) await require('./updateInstruments')();
 }
 
@@ -171,7 +171,7 @@ async function xport({ fileName, fileExtension, delimiter, adjustPrices, encodin
   };
   const _settings = require('./lib/settings');
   const selectedExport = await _settings.get('selectedExport');
-  if (save) await _settings.set('selectedExport', Object.assign({}, selectedExport, userSettings));
+  if (save) await _settings.set('selectedExport', {...selectedExport, ...userSettings});
   await require('./generateFiles')(userSettings);
 }
 

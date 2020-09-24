@@ -30,8 +30,8 @@ module.exports = async function () {
     currentShares = await getShares(true);
     const insDevens = Object.keys(currentInstruments).map( k => parseInt(currentInstruments[k].match(/\b\d{8}\b/)[0]) );
     const shareIds = currentShares.map( i => parseInt(i.Idn) );
-    lastDeven = Math.max.apply(Math, insDevens);
-    lastId    = Math.max.apply(Math, shareIds);
+    lastDeven = Math.max(...insDevens);
+    lastId    = Math.max(...shareIds;
   }
   
   let error;
