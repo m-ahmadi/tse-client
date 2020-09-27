@@ -9,7 +9,7 @@ const settings                        = require('./lib/settings');
 const rq                              = require('./lib/request.v2');
 const getInstruments                  = require('./lib/getInstruments');
 const getShares                       = require('./lib/getShares');
-const { dateToStr, msg, getRqErrMsg } = require('./lib/util');
+const { dateToStr, msg } = require('./lib/util');
 
 module.exports = async function () {
   const { cacheDir, lastInstrumentUpdate: lastUpdate } = await settings.get();
@@ -35,8 +35,8 @@ module.exports = async function () {
   }
   
   let error;
-  const { data } = await rq.InstrumentAndShare(lastDeven, lastId).catch(err => error = err);
-  if (error) { msg('Failed request: ', 'InstrumentAndShare: ', getRqErrMsg(error).red); return; }
+  const data = await rq.InstrumentAndShare(lastDeven, lastId).catch(err => error = err);
+  if (error) { msg('Failed request: ', 'InstrumentAndShare: ', `(${error})`.red); return; }
   
   const splitted  = data.split('@');
   let instruments = splitted[0];

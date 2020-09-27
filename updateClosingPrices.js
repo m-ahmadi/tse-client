@@ -12,7 +12,7 @@ const rq                       = require('./lib/request.v2');
 const getSelectedInstruments   = require('./lib/getSelectedInstruments');
 const readFileIntoArray        = require('./lib/readFileIntoArray');
 const ClosingPrice             = require('./struct/ClosingPrice');
-const { msg, getRqErrMsg, splitArr, sleep } = require('./lib/util');
+const { msg, splitArr, sleep } = require('./lib/util');
 
 const startDeven = '20010321';
 
@@ -27,8 +27,8 @@ module.exports = async function () {
   
   const cacheDir = await settings.get('cacheDir');
   let error;
-  const { data: res } = await rq.LastPossibleDeven().catch(err => error = err);
-  if (error)                        { msg('Failed request: ',          'LastPossibleDeven: ', getRqErrMsg(error).red); return; }
+  const res = await rq.LastPossibleDeven().catch(err => error = err);
+  if (error)                        { msg('Failed request: ',          'LastPossibleDeven: ', `(${error})`.red); return; }
   if ( !/^\d{8};\d{8}$/.test(res) ) { msg('Invalid server response: ', 'LastPossibleDeven'); return; }
   const lastPossibleDeven = res.split(';')[0] || res.split(';')[1];
   
@@ -137,7 +137,7 @@ async function requester(chunk=[]) {
   const insCodes = chunk.map(i => i.uriSegs.join(',')).join(';');
   
   let error;
-  const { data: resp } = await rq.ClosingPrices(insCodes).catch(r => error = r);
+  const resp = await rq.ClosingPrices(insCodes).catch(r => error = r);
   if (error)                          { res = mkRes(chunk, 'Failed request: ClosingPrices', error);   return res; }
   if ( !/^[\d\.,;@\-]*$/.test(resp) ) { res = mkRes(chunk, 'Invalid server response: ClosingPrices'); return res; }
   if (resp === '')                    { res = mkRes(chunk, 'Unknown Error.');                         return res; }
