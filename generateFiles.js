@@ -27,9 +27,10 @@ module.exports = async function (userSettings) {
   startDate = util.shamsiToGreg(startDate);
   
   const prices = {};
-  for (const v of selectedInstruments) {
-    prices[v.InsCode] = await getClosingPrices(v.InsCode);
-    if (!prices[v.InsCode].length) { util.msg('Missing instrument data.'); return; }
+  for (const i of selectedInstruments) {
+    const insCode = i.InsCode;
+    prices[insCode] = await getClosingPrices(insCode);
+    //if (!prices[insCode].length) { util.msg('Missing instrument data.'); return; }
   }
   const columns = await getColumns();
   
@@ -45,8 +46,9 @@ module.exports = async function (userSettings) {
   }
   const shares = await getShares(true);
   
-  let files = selectedInstruments.map(v => {
-    const insCode = v.InsCode;
+  let files = selectedInstruments.map(instrument => {
+    if (!instrument) return;
+    const insCode = instrument.InsCode;
     const cond = adjustPrices;
     const closingPrices = prices[insCode];
     if (cond === 1 || cond === 2) {
@@ -56,6 +58,7 @@ module.exports = async function (userSettings) {
     }
   });
   files = files.map(closingPrices => {
+    if (!closingPrices.length) return;
     const instrument = selectedInstruments.find(v => v.InsCode === closingPrices[0].InsCode);
     let str = headerRow;
     closingPrices.forEach(closingPrice => {
