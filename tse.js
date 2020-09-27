@@ -326,7 +326,9 @@ async function getLastPossibleDeven() {
 	}
 	
 	if (shouldUpdate) {
-		const res = await rq.LastPossibleDeven();
+		let error;
+		const res = await rq.LastPossibleDeven().catch(err => error = err);
+		if (error)                        throw new Error('Failed request: ',      'LastPossibleDeven: ', `(${error})`);
 		if ( !/^\d{8};\d{8}$/.test(res) ) throw new Error('Invalid server response: LastPossibleDeven');
 		lastPossibleDeven = res.split(';')[0] || res.split(';')[1];
 		localStorage.setItem('tse.lastPossibleDeven', lastPossibleDeven);
