@@ -12,7 +12,7 @@ const rq                       = require('./lib/request.v2');
 const getSelectedInstruments   = require('./lib/getSelectedInstruments');
 const readFileIntoArray        = require('./lib/readFileIntoArray');
 const ClosingPrice             = require('./struct/ClosingPrice');
-const { msg, splitArr, sleep } = require('./lib/util');
+const { msg, getErrMsg, splitArr, sleep } = require('./lib/util');
 
 const startDeven = '20010321';
 
