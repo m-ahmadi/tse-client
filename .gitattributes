@@ -1,0 +1,2 @@
+*.js    filter=tabspace
+*.json  filter=tabspace
