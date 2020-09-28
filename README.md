@@ -1,10 +1,7 @@
 ### Usage:
+**Using standalone version:** *(bundled with the 3 dependencies)*
 ```html
-<script src="https://cdn.jsdelivr.net/npm/big.js"></script>
-<script src="path/to/jalaali-js.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/localforage"></script>
-<script src="tse.js"></script>
-
+<script src="https://cdn.jsdelivr.net/npm/tse-browser-client/dist/tse.bundle.min.js"></script>
 <script>
   (async function () {
     const data = await tse.getPrices(['ذوب', 'فولاد']);
@@ -18,12 +15,18 @@
 </script>
 ```
 
-Get `jalaali-js` for browser: (Windows)
-```
-mkdir tmp && cd tmp && npm i jalaali-js && echo module.exports = require('jalaali-js'); > x.js && npx browserify x.js -o ../jalaali-js.js -s jalaali && del x.js && cd ../ && rmdir tmp /s /q
+**Using unbundled version:** *(the 3 dependencies must be loaded before)*
+```html
+<script src="https://cdn.jsdelivr.net/npm/big.js"></script>
+<script src="path/to/jalaali-js.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/localforage"></script>
+<script src="https://cdn.jsdelivr.net/npm/tse-browser-client/dist/tse.min.js"></script>
+<script>
+tse.getPrices(['فولاد']).then(([prices]) => console.log(prices));
+</script>
 ```
 
-Simple PHP proxy example:
+**Simple `PHP` proxy example:**
 ```php
 // proxy.php
 <?php
@@ -40,6 +43,19 @@ tse.API_URL = 'http://path/to/proxy.php';
   const data = await tse.getPrices(['فملی']);
 })();
 ```
+
+**Get `jalaali-js` for browser: (Windows)**
+```
+mkdir tmp && cd tmp && npm i jalaali-js && echo module.exports = require('jalaali-js'); > x.js && npx browserify x.js -o ../jalaali-js.js -s jalaali && del x.js && cd ../ && rmdir tmp /s /q
+```
+
+**Published files in `dist/`**
+| File | Description
+|------------------------|-----------------------|
+|`dist/tse.js`           | Unminified code. |
+|`dist/tse.min.js`       | Minified code. |
+|`dist/tse.bundle.min.js`| Minified dependencies + minified code. |
+
 ---
 ### API
 Member | Description
@@ -117,8 +133,8 @@ index | name | fname
 13 | Count          | تعداد معاملات
 14 | PriceYesterday | قیمت دیروز
 ---
+
 ### Notes
-- Used [fetch](https://github.com/m-ahmadi/tse-browser-client/blob/master/tse.js#L34) for `HTTP` requests.  
 - Storing `InstrumentAndShare` data in `localStorage`.  
 - Storing `ClosingPrices` data in `indexedDB`.  
 - `Instrument.Symbol` characters are [cleaned](https://github.com/m-ahmadi/tse-browser-client/blob/master/tse.js#L152) from `zero-width` characters, `ك` and  `ي`.
