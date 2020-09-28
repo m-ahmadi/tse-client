@@ -9,6 +9,7 @@ execSync('browserify x.js -s jalaali | terser -c -m -o dep2.js');
 
 fs.copyFileSync('node_modules/localforage/dist/localforage.min.js', 'dep3.js');
 
+if (!fs.existsSync('dist')) fs.mkdirSync('dist');
 fs.copyFileSync('tse.js', 'dist/tse.js');
 execSync('terser tse.js -o dist/tse.min.js -c -m');
 fs.writeFileSync('dist/tse.bundle.min.js', ['dep1.js','dep2.js','dep3.js','dist/tse.min.js'].map(i=>fs.readFileSync(i,'utf8')).join('\n'));
