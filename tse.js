@@ -1,4 +1,4 @@
-const tse = (function () {
+(function () {
 
 let API_URL = 'http://service.tsetmc.com/tsev2/data/TseClient2.aspx';
 
@@ -569,7 +569,7 @@ async function getPrices(symbols=[], settings={}) {
   return res;
 }
 
-return {
+window.tse = {
   getInstruments,
   getPrices,
   
