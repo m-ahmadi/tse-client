@@ -6,6 +6,7 @@
   "scripts": {
     "prepare": "node scripts/prepare.js"
   },
+  "files": ["dist"],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/m-ahmadi/tse-browser-client.git"
