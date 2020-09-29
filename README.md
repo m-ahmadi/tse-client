@@ -1,4 +1,4 @@
-### Usage:
+## Usage:
 **Using standalone version:** *(bundled with the 3 dependencies)*
 ```html
 <script src="https://cdn.jsdelivr.net/npm/tse-browser-client/dist/tse.bundle.min.js"></script>
@@ -20,7 +20,7 @@
 <script src="https://cdn.jsdelivr.net/npm/big.js"></script>
 <script src="path/to/jalaali-js.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/localforage"></script>
-<script src="https://cdn.jsdelivr.net/npm/tse-browser-client/dist/tse.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tse-browser-client"></script>
 <script>
 tse.getPrices(['فولاد']).then(([prices]) => console.log(prices));
 </script>
@@ -57,7 +57,7 @@ mkdir tmp && cd tmp && npm i jalaali-js && echo module.exports = require('jalaal
 |`dist/tse.bundle.min.js`| Minified dependencies + minified code. |
 
 ---
-### API
+## API
 Member | Description
 -------|-------------
 `tse.API_URL` | The API URL to use for HTTP requests. Only string and valid URL. Default: 'http://service.tsetmc.com/tsev2/data/TseClient2.aspx'
@@ -114,7 +114,7 @@ adjustPrices | desc | desc fa
 1 | Share increase and dividends | افزایش سرمایه + سود
 2 | Share increase | افزایش سرمایه
 
-### Column indexes
+**Column indexes:**
 index | name | fname
 ------|------|------------------
 0  | CompanyCode    | کد شرکت
@@ -134,7 +134,7 @@ index | name | fname
 14 | PriceYesterday | قیمت دیروز
 ---
 
-### Notes
+## Notes
 - Storing `InstrumentAndShare` data in `localStorage`.  
 - Storing `ClosingPrices` data in `indexedDB`.  
 - `Instrument.Symbol` characters are [cleaned](https://github.com/m-ahmadi/tse-browser-client/blob/master/tse.js#L152) from `zero-width` characters, `ك` and  `ي`.
