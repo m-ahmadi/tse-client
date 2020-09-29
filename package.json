@@ -4,7 +4,7 @@
   "description": "A client for receiving stock data from the Tehran Stock Exchange (TSE) in the browser.",
   "main": "tse.js",
   "scripts": {
-    "build": "node scripts/build.js"
+    "prepare": "node scripts/prepare.js"
   },
   "repository": {
     "type": "git",
