@@ -1,6 +1,6 @@
 {
   "name": "tse-browser-client",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "A client for receiving stock data from the Tehran Stock Exchange (TSE) in the browser.",
   "main": "tse.js",
   "scripts": {
