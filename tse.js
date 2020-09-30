@@ -534,17 +534,17 @@ async function getPrices(symbols=[], settings={}) {
   }
   
   const shares = localStorage.getItem('tse.shares').split(';').map(i => new Share(i));
-  const columns = settings.columns.map( i => new Column(!Array.isArray(i) ? [i] : i) );
+  const columns = settings.columns.map(i => {
+    const row = !Array.isArray(i) ? [i] : i;
+    const column = new Column(row);
+    const finalHeader = column.header || column.name;
+    return { ...column, header: finalHeader };
+  });
   
   const res = selection.map(instrument => {
     if (!instrument) return;
     const res = {};
-    
-    const finalColumns = columns.map(col => {
-      const finalHeader = col.header || col.name;
-      res[finalHeader] = [];
-      return { ...col, header: finalHeader };
-    });
+    columns.forEach(col => res[col.header] = []);
     
     const insCode = instrument.InsCode;
     if (!prices[insCode]) return res;
@@ -557,7 +557,7 @@ async function getPrices(symbols=[], settings={}) {
       if ( Big(closingPrice.DEven).lt(startDate) ) continue;
       if ( Big(closingPrice.ZTotTran).eq(0) && !daysWithoutTrade ) continue;
       
-      for (const {header, name} of finalColumns) {
+      for (const {header, name} of columns) {
         const cell = getCell(name, instrument, closingPrice);
         res[header].push(/^\d+(\.?\d+)?$/.test(cell) ? parseFloat(cell) : cell);
       }
