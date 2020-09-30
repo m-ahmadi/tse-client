@@ -34,8 +34,7 @@ async function makeChart(_symbol='', title='', w=+_w.value, h=+_h.value, monthsB
 	
 	const chg = symbol.close.map((n,i) => +(n - symbol.close[i-1] ).toFixed(0) );
 	const radiusIdx = Math.round(symbol.close.length / 20);
-	let pointRadius = [...[6,6,5,5,4,3,2,1,1,1,0,0], ...Array(100).fill(0)][radiusIdx];
-	console.log(symbol.close.length,radiusIdx);
+	const pointRadius = [...[6,6,5,5,4,3,2,1,1,1,0,0], ...Array(100).fill(0)][radiusIdx];
 	
 	const chart = new Chart(div.children[0], {
 		type: 'bar',
