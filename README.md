@@ -1,5 +1,5 @@
 ## Usage:
-**Using standalone version:** *(bundled with the 3 dependencies)*
+**Using standalone bundle:** *(bundled with the 3 dependencies)*
 ```html
 <script src="https://cdn.jsdelivr.net/npm/tse-browser-client/dist/tse.bundle.min.js"></script>
 <script>
@@ -15,14 +15,14 @@
 </script>
 ```
 
-**Using unbundled version:** *(the 3 dependencies must be loaded before)*
+**Using the module itself:** *(the 3 dependencies must be loaded before)*
 ```html
 <script src="https://cdn.jsdelivr.net/npm/big.js"></script>
 <script src="path/to/jalaali-js.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/localforage"></script>
 <script src="https://cdn.jsdelivr.net/npm/tse-browser-client"></script>
 <script>
-tse.getPrices(['فولاد']).then(([prices]) => console.log(prices));
+  tse.getPrices(['فولاد']).then(([prices]) => console.log(prices));
 </script>
 ```
 
