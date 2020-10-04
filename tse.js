@@ -400,9 +400,9 @@ async function updatePricesRequester(chunk=[]) {
   
   let error;
   const resp = await rq.ClosingPrices(insCodes).catch(r => error = r);
-  if (error)                          { res = mkRes(chunk, 'Failed request: ClosingPrices', error);   return res; }
-  if ( !/^[\d\.,;@\-]*$/.test(resp) ) { res = mkRes(chunk, 'Invalid server response: ClosingPrices'); return res; }
-  if (resp === '')                    { res = mkRes(chunk, 'Unknown Error.');                         return res; }
+  if (error)                        { res = mkRes(chunk, 'Failed request: ClosingPrices', error);   return res; }
+  if ( !/^[\d.,;@-]*$/.test(resp) ) { res = mkRes(chunk, 'Invalid server response: ClosingPrices'); return res; }
+  if (resp === '')                  { res = mkRes(chunk, 'Unknown Error.');                         return res; }
   
   const o = {};
   resp.split('@').forEach((v,i)=> o[chunk[i].insCode] = v);
