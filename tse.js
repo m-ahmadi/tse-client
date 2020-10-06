@@ -533,7 +533,7 @@ async function getPrices(symbols=[], settings={}) {
     prices[insCode] = strPrices.split(';').map(i => new ClosingPrice(i));
   }
   
-  const shares = localStorage.getItem('tse.shares').split(';').map(i => new Share(i));
+  const shares = parseShares(true, true);
   const columns = settings.columns.map(i => {
     const row = !Array.isArray(i) ? [i] : i;
     const column = new Column(row);
