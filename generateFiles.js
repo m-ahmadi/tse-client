@@ -22,7 +22,7 @@ module.exports = async function (userSettings) {
   
   const defaultSettings = await _settings.get('defaultExportSettings');
   const settings = {...defaultSettings, ...userSettings};
-  const { adjustPrices, delimiter } = settings;
+  const { adjustPrices, delimiter, daysWithoutTrade } = settings;
   let { startDate } = settings;
   startDate = util.shamsiToGreg(startDate);
   
@@ -44,37 +44,35 @@ module.exports = async function (userSettings) {
       headerRow += '\n';
     }
   }
+  
   const shares = await getShares(true);
   
-  let files = selectedInstruments.map(instrument => {
+  const files = selectedInstruments.map(instrument => {
     if (!instrument) return;
     const insCode = instrument.InsCode;
     const cond = adjustPrices;
-    const closingPrices = prices[insCode];
-    if (cond === 1 || cond === 2) {
-      return adjust(cond, closingPrices, shares, insCode);
-    } else {
-      return closingPrices;
-    }
-  });
-  files = files.map(closingPrices => {
-    if (!closingPrices.length) return;
-    const instrument = selectedInstruments.find(v => v.InsCode === closingPrices[0].InsCode);
-    let str = headerRow;
-    closingPrices.forEach(closingPrice => {
-      if ( Big(closingPrice.DEven).lt(startDate) ) return;
+    
+    const closingPrices = cond === 1 || cond === 2
+      ? adjust(cond, prices[insCode], shares, insCode)
+      : prices[insCode];
+    
+    
+    let str = '' + headerRow;
+    
+    for (const closingPrice of closingPrices) {
+      if ( Big(closingPrice.DEven).lt(startDate) ) continue;
+      if ( Big(closingPrice.ZTotTran).eq(0) && !daysWithoutTrade ) continue;
+      
       for (const column of columns) {
-        if (!Big(closingPrice.ZTotTran).eq(0) || settings.daysWithoutTrade) {
-          str += getCell(column.name, instrument, closingPrice, adjustPrices);
-          str += delimiter;
-        }
+        const cell = getCell(column.name, instrument, closingPrice, adjustPrices);
+        str += cell + delimiter;
       }
       if (str !== '') {
         str = str.slice(0, -1);
         str += '\n';
       }
-    });
-    str = str.slice(0, -1);
+    }
+    
     return str;
   });
   
@@ -157,7 +155,7 @@ function adjust(cond, closingPrices, shares, insCode) {
 
 function suffix(YMarNSC, adjustPrices, fa=false) {
   let str = '';
-  if (YMarNSC != 'ID') {
+  if (YMarNSC !== 'ID') {
     if (adjustPrices === 1) {
       str = fa ? '-ت' : '-a';
     } else if (adjustPrices === 2) {
