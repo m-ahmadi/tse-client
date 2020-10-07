@@ -11,14 +11,14 @@ npm install tse-client -g
 ### CLI usage
 First thing to do after install:
 ```shell
-tse --update-instruments
+tse update --instruments
 ```
 
 #### Basic
 ```shell
-tse --update-instruments
+tse update --instruments
 tse select فولاد ذوب
-tse --update-prices
+tse update --prices
 tse export --out-dir /path/to/dir
 ```
 
@@ -30,7 +30,7 @@ tse export --out-dir /path/to/dir
 
 #### Select columns and specify their headers
 ```shell
-tse select -c "6,OPEN 7,HIGH 8,LOW 10,CLOSE"
+tse select -c "6:OPEN 7:HIGH 8:LOW 10:CLOSE"
 tse export --out-dir /path/to/dir
 ```
 
