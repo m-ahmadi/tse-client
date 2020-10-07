@@ -42,9 +42,11 @@ class Column {
     const len = row.length;
     if (len > 2 || len < 1) throw new Error('Invalid Column data!');
     
-    this.name   = names[ row[0] ];
-    this.fname  = fnames[ row[0] ];
-    this.header = row[1];
+    const [index, header] = row;
+    
+    this.name   = names[index];
+    this.fname  = fnames[index];
+    this.header = header;
   }
 }
 
