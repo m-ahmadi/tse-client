@@ -12,7 +12,7 @@ require('./lib/colors');
 const _settings              = require('./lib/settings');
 const getSelectedInstruments = require('./lib/getSelectedInstruments');
 const getShares              = require('./lib/getShares');
-const getColumns             = require('./lib/getColumns')();
+const getColumns             = require('./lib/getColumns');
 const getClosingPrices       = require('./lib/getClosingPrices');
 const util                   = require('./lib/util');
 

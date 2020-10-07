@@ -8,16 +8,16 @@ const defaultSettings = {
   selectedColumns: [],
   selectedExportSettings: {},
   defaultColumns: [
-    2, '<TICKER>',
-    4, '<DTYYYYMMDD>',
-    6, '<OPEN>',
-    7, '<HIGH>',
-    8, '<LOW>',
-    10, '<CLOSE>',
-    12, '<VOL>',
-    11, '<PRICE>',
-    13, '<COUNT>',
-    14, '<YESTERDAY>'
+    [2, '<TICKER>'],
+    [4, '<DTYYYYMMDD>'],
+    [6, '<OPEN>'],
+    [7, '<HIGH>'],
+    [8, '<LOW>'],
+    [10, '<CLOSE>'],
+    [12, '<VOL>'],
+    [11, '<PRICE>'],
+    [13, '<COUNT>'],
+    [14, '<YESTERDAY>']
   ],
   defaultExportSettings: {
     fileName: 4,
@@ -43,4 +43,3 @@ const defaultSettings = {
     fs.mkdirSync(cacheDir);
   }
 })();
-
