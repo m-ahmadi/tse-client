@@ -4,9 +4,9 @@ const { join } = require('path');
 const defaultSettings = {
   cacheDir: join(__dirname, '../data'),
   lastInstrumentUpdate: 'never',
-  selectedInstruments: [],
+  selectedSymbols: [],
   selectedColumns: [],
-  selectedExport: {},
+  selectedExportSettings: {},
   defaultColumns: [
     2, '<TICKER>',
     4, '<DTYYYYMMDD>',
@@ -19,7 +19,7 @@ const defaultSettings = {
     13, '<COUNT>',
     14, '<YESTERDAY>'
   ],
-  defaultExport: {
+  defaultExportSettings: {
     fileName: 4,
     fileExtension: 'csv',
     delimiter: ',',

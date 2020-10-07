@@ -20,7 +20,7 @@ module.exports = async function (userSettings) {
   const selectedInstruments = await getSelectedInstruments(true);
   if (!selectedInstruments.length) { util.msg('No selected instruments.'); return; }
   
-  const defaultSettings = await _settings.get('defaultExport');
+  const defaultSettings = await _settings.get('defaultExportSettings');
   const settings = {...defaultSettings, ...userSettings};
   const { adjustPrices, delimiter } = settings;
   let { startDate } = settings;
