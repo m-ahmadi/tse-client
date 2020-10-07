@@ -22,8 +22,8 @@ class Instrument {
     this.CGrValCot    = row[12];
     this.YMarNSC      = row[13];
     this.CComVal      = row[14];
-    this.CSecVal      = row[15];
-    this.CSoSecVal    = row[16];
+    this.CSecVal      = row[15].trim();
+    this.CSoSecVal    = row[16].trim();
     this.YVal         = row[17];
   }
 }
