@@ -1,48 +1,68 @@
-const fetch   = require('node-fetch');
-const Big     = require('big.js');
-const jalaali = require('jalaali-js');
+(function () {
+const isNode    = (function(){return typeof global!=='undefined'&&this===global})();
+const isBrowser = (function(){return typeof window!=='undefined'&&this===window})();
+const fetch   = isNode ? require('node-fetch') : isBrowser ? window.fetch   : undefined;
+const Big     = isNode ? require('big.js')     : isBrowser ? window.Big     : undefined;
+const jalaali = isNode ? require('jalaali-js') : isBrowser ? window.jalaali : undefined;
+if (isBrowser) {
+  if (!Big)         throw new Error('Cannot find required dependecy: Big');
+  if (!jalaali)     throw new Error('Cannot find required dependecy: jalaali');
+  if (!localforage) throw new Error('Cannot find required dependecy: localforage');
+}
 //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 // storage
 const storage = (function () {
-  const { existsSync, mkdirSync, readFileSync, writeFileSync, statSync } = require('fs');
-  const { join } = require('path');
+  let instance;
   
-  let datadir;
-  const home = require('os').homedir();
-  const defaultdir = join(home, 'tse-cache');
-  const pathfile   = join(home, '.tse');
-  if ( existsSync(pathfile) ) {
-    datadir = readFileSync(pathfile, 'utf8'); 
-    try { statSync(datadir).isDirectory(); } catch { datadir = defaultdir; }
-  } else {
-    datadir = defaultdir;
-    if ( !existsSync(datadir) ) mkdirSync(datadir);
-    writeFileSync(pathfile, datadir);
+  if (isNode) {
+    const { existsSync, mkdirSync, readFileSync, writeFileSync, statSync } = require('fs');
+    const { join } = require('path');
+    
+    let datadir;
+    const home = require('os').homedir();
+    const defaultdir = join(home, 'tse-cache');
+    const pathfile   = join(home, '.tse');
+    if ( existsSync(pathfile) ) {
+      datadir = readFileSync(pathfile, 'utf8');
+      try { statSync(datadir).isDirectory(); } catch { datadir = defaultdir; }
+    } else {
+      datadir = defaultdir;
+      if ( !existsSync(datadir) ) mkdirSync(datadir);
+      writeFileSync(pathfile, datadir);
+    }
+    
+    const store = Object.create(null);
+    
+    const getItem = (key) => {
+      key = key.replace('tse.', '');
+      const file = join(datadir, `${key}.csv`);
+      if ( !existsSync(file) ) writeFileSync(file, '');
+      if ( !(key in store) ) store[key] = readFileSync(file, 'utf8');
+      return store[key];
+    };
+    
+    const setItem = (key, value) => {
+      key = key.replace('tse.', '');
+      store[key] = value;
+      writeFileSync(join(datadir, `${key}.csv`), value);
+    };
+    
+    instance = {
+      getItem,
+      setItem,
+      getItemAsync: (key)        => new Promise( (resolve) => resolve(getItem(key)) ),
+      setItemAsync: (key, value) => new Promise( (resolve) => resolve(setItem(key, value)) )
+    };
+  } else if (isBrowser) {
+    instance = {
+      getItem: (key)        => localStorage.getItem(key),
+      setItem: (key, value) => localStorage.setItem(key, value),
+      getItemAsync: async (key)        => await localforage.getItem(key),
+      setItemAsync: async (key, value) => await localforage.setItem(key, value)
+    };
   }
   
-  const store = Object.create(null);
-  
-  const getItem = (key) => {
-    key = key.replace('tse.', '');
-    const file = join(datadir, `${key}.csv`);
-    if ( !existsSync(file) ) writeFileSync(file, '');
-    if ( !(key in store) ) store[key] = readFileSync(file, 'utf8');
-    return store[key];
-  };
-  
-  const setItem = (key, value) => {
-    key = key.replace('tse.', '');
-    store[key] = value;
-    writeFileSync(join(datadir, `${key}.csv`), value);
-  };
-  
-  return {
-    getItem,
-    setItem,
-    getItemAsync: (key)        => new Promise( (resolve) => resolve(getItem(key)) ),
-    setItemAsync: (key, value) => new Promise( (resolve) => resolve(setItem(key, value)) )
-  };
-  
+  return instance;
 })();
 //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 let API_URL = 'http://service.tsetmc.com/tsev2/data/TseClient2.aspx';
@@ -314,8 +334,8 @@ function getCell(columnName, instrument, closingPrice) {
 }
 //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 let UPDATE_INTERVAL           = 1;
-let PRICES_UPDATE_CHUNK       = 10;
-let PRICES_UPDATE_CHUNK_DELAY = 500;
+let PRICES_UPDATE_CHUNK       = isBrowser ? 10  : 50;
+let PRICES_UPDATE_CHUNK_DELAY = isBrowser ? 500 : 3000;
 let PRICES_UPDATE_RETRY_COUNT = 3;
 let PRICES_UPDATE_RETRY_DELAY = 5000;
 const defaultSettings = {
@@ -614,7 +634,7 @@ async function getPrices(symbols=[], settings={}) {
   return res;
 }
 
-module.exports = {
+const instance = {
   getInstruments,
   getPrices,
   
@@ -645,3 +665,9 @@ module.exports = {
     return [...Array(15)].map((v,i) => ({name: cols[i], fname: colsFa[i]}));
   }
 };
+if (isNode) {
+  module.exports = instance;
+} else if (isBrowser) {
+  window.tse = instance;
+}
+})();
