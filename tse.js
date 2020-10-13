@@ -610,12 +610,16 @@ async function getInstruments(struct=true, arr=true, structKey='InsCode') {
 
 async function getPrices(symbols=[], settings={}) {
   if (!symbols.length) return;
+  const result = { prices: [], error: undefined };
   
   await updateInstruments();
   const instruments = parseInstruments(true, undefined, 'Symbol');
   const selection = symbols.map(i => instruments[i]);
   const notFounds = symbols.filter((v,i) => !selection[i]);
-  if (notFounds.length) { console.error('Incorrect symbol names:', notFounds); return; }
+  if (notFounds.length) {
+    result.error = { code: 1, title: 'Incorrect Symbol', symbols: notFounds };
+    return result;
+  }
   
   settings = {...defaultSettings, ...settings};
   const { adjustPrices, startDate, daysWithoutTrade } = settings;
@@ -623,10 +627,9 @@ async function getPrices(symbols=[], settings={}) {
   await parseStoredPrices();
   
   const { succs, fails } = await updatePrices(selection, startDate);
-  const [ slen, flen ] = [succs, fails].map(i => Object.keys(i).length);
   
-  if (flen) {
-    warn(`Incomplete Price Update:  Failed: ${flen} - Updated: ${slen} (after ${PRICES_UPDATE_RETRY_COUNT} retries)`);
+  if (fails.length) {
+    result.error = { code: 2, title: 'Incomplete Price Update', fails, succs };
     const failKeys = Object.keys(fails);
     selection.forEach((v,i,a) => failKeys.includes(v.InsCode) ? a[i] = undefined : 0);
   }
@@ -648,7 +651,7 @@ async function getPrices(symbols=[], settings={}) {
     return { ...column, header: finalHeader };
   });
   
-  const res = selection.map(instrument => {
+  result.prices = selection.map(instrument => {
     if (!instrument) return;
     const res = {};
     columns.forEach(col => res[col.header] = []);
@@ -673,7 +676,7 @@ async function getPrices(symbols=[], settings={}) {
     return res;
   });
   
-  return res;
+  return result;
 }
 
 const instance = {
