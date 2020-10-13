@@ -4,11 +4,21 @@ const jalaali = require('jalaali-js');
 //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 // storage
 const storage = (function () {
-  const { existsSync, mkdirSync, readFileSync, writeFileSync } = require('fs');
+  const { existsSync, mkdirSync, readFileSync, writeFileSync, statSync } = require('fs');
   const { join } = require('path');
   
-  const datadir = join(__dirname, 'data');
-  if ( !existsSync(datadir) ) mkdirSync(datadir);
+  let datadir;
+  const home = require('os').homedir();
+  const defaultdir = join(home, 'tse-cache');
+  const pathfile   = join(home, '.tse');
+  if ( existsSync(pathfile) ) {
+    datadir = readFileSync(pathfile, 'utf8'); 
+    try { statSync(datadir).isDirectory(); } catch { datadir = defaultdir; }
+  } else {
+    datadir = defaultdir;
+    if ( !existsSync(datadir) ) mkdirSync(datadir);
+    writeFileSync(pathfile, datadir);
+  }
   
   const store = Object.create(null);
   
