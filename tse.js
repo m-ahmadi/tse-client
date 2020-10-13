@@ -410,29 +410,28 @@ async function parseStoredPrices() {
   }
 }
 
+function shouldUpdate(latest='') {
+  if (!latest) return true; // first time (never updated before)
+  
+  const today = new Date();
+  const daysPassed = dayDiff(dateToStr(today), latest);
+  const inWeekend = [4,5].includes( today.getDay() );
+  const lastUpdateWeekday = strToDate(latest).getDay();
+  
+  const result = daysPassed >= UPDATE_INTERVAL && !(
+    // no update needed if: we are in weekend but ONLY if last time we updated was on last day (wednesday) of THIS week
+    inWeekend &&
+    lastUpdateWeekday !== 3 && // not wednesday
+    daysPassed <= 3            // and wednesday of this week
+  );
+  
+  return result; 
+}
+
 async function getLastPossibleDeven() {
   let lastPossibleDeven = storage.getItem('tse.lastPossibleDeven');
   
-  let shouldUpdate;
-  
-  if (lastPossibleDeven) {
-    const today = new Date();
-    const daysPassed = dayDiff(dateToStr(today), lastPossibleDeven);
-    const inWeekend = [4,5].includes( today.getDay() );
-    const lastUpdateWeekday = strToDate(lastPossibleDeven).getDay();
-    
-    shouldUpdate = daysPassed >= UPDATE_INTERVAL && !(
-      // no update needed if: we are in weekend but ONLY if last time we updated was on last day (wednesday) of THIS week
-      inWeekend &&
-      lastUpdateWeekday !== 3 && // not wednesday
-      daysPassed <= 3            // and wednesday of this week
-    );
-  } else {
-    // first time (never updated before)
-    shouldUpdate = true;
-  }
-  
-  if (shouldUpdate) {
+  if ( shouldUpdate(lastPossibleDeven) ) {
     let error;
     const res = await rq.LastPossibleDeven().catch(err => error = err);
     if (error)                        throw new Error('Failed request: ',      'LastPossibleDeven: ', `(${error})`);
@@ -463,8 +462,7 @@ async function updateInstruments() {
     lastId    = Math.max(...shareIds);
   }
   
-  const lastPossibleDeven = await getLastPossibleDeven();
-  if (dayDiff(''+lastDeven, ''+lastPossibleDeven) < UPDATE_INTERVAL) return;
+  if ( !shouldUpdate(''+lastDeven) ) return;
   
   let error;
   const res = await rq.InstrumentAndShare(lastDeven, lastId).catch(err => error = err);
