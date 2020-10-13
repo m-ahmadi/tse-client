@@ -188,6 +188,7 @@ class Instrument {
   constructor(_row='') {
     const row = _row.split(',');
     if (row.length !== 18) throw new Error('Invalid Instrument data!');
+    // unspecified ones are all string
     this.InsCode      = row[0];         // int64 (long)
     this.InstrumentID = row[1];
     this.LatinSymbol  = row[2];
