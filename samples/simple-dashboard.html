@@ -140,7 +140,7 @@ async function makeChart(_symbol='', title='', w=+_w.value, h=+_h.value, monthsB
 function lastMonths(n=2) {
 	const d = new Date();
 	d.setMonth(d.getMonth() - n);
-	return (d.getFullYear()*10000) + ((d.getMonth()-1)*100) + d.getDate() + '';
+	return (d.getFullYear()*10000) + ((d.getMonth()+1)*100) + d.getDate() + '';
 }
 
 function formatNum(n) {
