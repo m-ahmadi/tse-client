@@ -575,7 +575,7 @@ async function updatePrices(instruments=[], startDeven) {
       }
     }
   }
-  let res = { succs: {}, fails: {} };
+  const res = { succs: {}, fails: {} };
   if (!Object.keys(updateNeeded).length) return res;
   
   const { succs, fails } = await updatePricesRetrier(updateNeeded);
