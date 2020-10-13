@@ -1,0 +1,32 @@
+<script src="https://cdn.jsdelivr.net/npm/big.js"></script>
+<script src="jalaali-js.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/localforage"></script>
+<script src="../tse.js"></script>
+
+
+<button onclick="update()">update</button> <input id="howmany" type="number" min="0" max="1000" step="10" value="20" /> instruments
+
+<br><br>
+
+<input type="number" min="1" max="60"    step="1"   value="10"   onchange="tse.PRICES_UPDATE_CHUNK = +this.value" />&emsp;&nbsp; PRICES_UPDATE_CHUNK <br>
+<input type="number" min="0" max="99999" step="500" value="500"  onchange="tse.PRICES_UPDATE_CHUNK_DELAY = +this.value" /> PRICES_UPDATE_CHUNK_DELAY  <br>
+<input type="number" min="0" max="99999" step="1"   value="3"    onchange="tse.PRICES_UPDATE_RETRY_COUNT = +this.value" /> PRICES_UPDATE_RETRY_COUNT  <br>
+<input type="number" min="0" max="99999" step="500" value="5000" onchange="tse.PRICES_UPDATE_RETRY_DELAY = +this.value" /> PRICES_UPDATE_RETRY_DELAY  <br>
+
+<br><br>
+
+<button onclick="localforage.clear()">clear indexedDB</button>
+
+
+<script>
+document.querySelectorAll('input[type=number]').forEach(i=> i.dispatchEvent(new Event('change')));
+
+async function update() {
+	const instruments = await tse.getInstruments();
+	
+	const toUpdate = instruments.slice(0,+howmany.value).map(i => i.Symbol);
+	const data = await tse.getPrices(toUpdate);
+	
+	console.log(data);
+}
+</script>

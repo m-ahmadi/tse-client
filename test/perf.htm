@@ -1,0 +1,38 @@
+<script src="https://cdn.jsdelivr.net/npm/big.js"></script>
+<script src="jalaali-js.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/localforage"></script>
+<script src="../tse.js"></script>
+
+
+<button onclick="update()">update</button> <input id="howmany" type="number" min="0" max="1000" step="10" value="50" /> instruments
+
+<br><br>
+
+<pre id="res"></pre>
+
+<button onclick="localforage.clear()">clear indexedDB</button>
+
+
+<script>
+let instruments;
+let data;
+tse.getInstruments().then(r => instruments = r);
+
+async function update() {
+	const toUpdate = instruments.slice(0,+howmany.value).map(i => i.Symbol);
+	
+	var t0 = performance.now();
+	data = await tse.getPrices(toUpdate);
+	var t1 = performance.now();
+	write('tse.getPrices() took <strong>', +(t1-t0).toFixed(1), '</strong> ms');
+	
+	console.log(data);
+}
+
+function write(...msgs) {
+	const div = document.createElement('div');
+	div.innerHTML = '<p>'+msgs.join(' ')+'</p>';
+	const msg = div.children[0];
+	res.append(msg);
+}
+</script>

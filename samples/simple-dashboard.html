@@ -1,0 +1,161 @@
+<meta charset="utf8"/><style>input[type=number]{width:60px;}</style>
+
+<button id="_add" onclick="makeChart(_syms.selectedOptions[0].value, _syms.selectedOptions[0].innerText, +_w.value, +_h.value, +_b.value), this.disabled=true, this.innerText = this.innerText+'...'">add</button>
+<select id="_syms">
+	<option value="شاخص کل6">شاخص کل</option>
+	<option value="شاخص کل (هم وزن)6">شاخص کل هم وزن</option>
+	<option value="شاخص کل فرابورس6">شاخص فرابورس</option>
+</select>
+<input id="_w" type="number" min="600" value="1900">
+<input id="_h" type="number" min="400" value="600">
+last<input id="_b" type="number" min="1" value="1" style="width:40px;">month(s)
+<button onclick="charts.forEach(i=>{i.canvas.parentElement.remove(); i.destroy(true)}), charts=[]">clear</button>
+
+<div id="_charts" style="display: grid; grid-template-columns: auto auto auto; row-gap: .5rem; column-gap: .2rem;"></div>
+
+<script src='https://cdn.jsdelivr.net/npm/tse-browser-client/dist/tse.bundle.min.js'></script>
+<script src='https://cdn.jsdelivr.net/npm/chart.js'></script>
+<script>
+let data = {};
+let charts = [];
+
+async function makeChart(_symbol='', title='', w=+_w.value, h=+_h.value, monthsBack=+_b.value) {
+	const [symbol] = await tse.getPrices([_symbol], {startDate: lastMonths(monthsBack)});
+	_add.disabled = false; _add.innerText = _add.innerText.slice(0,-3);
+	data[_symbol] = {...symbol};
+	
+	const div = document.createElement('div');
+	div.style.width = w;
+	div.style.height = h;
+	div.style.border = '1px solid grey';
+	div.innerHTML = '<canvas width="'+w+'" height="'+h+'"></canvas>';
+	_charts.style.gridTemplateColumns = Array(Math.floor(window.innerWidth / w)).fill('auto').join(' ');
+	_charts.append(div);
+	
+	const chg = symbol.close.map((n,i) => +(n - symbol.close[i-1] ).toFixed(0) );
+	const radiusIdx = Math.round(symbol.close.length / 20);
+	const pointRadius = [...[6,6,5,5,4,3,2,1,1,1,0,0], ...Array(100).fill(0)][radiusIdx];
+	
+	const chart = new Chart(div.children[0], {
+		type: 'bar',
+		data: {
+			labels: symbol.date.map(n => {
+				const s = ''+n;
+				const d = jalaali.toJalaali(+s.slice(0,4), +s.slice(4,6), +s.slice(6,8));
+				return d.jm +'-'+ d.jd;
+			}),
+			datasets: [
+				{
+					data: symbol.close,
+					type: 'line',
+					label: 'شاخص',
+					fill: false,
+					backgroundColor: 'dodgerblue',
+					borderColor: 'lightblue',
+					pointRadius: pointRadius, // 4
+					yAxisID: 'y1',
+				},
+				{
+					data: chg,
+					label: 'تغییر',
+					backgroundColor: chg.map(n => n > 0 ? 'green' : 'crimson'),
+					yAxisID: 'y2',
+				},
+			]
+		},
+		options: {
+			responsive: true,
+			title: {
+				display: true,
+				text: title + ' - ' + monthsBack + ' ماه قبل',
+				fontFamily: 'Calibri',
+				fontSize: 36,
+			},
+			legend: {
+				position: 'bottom',
+				labels: {
+					fontFamily: 'Calibri',
+					fontSize: 14,
+					fontStyle: 'bold'
+				},
+			},
+			scales: {
+				xAxes: [{
+					gridLines: {display: false},
+					scaleLabel: {
+						display: true,
+						labelString: 'زمان',
+						fontFamily: 'Calibri',
+						fontSize: 30
+					},
+					ticks: { maxRotation: 40 }
+				}],
+				yAxes: [
+					{
+						position: 'left',
+						id: 'y2',
+						scaleLabel: {
+							display: true,
+							labelString: 'مقدار تغییر',
+							fontFamily: 'Calibri',
+							fontSize: 24
+						},
+						ticks: {
+							callback: formatNum
+						}
+					},
+					{
+						position: 'right',
+						id: 'y1',
+						gridLines: {display: false},
+						scaleLabel: {
+							display: true,
+							labelString: 'مقدار شاخص',
+							fontFamily: 'Calibri',
+							fontSize: 24
+						},
+						ticks: {
+							callback: formatNum
+						}
+					}
+				]
+			},
+			tooltips: {
+				mode: 'index',
+				callbacks: {
+					title: (tooltips, obj) => {
+						let s = symbol.date[ tooltips[0].index ] + '';
+						let d = jalaali.toJalaali(+s.slice(0,4), +s.slice(4,6), +s.slice(6,8));
+						return (''+d.jy).slice(2) +'-'+ d.jm +'-'+ d.jd;
+					},
+					label: (tooltip, obj) => (+tooltip.value).toLocaleString(),
+				}
+			}
+		}
+	});
+	
+	charts.push(chart);
+}
+
+function lastMonths(n=2) {
+	const d = new Date();
+	d.setMonth(d.getMonth() - n);
+	return (d.getFullYear()*10000) + ((d.getMonth()+1)*100) + d.getDate() + '';
+}
+
+function formatNum(n) {
+	let res =
+		n <= -1e3 && n > -1e6 ? (n / 1e3) + ' K' :
+		n <= -1e6 && n > -1e9 ? (n / 1e6) + ' M' :
+		n <= -1e9             ? (n / 1e9) + ' B' :
+		n >=  1e3 && n <  1e6 ? (n / 1e3) + ' K' :
+		n >=  1e6 && n <  1e9 ? (n / 1e6) + ' M' :
+		n >=  1e9             ? (n / 1e9) + ' B' : n;
+	if (typeof res === 'string' && /\./.test(res)) {
+		const frac = res.match(/\.(\d+)/)[1];
+		const fracRound = (+frac * +('0.'+Array(frac.length-1).fill(0).join('')+'1') ).toFixed(2).slice(2);
+		res = res.replace(/(\-?)(\d+)\.\d\d.*(\w)/,'$1$2.'+fracRound+' $3');
+	}
+	return res;
+}
+</script> 
