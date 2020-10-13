@@ -1,5 +1,40 @@
-(function () {
-
+const fetch   = require('node-fetch');
+const Big     = require('big.js');
+const jalaali = require('jalaali-js');
+//@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+// storage
+const storage = (function () {
+  const { existsSync, mkdirSync, readFileSync, writeFileSync } = require('fs');
+  const { join } = require('path');
+  
+  const datadir = join(__dirname, 'data');
+  if ( !existsSync(datadir) ) mkdirSync(datadir);
+  
+  const store = Object.create(null);
+  
+  const getItem = (key) => {
+    key = key.replace('tse.', '');
+    const file = join(datadir, `${key}.csv`);
+    if ( !existsSync(file) ) writeFileSync(file, '');
+    if ( !(key in store) ) store[key] = readFileSync(file, 'utf8');
+    return store[key];
+  };
+  
+  const setItem = (key, value) => {
+    key = key.replace('tse.', '');
+    store[key] = value;
+    writeFileSync(join(datadir, `${key}.csv`), value);
+  };
+  
+  return {
+    getItem,
+    setItem,
+    getItemAsync: (key)        => new Promise( (resolve) => resolve(getItem(key)) ),
+    setItemAsync: (key, value) => new Promise( (resolve) => resolve(setItem(key, value)) )
+  };
+  
+})();
+//@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 let API_URL = 'http://service.tsetmc.com/tsev2/data/TseClient2.aspx';
 
 const rq = {
@@ -116,7 +151,7 @@ class Share {
 //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 // utils
 function parseInstruments(struct=false, arr=false, structKey='InsCode') {
-  const rows = localStorage.getItem('tse.instruments').split(';');
+  const rows = storage.getItem('tse.instruments').split(';');
   const instruments = arr ? [] : {};
   for (const row of rows) {
     const item = struct ? new Instrument(row) : row;
@@ -130,7 +165,7 @@ function parseInstruments(struct=false, arr=false, structKey='InsCode') {
   return instruments;
 }
 function parseShares(struct=false, arr=false, structKey='InsCode') {
-  const rows = localStorage.getItem('tse.shares').split(';');
+  const rows = storage.getItem('tse.shares').split(';');
   const shares = arr ? [] : {};
   for (const row of rows) {
     const item = struct ? new Share(row) : row;
@@ -292,7 +327,7 @@ const { warn } = console;
 const storedPrices = {};
 
 async function parseStoredPrices() {
-  const storedStr = await localforage.getItem('tse.prices');
+  const storedStr = await storage.getItemAsync('tse.prices');
   if (!storedStr) return storedPrices;
   
   const strs = storedStr.split('@');
@@ -304,7 +339,7 @@ async function parseStoredPrices() {
 }
 
 async function getLastPossibleDeven() {
-  let lastPossibleDeven = localStorage.getItem('tse.lastPossibleDeven');
+  let lastPossibleDeven = storage.getItem('tse.lastPossibleDeven');
   
   let shouldUpdate;
   
@@ -331,14 +366,14 @@ async function getLastPossibleDeven() {
     if (error)                        throw new Error('Failed request: ',      'LastPossibleDeven: ', `(${error})`);
     if ( !/^\d{8};\d{8}$/.test(res) ) throw new Error('Invalid server response: LastPossibleDeven');
     lastPossibleDeven = res.split(';')[0] || res.split(';')[1];
-    localStorage.setItem('tse.lastPossibleDeven', lastPossibleDeven);
+    storage.setItem('tse.lastPossibleDeven', lastPossibleDeven);
   }
   
   return +lastPossibleDeven;
 }
 
 async function updateInstruments() {
-  const lastUpdate = localStorage.getItem('tse.lastInstrumentUpdate');
+  const lastUpdate = storage.getItem('tse.lastInstrumentUpdate');
   let lastDeven;
   let lastId;
   let currentInstruments;
@@ -376,7 +411,7 @@ async function updateInstruments() {
       instruments.split(';').forEach(i => currentInstruments[ i.match(/^\d+\b/)[0] ] = i);
       instruments = Object.keys(currentInstruments).map(k => currentInstruments[k]).join(';');
     }
-    localStorage.setItem('tse.instruments', instruments);
+    storage.setItem('tse.instruments', instruments);
   }
   
   if (shares !== '') {
@@ -384,11 +419,11 @@ async function updateInstruments() {
       shares.split(';').forEach(i => currentShares[ i.split(',',1)[0] ] = i);
       shares = Object.keys(currentShares).map(k => currentShares[k]).join(';');
     }
-    localStorage.setItem('tse.shares', shares);
+    storage.setItem('tse.shares', shares);
   }
   
   if ((instruments !== '' && instruments !== '*') || shares !== '') {
-    localStorage.setItem('tse.lastInstrumentUpdate', dateToStr(new Date()));
+    storage.setItem('tse.lastInstrumentUpdate', dateToStr(new Date()));
   }
 }
 
@@ -491,7 +526,7 @@ async function updatePrices(instruments=[], startDeven) {
   for (let i=0, n=keys.length; i<n; i++) str += storedPrices[ keys[i] ] + '@';
   str = str.slice(0, -1);
   
-  await localforage.setItem('tse.prices', str);
+  await storage.setItemAsync('tse.prices', str);
   
   return res;
 }
@@ -569,7 +604,7 @@ async function getPrices(symbols=[], settings={}) {
   return res;
 }
 
-window.tse = {
+module.exports = {
   getInstruments,
   getPrices,
   
@@ -600,4 +635,3 @@ window.tse = {
     return [...Array(15)].map((v,i) => ({name: cols[i], fname: colsFa[i]}));
   }
 };
-})();
