@@ -8,7 +8,7 @@ Object.keys(c).forEach(k => String.prototype.__defineGetter__(k, function(){retu
 (async () => {
   let fail;
   
-  const files = readdirSync(join(__dirname,'./')).filter(i=>!/^index|#/.test(i));
+  const files = readdirSync(join(__dirname,'./')).filter(i=>!/^index|#|browser/.test(i));
   for (const file of files) {
     log(file.y);
     let test, res, err;

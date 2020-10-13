@@ -6,18 +6,20 @@
 <script src="https://cdn.jsdelivr.net/npm/big.js"></script>
 <script src="jalaali-js.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/localforage"></script>
-<script src="../tse.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pako/dist/pako.min.js"></script>
+<script src="../../tse.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/uplot/dist/uPlot.iife.min.js"></script>
+
 
 <div id="content"></div>
 
 <script>
 (async function () {
-	const data = await tse.getPrices(['ذوب', 'فولاد']);
-	const adjustedData = await tse.getPrices(['خساپا'], {adjustPrices: 1});
+	const { prices: data } = await tse.getPrices(['ذوب', 'فولاد']);
+	const { prices: adjustedData } = await tse.getPrices(['خساپا'], {adjustPrices: 1});
 
-	const customCols1 = await tse.getPrices(['شپنا'], {columns: [4,7,8]}); // default names
-	const customCols2 = await tse.getPrices(['شپنا'], {columns: [[4,'DATE'],[7,'MAX'],[8,'MIN']]}); // custom names
+	const { prices: customCols1 } = await tse.getPrices(['شپنا'], {columns: [4,7,8]}); // default names
+	const { prices: customCols2 } = await tse.getPrices(['شپنا'], {columns: [[4,'DATE'],[7,'MAX'],[8,'MIN']]}); // custom names
 	
 	// making some charts:
 	makeChart(data[0], 'ذوب (پایانی)');

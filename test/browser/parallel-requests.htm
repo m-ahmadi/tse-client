@@ -1,7 +1,8 @@
 <script src="https://cdn.jsdelivr.net/npm/big.js"></script>
 <script src="jalaali-js.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/localforage"></script>
-<script src="../tse.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pako/dist/pako.min.js"></script>
+<script src="../../tse.js"></script>
 
 
 <button onclick="update()">update</button> <input id="howmany" type="number" min="0" max="1000" step="10" value="20" /> instruments
@@ -25,7 +26,7 @@ async function update() {
 	const instruments = await tse.getInstruments();
 	
 	const toUpdate = instruments.slice(0,+howmany.value).map(i => i.Symbol);
-	const data = await tse.getPrices(toUpdate);
+	const { prices: data } = await tse.getPrices(toUpdate);
 	
 	console.log(data);
 }
