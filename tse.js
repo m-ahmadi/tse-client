@@ -17,6 +17,7 @@ const storage = (function () {
   if (isNode) {
     const { existsSync, mkdirSync, readFileSync, writeFileSync, statSync } = require('fs');
     const { join } = require('path');
+    const { gzipSync, gunzipSync } = require('zlib');
     
     let datadir;
     const home = require('os').homedir();
@@ -47,18 +48,49 @@ const storage = (function () {
       writeFileSync(join(datadir, `${key}.csv`), value);
     };
     
-    instance = {
-      getItem,
-      setItem,
-      getItemAsync: (key)        => new Promise( (resolve) => resolve(getItem(key)) ),
-      setItemAsync: (key, value) => new Promise( (resolve) => resolve(setItem(key, value)) )
-    };
+    const getItemAsync = (key, zip=false) => new Promise((done, fail) => {
+      key = key.replace('tse.', '');
+      const file = join(datadir, `${key}.csv` + (zip?'.gz':''));
+      if ( !existsSync(file) ) { done(''); return; };
+      if ( !(key in store) ) {
+        const content = readFileSync(file, zip?undefined:'utf8');
+        store[key] = zip ? gunzipSync(content).toString() : content;
+      }
+      done(store[key]);
+    });
+    
+    const setItemAsync = (key, value, zip=false) => new Promise((done, fail) => {
+      key = key.replace('tse.', '');
+      store[key] = value;
+      const file = join(datadir, `${key}.csv` + (zip?'.gz':''));
+      writeFileSync(file, zip ? gzipSync(value) : value);
+      done();
+    });
+    
+    instance = { getItem, setItem, getItemAsync, setItemAsync };
   } else if (isBrowser) {
+    const pako = window.pako || undefined;
+    
+    const getItemAsync = async (key, zip=false) => {
+      const stored = await localforage.getItem(key);
+      if (!stored || !pako) return stored;
+      return zip ? pako.ungzip(stored, {to: 'string'}) : stored;
+    };
+    
+    const setItemAsync = async (key, value, zip=false) => {
+      if (!pako) {
+        await localforage.setItem(key, value);
+        return;
+      }
+      const rdy = zip ? pako.gzip(value) : value;
+      await localforage.setItem(key, rdy);
+    };
+    
     instance = {
       getItem: (key)        => localStorage.getItem(key),
       setItem: (key, value) => localStorage.setItem(key, value),
-      getItemAsync: async (key)        => await localforage.getItem(key),
-      setItemAsync: async (key, value) => await localforage.setItem(key, value)
+      getItemAsync,
+      setItemAsync
     };
   }
   
@@ -357,7 +389,7 @@ const { warn } = console;
 const storedPrices = {};
 
 async function parseStoredPrices() {
-  const storedStr = await storage.getItemAsync('tse.prices');
+  const storedStr = await storage.getItemAsync('tse.prices', true);
   if (!storedStr) return storedPrices;
   
   const strs = storedStr.split('@');
@@ -556,7 +588,7 @@ async function updatePrices(instruments=[], startDeven) {
   for (let i=0, n=keys.length; i<n; i++) str += storedPrices[ keys[i] ] + '@';
   str = str.slice(0, -1);
   
-  await storage.setItemAsync('tse.prices', str);
+  await storage.setItemAsync('tse.prices', str, true);
   
   return res;
 }
