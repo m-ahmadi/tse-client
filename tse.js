@@ -67,7 +67,16 @@ const storage = (function () {
       done();
     });
     
-    instance = { getItem, setItem, getItemAsync, setItemAsync };
+    instance = {
+      getItem, setItem, getItemAsync, setItemAsync,
+      get CACHE_DIR() { return datadir.replace(/\\/g,'/'); },
+      set CACHE_DIR(newdir) {
+        if ( typeof newdir === 'string' && existsSync(newdir) && statSync(newdir).isDirectory() ) {
+          datadir = newdir;
+          writeFileSync(pathfile, datadir);
+        }
+      }
+    };
   } else if (isBrowser) {
     const pako = window.pako || undefined;
     
@@ -698,6 +707,10 @@ const instance = {
   }
 };
 if (isNode) {
+  Object.defineProperty(instance, 'CACHE_DIR', {
+    get: () => storage.CACHE_DIR,
+    set: v => storage.CACHE_DIR = v
+  });
   module.exports = instance;
 } else if (isBrowser) {
   window.tse = instance;
