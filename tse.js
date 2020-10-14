@@ -71,9 +71,12 @@ const storage = (function () {
       getItem, setItem, getItemAsync, setItemAsync,
       get CACHE_DIR() { return datadir.replace(/\\/g,'/'); },
       set CACHE_DIR(newdir) {
-        if ( typeof newdir === 'string' && existsSync(newdir) && statSync(newdir).isDirectory() ) {
-          datadir = newdir;
-          writeFileSync(pathfile, datadir);
+        if (typeof newdir === 'string') {
+          if ( !existsSync(newdir) ) mkdirSync(newdir);
+          if ( statSync(newdir).isDirectory() ) {
+            datadir = newdir;
+            writeFileSync(pathfile, datadir);
+          }
         }
       }
     };
