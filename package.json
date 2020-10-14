@@ -15,11 +15,11 @@
     "url": "git+https://github.com/m-ahmadi/tse-client.git"
   },
   "keywords": [
-    "stock",
-    "securities",
-    "exchange",
-    "tehran",
-    "tse"
+    "stock-market-data",
+    "tehran-stock-exchange",
+    "tse",
+    "tsetmc",
+    "data-fetching-client"
   ],
   "author": "Mohammad Ahmadi",
   "license": "MIT",
