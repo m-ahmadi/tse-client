@@ -109,8 +109,8 @@ const storage = (function () {
   return instance;
 })();
 //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+// request
 let API_URL = 'http://service.tsetmc.com/tsev2/data/TseClient2.aspx';
-
 const rq = {
   Instrument(DEven) {
     const params = {
