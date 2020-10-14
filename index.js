@@ -1,353 +1,327 @@
 #!/usr/bin/env node
+const tse = require('./tse.js');
+if (require.main !== module) {
+  module.exports = tse;
+  return;
+}
 const cmd = require('commander');
-require('./lib/colors');
+const { readFileSync, writeFileSync, existsSync, statSync, mkdirSync } = require('fs');
+const { join, resolve } = require('path');
+const { toGregorian } = require('jalaali-js');
+require('./lib/colors.js');
+
+if ( !existsSync(join(__dirname,'settings.json')) ) resetDefaults();
+const settings = require('./settings.json');
+const { log } = console;
 
 cmd
   .helpOption('-h, --help', 'Show help.')
   .name('tse')
-  .usage('[command] [options]\n  tse update --instruments\n  tse search faSymbol -b symbol\n  tse select faSymbol1 faSymbol2 [faSymbol3 ...]\n  tse update --prices\n  tse export --out-dir /tsedata')
+  .usage('[symbols] [options]\n  tse faSymbol1 faSymbol2 -o /tsedata -x txt -e utf8 -H')
   .description('A client for receiving stock data from the Tehran Stock Exchange (TSE).')
-  .option('--cache-dir [path]',            'Show or change the location of cacheDir.\n\t\t\t\t\t  if [path] is provided, new location is set and\n\t\t\t\t\t  existing content is moved to the new location.')
-  .version(''+JSON.parse(require('fs').readFileSync(require('path').join(__dirname, 'package.json'), 'utf8')).version, '-v, --version', 'Show version number.');
+  .option('-s, --symbol <string>',           '"faSymbol faSymbol ..."')
+  .option('-f, --symbol-file <string>',      'path/to/file "faSymbol \\n fasymbol ..."')
+  .option('-m, --symbol-filter <string>',    '"m=id,id... t=id,id... i=id,id..."')
+  .option('-d, --symbol-delete',             'true/false', false)
+  .option('-a, --symbol-all',                'true/false', false)
+  .option('-c, --price-columns <string>',    '1,2 | 1:a 2:b', '4:DATE 6:OPEN 7:HIGH 8:LOW 9:LAST 10:CLOSE 12:VOL')
+  .option('-j, --price-adjust <number>',     '0|1|2 as none|capinc + dividend|capinc', 0)
+  .option('-b, --price-start-date <string>', 'Shamsi YYYYMMDD min: 13800101 as ^\\d{8}$ or Relative as ^\\d+(y|m|d)$', '3m') // 13800101
+  .option('-t, --price-days-without-trade',  'true/false', false)
+  .option('-o, --file-outdir <string>',      '', './')
+  .option('-n, --file-name <number>',        '0|1|2|3|4 as isin_code|latin_name|latin_symbol|farsi_name|farsi_symbol', '4')
+  .option('-x, --file-extension <string>',   '', 'csv')
+  .option('-l, --file-delimiter <string>',   '', ',')
+  .option('-e, --file-encoding <string>',    'utf8|utf8bom|ascii', 'utf8bom')
+  .option('-H, --file-headers',              'true/false', false)
+  .option('--save',                          'true/false', false)
+  .option('--save-reset',                    'true/false', false)
+  .option('--cache-dir [path]',              'Show or change the location of cacheDir.\n\t\t\t\t\t  if [path] is provided, new location is set and\n\t\t\t\t\t  existing content is moved to the new location.')
+  .version(''+JSON.parse(readFileSync(join(__dirname, 'package.json'), 'utf8')).version, '-v, --version', 'Show version number.')
 cmd.command('list').alias('ls').description('Show information about current settings and more. (help: tse ls -h)')
-  .option('-s, --selected-symbols',        'List currently selected symbols.')
-  .option('-c, --selected-columns',        'List currently selected columns.')
-  .option('-l, --last-instruments-update', 'Show the date of last instruments update.')
-  .option('-x, --current-export-settings', 'List current export settings.')
-  .option('-f, --filter-match <string>',   'List symbols that match a filter string. (same string syntax as: tse s -f)')
-  .option('-a, --all-columns',             'Show all possible column indexes.')
-  .option('-m, --id-market',               'Show all possible market-type IDs. "Instrument.Flow"')
-  .option('-t, --id-symbol',               'Show all possible symbol-type IDs. "Instrument.YVal"')
-  .option('-i, --id-industry',             'Show all possible industry-sector IDs. "Instrument.CSecVal"')
-  .option('-b, --id-board',                'Show all possible board IDs. "Instrument.CComVal"')
-  .option('-y, --id-market-code',          'Show all possible market-code IDs. "Instrument.YMarNSC"')
-  .option('-g, --id-symbol-gcode',         'Show all possible symbol-group IDs. "Instrument.CGrValCot"')
-  .option('-o, --id-sort [columnIndex]',   'Sort the IDs table by specifying the index of the column. Negative number means ascending sort.', 1)
+  .option('-S, --saved-symbols',             'List saved symbols.')
+  .option('-D, --saved-settings',            'List saved settings.')
+  .option('-L, --last-update',               'Show the date of last instruments update.')
+  .option('-F, --filter-match <string>',     'List symbols that match a filter string. (same string syntax as: tse s -f)')
+  .option('-A, --all-columns',               'Show all possible column indexes.')
+  .option('-M, --id-market',                 'Show all possible market-type IDs. "Instrument.Flow"')
+  .option('-T, --id-symbol',                 'Show all possible symbol-type IDs. "Instrument.YVal"')
+  .option('-I, --id-industry',               'Show all possible industry-sector IDs. "Instrument.CSecVal"')
+  .option('-B, --id-board',                  'Show all possible board IDs. "Instrument.CComVal"')
+  .option('-Y, --id-market-code',            'Show all possible market-code IDs. "Instrument.YMarNSC"')
+  .option('-G, --id-symbol-gcode',           'Show all possible symbol-group IDs. "Instrument.CGrValCot"')
+  .option('-O, --id-sort [columnIndex]',     'Sort the IDs table by specifying the index of the column. put underline at end for ascending sort: 1_', 1)
+  .option('--search <query>',                'Search symbols.')
   .action(list);
-cmd.command('search <query>').alias('f').description('Search in instrument symbols or names. (or both)\n\t\t\t\t\t  specify which with -b option. default: both')
-  .option('-t, --search-in <what>',        'Specify search criteria.\n\t\t\t\t\toptions: symbol|name|both', 'both')
-  .action(search);
-cmd.command('select [input...]').alias('s').description('Select symbols and columns. (help: tse s -h)\n\t\t\t\t\t  if any hyphenless arg is provided then\n\t\t\t\t\t  each arg is treated as one symbol.\n\t\t\t\t\t  example: tse s sym1 sym2 sym3')
-  .option('-s, --symbols <string>',        'The space separated string of symbols to select.')
-  .option('-c, --columns <string>',        'The space/comma separated string of columns to select. Format:\n\t\t\t\t"index1,index2,..."\n\t\t\t\t"index1:header1 index2:header2 ..."')
-  .option('-p, --symbols-file <path>',     'Select symbols from a file that contains newline seperated symbols.')
-  .option('-f, --symbols-filter <string>', 'Select symbols based on a space seperated filter string. (AND-based)\n\t\t\t\t\tmarket type:     m=id,id,... \n\t\t\t\t\tsymbol type:     t=id,id,...\n\t\t\t\t\tindustry sector: i=id,id,...\n\t\t\t\t\texample:  tse s -f "t=300,303 i=27"\n\t\t\t\t\t(help: tse ls -m -t -i)"')
-  .option('--all',                         'Boolean. if true, then select/deselect all items. (symbols or columns)')
-  .option('-d, --remove',                  'Boolean. if true, then operation changes to de-select. (symbols or columns)')
-  .action(select);
-cmd.command('update').alias('u').description('Download data from the server. (help: tse u -h)')
-  .option('-i, --instruments',             'Update the list of instruments.')
-  .option('-p, --prices',                  'Update the data of selected instruments.')
-  .action(update);
-cmd.command('export').alias('x').description('Generate files for current selected instruments. (help: tse x -h)')
-  .option('-n, --file-name <num>',         'The filename used for the generated files. options: 0|1|2|3|4 default: 4\n\t\t\t\t\t0: isin code\n\t\t\t\t\t1: latin name\n\t\t\t\t\t2: latin symbol\n\t\t\t\t\t3: farsi name\n\t\t\t\t\t4: farsi symbol')
-  .option('-x, --file-extension <str>',    'The extension used for the generated files. default: "csv"')
-  .option('-d, --delimiter <char>',        'The delimiter used for the generated files. default: ","')
-  .option('-a, --adjust-prices <num>',     'Type of price adjustment for the generated files. options: 0|1|2 default: 0\n\t\t\t\t\t0: none\n\t\t\t\t\t1: share increase and dividends\n\t\t\t\t\t2: share increase')
-  .option('-e, --encoding <str>',          'Encoding of the generated files. options: utf8|utf8bom default: utf8bom')
-  .option('-m, --days-without-trade',      'Boolean. Wheater or not to include days without trade in the generated files. default: false')
-  .option('-b, --start-date <date>',       'Starting date of the generated files. default: "1380/01/01"\n\t\t\t\t\tmust be a shamsi/jalali date and forward-slash separated.\n\t\t\t\t\tinvalid: "13800101" | "1380-01-01"')
-  .option('-r, --no-headers',              'Boolean. Do not generate the header row. default: false')
-  .option('-o, --out-dir <path>',          'Location of the generated files. default: ./')
-  .option('--save',                        'Boolean. Save the passed options for future use.')
-  .action(xport);
 cmd.parse(process.argv);
 
-(async function () {
-  if (!cmd.args.length) cmd.help();
-  if (cmd.cacheDir) await cacheDirHandler(cmd.cacheDir);
-})();
+const subs = new Set( cmd.commands.map(i=>[i.name(),i.alias()]).reduce((a,c)=>a=a.concat(c),[]) );
+if (cmd.rawArgs.find(i=> subs.has(i))) return;
+if (cmd.cacheDir) { handleCacheDir(cmd.cacheDir); return; }
 
-async function list(opts) {
-  const { selectedSymbols, selectedColumns, allColumns, lastInstrumentsUpdate, currentExportSettings, filterMatch } = opts;
-  const settings = await require('./lib/settings').get();
-  const { log, table } = console;
-  
-  if (selectedSymbols) {
-    const last = settings.lastInstrumentUpdate;
-    if (settings.lastInstrumentUpdate === 'never') await require('./updateInstruments')();
-    const ins = await require('./lib/getInstruments')(true);
-    let selins = settings.selectedSymbols;
-    selins = selins.map(i => ins[i].Symbol).join('\n');
-    log('\nCurrently selected instruments:'.yellow);
-    table( selins.length ? selins.yellowBold : 'none'.yellow );
-  }
-  
-  if (selectedColumns) {
-    const getColumns = require('./lib/getColumns');
-    const selcols = await getColumns();
-    log('\nCurrently selected columns:'.yellow);
-    table(selcols);
-  }
-  
-  if (allColumns) {
-    const getColumns = require('./lib/getColumns');
-    const colstr = [...Array(15)].map((v,i)=>i).join(',');
-    const cols = await getColumns(undefined, require('./lib/parseColstr')(colstr));
-    log('\nAll valid column indexes:'.yellow);
-    table(cols);
-  }
-  
-  if (lastInstrumentsUpdate) {
-    const last = settings.lastInstrumentUpdate;
-    const { gregToShamsi: toShamsi, formatDateStr: format } = require('./lib/util');
-    const output = last === 'never' ? last.yellowBold : `${format(last).yellowBold} (${format(toShamsi(last)).cyan})`;
-    log('\nLast instruments update:'.yellow);
-    log(output);
-  }
-  
-  if (currentExportSettings) {
-    const toShow = {...settings.defaultExportSettings, ...settings.selectedExportSettings};
-    log('\nCurrent export settings:'.yellow);
-    table(toShow);
-  }
-  
-  if (filterMatch) {
-    const filters = parseFilterStr(filterMatch);
-    
-    if (filters) {
-      const ins = await require('./lib/getInstruments')(true, true);
-      const { flow, yval, csecval } = filters;
-      const matchedSymbols = ins.filter(i => (
-        (flow && flow.includes(i.Flow)) ||
-        (yval && yval.includes(i.YVal)) ||
-        (csecval && csecval.includes(i.CSecVal))
-      )).map(i => i.Symbol);
-      
-      log(matchedSymbols.sort().join('\n'));
+(async function () {
+const instruments = await tse.getInstruments();
+const allSymbols = instruments.map(i => i.Symbol);
+const symbols = resolveSymbols(allSymbols, settings.symbols, cmd);
+
+log('Total symbols:'.grey, (symbols.length+'').yellow );
+
+if (symbols.length) {
+  const { priceColumns, priceStartDate, priceDaysWithoutTrade } = cmd;
+  let { priceAdjust } = cmd;
+  priceAdjust = +priceAdjust;
+
+  let priceStartDateParsed;
+  if (priceStartDate) {
+    const s = priceStartDate;
+    const mindate = 20010321;
+    const relative = s.match(/^(\d{1,3})(y|m|d)$/);
+    if (relative) {
+      const n = parseInt(relative[1], 10);
+      const m = ({y:'FullYear',m:'Month',d:'Date'})[ relative[2] ];
+      const d = new Date();
+      d['set'+m](d['get'+m]() - n);
+      const res = (d.getFullYear()*10000) + ((d.getMonth()+1)*100) + d.getDate();
+      priceStartDateParsed = res < mindate ? ''+mindate : ''+res;
+    } else if (/^\d{8}$/.test(s)) {
+      const {gy,gm,gd} = toGregorian(+s.slice(0,4), +s.slice(4,6), +s.slice(6,8));
+      const res = (gy*10000) + (gm*100) + gd;
+      priceStartDateParsed = res < mindate ? ''+mindate : ''+res;
     } else {
-      log('Invalid filter string.'.redBold);
+      abort('Invalid option:', '--price-start-date');
+      return;
     }
   }
   
-  const { idMarket, idSymbol, idIndustry, idBoard, idMarketCode, idSymbolGcode } = opts;
-  
-  if (idMarket ||  idSymbol || idIndustry || idBoard || idMarketCode || idSymbolGcode) {
-    await showIdTables(opts);
+  let priceColumnsParsed;
+  if (priceColumns) {
+    priceColumnsParsed = parseColstr(priceColumns);
+    if (!priceColumnsParsed) abort('Invalid option:', '--price-columns');
   }
-}
-
-async function search(str, { searchIn }) {
-  if (str.length < 2) {
-    console.log('At least 2 characters'.redBold);
+  
+  if ( !/^[0-2]$/.test(''+priceAdjust) ) { abort('Invalid option:', '--price-adjust', '\n\tPattern not matched:'.red, '^[0-2]$'); return; }
+  
+  const _settings = {
+    columns:          priceColumnsParsed,
+    adjustPrices:     priceAdjust,
+    daysWithoutTrade: priceDaysWithoutTrade,
+    startDate:        priceStartDateParsed
+  };
+  const { error, prices } = await tse.getPrices(symbols, _settings);
+  
+  if (error) {
+    log(error);
     return;
   }
-  const both = searchIn === 'both' ? true : false;
-  const propName = searchIn[0].toUpperCase() + searchIn.slice(1).toLowerCase();
-  const getInstruments = require('./lib/getInstruments');
-  const ins = await getInstruments(true, true);
-  const res = ins
-    .filter(i => both ? i.Symbol.includes(str) || i.Name.includes(str) : i[propName].includes(str))
-    .map(i => `${i.Symbol.yellowBold} (${i.Name.grey})`)
-    .sort()
-    .join('\n');
-  console.log(res ? res : 'No match for: '.redBold + str.whiteBold);
+  
+  const { fileDelimiter, fileHeaders } = cmd;
+  
+  if ( !/^.$/.test(fileDelimiter) ) { abort('Invalid option:', '--file-delimiter', '\n\tPattern not matched:'.red, '^.$'); return; }
+  
+  const files = [];
+  const headers = priceColumnsParsed.map(i=>i[1]);
+  const headerRow = headers.join(fileDelimiter) + '\n';
+  for (let i=0, n=prices.length; i<n; i++) {
+    const sym = prices[i];
+    const fcol = sym[ headers[0] ];
+    let file = fileHeaders ? headerRow : '';
+    for (let j=0, m=fcol.length; j<m; j++) {
+      for (const k of headers) {
+        file += sym[k][j] + fileDelimiter;
+      }
+      file = file.slice(0,-1);
+      file += '\n';
+    }
+    files.push(file);
+  }
+  
+  const { fileOutdir, fileExtension } = cmd;
+  let { fileName, fileEncoding } = cmd;
+  fileName = +fileName;
+  
+//if (!existsSync(fileOutdir))                      { abort('Invalid option:', '--file-outdir',    '\n\tDirectory doesn\'t exist:'.red, resolve(fileOutdir).grey); return; }
+  if ( !existsSync(fileOutdir) ) mkdirSync(fileOutdir);
+  if ( !statSync(fileOutdir).isDirectory() )        { abort('Invalid option:', '--file-outdir',    '\n\tPath is not a directory:'.red,  resolve(fileOutdir).grey); return; }
+  if ( !/^[0-4]$/.test(''+fileName) )               { abort('Invalid option:', '--file-name',      '\n\tPattern not matched:'.red, '^[0-4]$');                     return; }
+  if ( !/^.{1,11}$/.test(''+fileExtension) )        { abort('Invalid option:', '--file-name',      '\n\tPattern not matched:'.red, '^.{1,11}$');                   return; }
+  if ( !/^(utf8(bom)?|ascii)$/.test(fileEncoding) ) { abort('Invalid option:', '--file-encoding',  '\n\tPattern not matched:'.red, '^(utf8(bom)?|ascii)$');        return; }
+  
+  const symins = await tse.getInstruments(true, false, 'Symbol');
+  let bom = '';
+  if (fileEncoding === 'utf8bom') {
+    bom = '\ufeff';
+    fileEncoding = undefined;
+  }
+  
+  files.forEach((file, i) => {
+    const sym = symbols[i];
+    const instrument = symins[sym];
+    const name = getFilename(fileName, instrument, priceAdjust);
+    writeFileSync(join(fileOutdir, name+'.'+fileExtension), bom+file, fileEncoding);
+  });
+  
+  const { save, saveReset } = cmd;
+  if (save) {
+    const opts = {
+      symbols,
+      priceColumns,
+      priceAdjust,
+      priceStartDate,
+      priceDaysWithoutTrade,
+      fileOutdir,
+      fileName,
+      fileExtension,
+      fileDelimiter,
+      fileEncoding,
+      fileHeaders,
+    };
+    writeFileSync(join(__dirname,'settings.json'), JSON.stringify(opts,null,2));
+  }
+  
+  if (saveReset) resetDefaults();
+} else {
+  abort('No symbols to process.', '');
+  return;
 }
 
-async function select(arr, { symbols, columns, remove, all, symbolsFile, symbolsFilter }) {
-  const settings = require('./lib/settings');
-  const ins = await require('./lib/getInstruments')(true, true);
-  const { log } = console;
+})();
+function resolveSymbols(allSymbols, savedSymbols, { args, symbol, symbolFile, symbolFilter, symbolDelete, symbolAll }) {
+  if (symbolAll) return symbolDelete ? [] : allSymbols;
   
-  if (arr.length) symbols = [...arr];
-  
-  if (symbolsFile) {
-    const fs = require('fs');
+  let symbols = [...args];
+
+  if (symbol) {
+    const syms = symbol.split(' ');
+    symbols.push(...syms);
+  }
+
+  if (symbolFile) {
     try {
-      symbolsFile = fs.readFileSync(symbolsFile, 'utf8').replace(/\ufeff/,'').replace(/\r\n/g, '\n').split('\n');
-      if (!symbols) symbols = 1;
+      const syms = readFileSync(symbolsFile, 'utf8').replace(/\ufeff/,'').replace(/\r\n/g, '\n').split('\n');
+      symbols.push(...syms);
     } catch (e) {
       log(e.message.red);
-      symbolsFile = undefined;
     }
   }
   
-  if (symbolsFilter) {
-    const filters = parseFilterStr(symbolsFilter);
-    
+  if (symbolFilter) {
+    const filters = parseFilterStr(symbolFilter);
     if (filters) {
       const { flow, yval, csecval } = filters;
-      symbolsFilter = ins.filter(i => (
-        (flow && flow.includes(i.Flow)) ||
-        (yval && yval.includes(i.YVal)) ||
+      const syms = instruments.filter(i => (
+        (flow && flow.includes(i.Flow)) &&
+        (yval && yval.includes(i.YVal)) &&
         (csecval && csecval.includes(i.CSecVal))
       )).map(i => i.Symbol);
-      if (!symbols) symbols = 1;
+      symbols.push(...syms);
     } else {
-      symbolsFilter = undefined;
       log('Invalid filter string.'.redBold);
     }
   }
   
-  if (symbols) {
-    symbols = typeof symbols === 'string' ? symbols.split(' ') : [];
-    if (arr.length)    symbols = [...new Set([...symbols, ...arr])];
-    if (symbolsFile)   symbols = [...new Set([...symbols, ...symbolsFile])];
-    if (symbolsFilter) symbols = [...new Set([...symbols, ...symbolsFilter])];
-    
-    const { selectedSymbols, lastInstrumentUpdate } = await settings.get();
-    if (lastInstrumentUpdate === 'never') await require('./updateInstruments')();
-    
-    let newSymbols = symbols.map(i => {
-      const found = ins.find(j => j.Symbol === i);
-      if (found) {
-        return found.InsCode;
-      } else {
-        log('No such symbol: '.redBold + i.whiteBold);
-      }
-    }).filter(i=>i);
-    
-    if (remove) newSymbols = selectedSymbols.filter(i => newSymbols.indexOf(i) === -1);
-    if (all)    newSymbols = remove ? [] : ins.map(i => i.InsCode);
-    if (!remove && !all && selectedSymbols.length > 0) {
-      newSymbols = newSymbols.filter(i => selectedSymbols.indexOf(i) === -1);
-      newSymbols = selectedSymbols.concat(newSymbols);
-    }
-    
-    await settings.set('selectedSymbols', newSymbols);
-    log('Done.'.green, '(Total symbols:'.grey, (newSymbols.length+'').yellow + ')'.grey);
+  if (symbolDelete) {
+    symbols = savedSymbols.filter(i => symbols.indexOf(i) === -1);
+  } else {
+    symbols = [...new Set([...savedSymbols, ...symbols])];
   }
   
-  if (columns) {
-    const cols = require('./lib/parseColstr')(columns);
-    if (cols) {
-      await settings.set('selectedColumns', cols);
-      log('Done.'.green, '(Selected'.grey, (cols.length+'').yellow, 'columns)'.grey);
+  const finalSymbols = symbols.filter(symbol => {
+    if (allSymbols.indexOf(symbol) !== -1) {
+      return true;
     } else {
-      log('Invalid column string.'.red);
+      log('No such symbol:'.redBold, symbol.whiteBold);
+      return false;
     }
-  }
+  });
+  
+  return finalSymbols;
 }
-
-async function update({ prices, instruments }) {
-  if (instruments) await require('./updateInstruments')();
-  if (prices)      await require('./updateClosingPrices')();
-}
-
-async function xport({ fileName, fileExtension, delimiter, adjustPrices, encoding, daysWithoutTrade, startDate, headers, outDir, save }) {
-  const { msg } = require('./lib/util');
-  if ( fileName     && !/^[0-4]$/.test(fileName) )                { msg('Invalid fileName.');     return; }
-  if ( adjustPrices && !/^[0-2]$/.test(adjustPrices) )            { msg('Invalid adjustPrices.'); return; }
-  if ( encoding     && !/^utf8$|^utf8bom$/.test(encoding) )       { msg('Invalid encoding.');     return; }
-  if ( startDate    && !/^\d{4}\/\d{2}\/\d{2}$/.test(startDate) ) { msg('Invalid startDate.');    return; }
-  if (outDir) {
-    const fs = require('fs');
-    const { resolve } = require('path');
-    if (!fs.existsSync(outDir))              { msg('Invalid outDir.', ' directory doesn\'t exist: '.red, resolve(outDir)); return; }
-    if (!fs.lstatSync(outDir).isDirectory()) { msg('Invalid outDir.', ' path is not a directory: '.red, resolve(outDir));  return; }
+function handleCacheDir(newdir) {
+  if (typeof newdir === 'string') {
+    tse.CACHE_DIR = newdir;
+    if (tse.CACHE_DIR !== newdir) log('Invalid option:'.redBold, '--cache-dir'.whiteBold, '\n\tDirectory path is an existing file.'.red);
   }
-  const userSettings = { 
-    ...fileName         && {fileName: parseInt(fileName, 10)},
-    ...fileExtension    && {fileExtension},
-    ...delimiter        && {delimiter},
-    ...adjustPrices     && {adjustPrices: parseInt(adjustPrices, 10)},
-    ...encoding         && {encoding},
-    ...daysWithoutTrade && {daysWithoutTrade},
-    ...startDate        && {startDate},
-    ...headers          && {showHeaders: headers},
-    ...outDir           && {outDir}
-  };
-  const _settings = require('./lib/settings');
-  const selectedExportSettings = await _settings.get('selectedExportSettings');
-  if (save) await _settings.set('selectedExportSettings', {...selectedExportSettings, ...userSettings});
-  await require('./generateFiles')(userSettings);
-}
-
-async function cacheDirHandler(_newPath) {
-  const newPath = _newPath === true ? undefined : _newPath;
-  const { msg } = require('./lib/util');
-  const settings = require('./lib/settings');
-  const cacheDir = await settings.get('cacheDir');
-  if (newPath) {
-    const moveDir = require('./lib/moveDir');
-    const moved = await moveDir(cacheDir, newPath);
-    if (moved) {
-      await settings.set('cacheDir', newPath);
-      msg('cacheDir ', `changed from ${cacheDir.redBold} to ${newPath.greenBold}.`, true);
-    } else {
-      msg('Directory not empty: ', newPath);
-    }
-    return;
-  }
-  msg('cacheDir: ', cacheDir.cyan, true);
+  log(tse.CACHE_DIR);
 }
 
 // helpers
-async function showIdTables(opts) {
-  const { idMarket, idSymbol, idIndustry, idBoard, idMarketCode, idSymbolGcode, idSort, idSortAsc } = opts;
+function parseFilterStr(str='') {
+  const map = {m:'flow', t:'yval', i:'csecval'};
   
-  const raw = require('./info.json');
-  const ins = await require('./lib/getInstruments')(true, true);
+  const arr = str.split(' ');
+  const result = {};
   
-  Object.keys(raw).forEach(k => raw[k].forEach(j => j.push(0))); // add count col
+  for (const i of arr) {
+    if (i.indexOf('=') === -1) continue;
+    
+    const [key, val] = i.split('=');
+    
+    if ( !map[key] )               continue;
+    if ( !/^[\d\w,]+$/.test(val) ) continue;
+    
+    result[ map[key] ] = val.split(',')
+  }
   
-  const { Flow, YVal, CSecVal, CComVal } = raw;
-  
-  ins.forEach(i => {
-    let found;
-    
-    found = raw.Flow.find(j => j[0] === i.Flow);
-    if (found) found[found.length-1] += 1;
-    
-    found = raw.YVal.find(j => j[0] === i.YVal);
-    if (found) found[found.length-1] += 1;
-    
-    found = raw.CSecVal.find(j => j[0] === i.CSecVal);
-    if (found) found[found.length-1] += 1;
-    
-    found = raw.CComVal.find(j => j[0] === i.CComVal);
-    if (found) found[found.length-1] += 1;
-    
-    found = raw.YMarNSC.find(j => j[0] === i.YMarNSC);
-    if (found) found[found.length-1] += 1;
-    
-    found = raw.CGrValCot.find(j => j[0] === i.CGrValCot);
-    if (found) found[found.length-1] += 1;
+  return Object.keys(result).length === arr.length ? result : undefined;
+}
+function parseColstr(str='') {
+  if (!str) return;
+  const chr = str.indexOf(' ') !== -1 ? ' ' : ',';
+  const res = str.split(chr).map(i => {
+    if (!/^\d{1,2}$|^\d{1,2}:\w+$/.test(i)) return;
+    const row = i.indexOf(':') !== -1
+      ? [  +i.split(':')[0],  i.split(':')[1]  ]
+      : [  +i  ];
+    if (Number.isNaN(row[0]) || row[0] === undefined) return;
+    return row;
   });
-  Object.keys(raw).forEach(k => {
-    raw[k] = raw[k].filter(j => j[j.length-1] > 0);
-  });
-  
-  let sorter;
-  if (idSort) {
-    const n = Math.abs(+idSort);
-    const asc = /^\-/.test(idSort) ? true : false;
-    sorter = asc
-      ? (a,b) => typeof a[n]==='number' ? a[n] - b[n] : a[n].localeCompare(b[n], 'fa')  // ascending
-      : (a,b) => typeof a[n]==='number' ? b[n] - a[n] : b[n].localeCompare(a[n], 'fa'); // descending
+  return res.filter(i=>!i).length ? undefined : res;
+}
+function abort(m1, m2, ...rest) {
+  console.log(m1.redBold, m2.whiteBold, ...rest);
+  process.exitCode = 1;
+  console.log('\naborted'.red);
+}
+function suffix(YMarNSC, adjust, fa=false) {
+  let str = '';
+  if (YMarNSC !== 'ID') {
+    if (adjust === 1) {
+      str = fa ? '-ت' : '-a';
+    } else if (adjust === 2) {
+      str = fa ? '-ا' : '-i';
+    }
   }
+  return str;
+}
+function getFilename(filename, instrument, adjust) {
+  const y = instrument.YMarNSC;
+  const a = adjust;
+  const f = filename;
   
-  if (idMarket) {
-    const rdy = raw.Flow.map(([id,desc,count]) => [id,count,desc]).sort(sorter)
-    printTable(rdy, ['id','count','desc']);
-  }
+  const str =
+    f === 0 ? instrument.CIsin       + suffix(y, a) :
+    f === 1 ? instrument.LatinName   + suffix(y, a) :
+    f === 2 ? instrument.LatinSymbol + suffix(y, a) :
+    f === 3 ? instrument.Name        + suffix(y, a, true) :
+    f === 4 ? instrument.Symbol      + suffix(y, a, true) :
+    instrument.Symbol + suffix(y, a, true); // instrument.CIsin + suffix(y, a)
   
-  if (idSymbol) {
-    const rdy = raw.YVal.map(([id,group,desc,count]) => [id, count, group, desc]).sort(sorter);
-    printTable(rdy, ['id','count','group','desc']);
-    if (sorter) rdy.sort(sorter);
-  }
-  
-  if (idIndustry) {
-    const rdy = raw.CSecVal.map(([id,desc,count]) => [id,count,desc]).sort(sorter);
-    printTable(rdy, ['id','count','desc']);
-  }
-  
-  if (idBoard) {
-    const rdy = raw.CComVal.map(([id,desc,count]) => [id,count,desc]).sort(sorter);
-    printTable(rdy, ['id','count','desc']);
-  }
-  
-  if (idMarketCode) {
-    const rdy = raw.YMarNSC.map(([id,desc,count]) => [id,count,desc]).sort(sorter);
-    printTable(rdy, ['id','count','desc']);
-  }
-  
-  if (idSymbolGcode) {
-    const rdy = raw.CGrValCot.map(([id,desc,count]) => [id,count,desc]).sort(sorter);
-    printTable(rdy, ['id','count','desc']);
-  }
-} 
+  return str;
+}
+function resetDefaults() {
+  writeFileSync(join(__dirname,'settings.json'), JSON.stringify({
+    symbols:               [],
+    priceColumns:          '4:DATE 6:OPEN 7:HIGH 8:LOW 9:LAST 10:CLOSE 12:VOL',
+    priceAdjust:           0,
+    priceStartDate:        '3m',
+    priceDaysWithoutTrade: false,
+    fileOutdir:            './',
+    fileName:              4,
+    fileExtension:         'csv',
+    fileDelimiter:         ',',
+    fileNoHeaders:         false
+  }, null, 2));
+}
 function printTable(table=[], cols=[]) {
   if (!table.length) return '';
   const colors = ['yellow', 'cyan', 'green', 'green'];
@@ -395,24 +369,146 @@ function printTable(table=[], cols=[]) {
   
   console.log(s);
 }
-function parseFilterStr(str='') {
-  const map = new Map([ ['m', 'flow'], ['t', 'yval'], ['i', 'csecval'] ]);
+
+async function list(opts) {
+  const { savedSymbols, savedSettings, allColumns, lastUpdate, filterMatch, search } = opts;
+  const { table } = console;
   
-  const arr = str.split(' ');
-  const result = {};
-  
-  for (const i of arr) {
-    if (i.indexOf('=') === -1) continue;
-    
-    const chunks = i.split('=');
-    const [key, val] = [ chunks[0], chunks[1] ];
-    
-    if ( !map.has(key) )         continue;
-    if ( !/^[\d\w,]+$/.test(val) ) continue;
-    
-    result[ map.get(key) ] = val.split(',')
+  if (savedSymbols) {
+    const selins = settings.symbols.join('\n');
+    log('\nSaved symbols:'.yellow);
+    table( selins.length ? selins.yellowBold : 'none'.yellow );
   }
   
-  return Object.keys(result).length === arr.length ? result : undefined;
+  if (savedSettings) {
+    log('\nSaved settings:'.yellow);
+    const t = {...settings};
+    delete t.symbols;
+    const o = {};
+    Object.keys(t).forEach(k => o[ '--'+k.replace(/([A-Z])/g, '-$1').toLowerCase() ] = t[k]);
+    table(o);
+    // const a = Object.keys(t).reduce((a,k)=> (a.push(['--'+k.replace(/([A-Z])/g, '-$1').toLowerCase(), t[k]]), a), []);
+    // printTable(a);
+  }
+  
+  if (allColumns) {
+    log('\nAll valid column indexes:'.yellow);
+    table(tse.columnList);
+  }
+  
+  if (filterMatch) {
+    const filters = parseFilterStr(filterMatch);
+    
+    if (filters) {
+      const ins = await tse.getInstruments(true, true);
+      const { flow, yval, csecval } = filters;
+      const matchedSymbols = ins.filter(i => (
+        (flow && flow.includes(i.Flow)) ||
+        (yval && yval.includes(i.YVal)) ||
+        (csecval && csecval.includes(i.CSecVal))
+      )).map(i => i.Symbol);
+      
+      log(matchedSymbols.sort().join('\n'));
+    } else {
+      log('Invalid filter string.'.redBold);
+    }
+  }
+  
+  if (search) {
+    const str = search;
+    if (str.length > 1) {
+      const ins = await tse.getInstruments(true, true);
+      const res = ins
+        .filter(i => i.Symbol.includes(str) || i.Name.includes(str))
+        .map(i => `${i.Symbol.yellowBold} (${i.Name.grey})`)
+        .sort()
+        .join('\n');
+      log(res ? res : 'No match for: '.redBold + str.whiteBold);
+    } else {
+      log('At least 2 characters'.redBold);
+    }
+  }
+  
+  const { idMarket, idSymbol, idIndustry, idBoard, idMarketCode, idSymbolGcode } = opts;
+  
+  if (idMarket ||  idSymbol || idIndustry || idBoard || idMarketCode || idSymbolGcode) {
+    const ins = await tse.getInstruments(true, true);
+    await listIdTables(opts, ins);
+  }
 }
-
+async function listIdTables(opts, instruments) {
+  const { idMarket, idSymbol, idIndustry, idBoard, idMarketCode, idSymbolGcode, idSort } = opts;
+  
+  const raw = require('./info.json');
+  
+  Object.keys(raw).forEach(k => raw[k].forEach(j => j.push(0))); // add count col
+  
+  instruments.forEach(i => {
+    let found;
+    
+    found = raw.Flow.find(j => j[0] === i.Flow);
+    if (found) found[found.length-1] += 1;
+    
+    found = raw.YVal.find(j => j[0] === i.YVal);
+    if (found) found[found.length-1] += 1;
+    
+    found = raw.CSecVal.find(j => j[0] === i.CSecVal);
+    if (found) found[found.length-1] += 1;
+    
+    found = raw.CComVal.find(j => j[0] === i.CComVal);
+    if (found) found[found.length-1] += 1;
+    
+    found = raw.YMarNSC.find(j => j[0] === i.YMarNSC);
+    if (found) found[found.length-1] += 1;
+    
+    found = raw.CGrValCot.find(j => j[0] === i.CGrValCot);
+    if (found) found[found.length-1] += 1;
+  });
+  Object.keys(raw).forEach(k => {
+    raw[k] = raw[k].filter(j => j[j.length-1] > 0);
+  });
+  
+  let sorter;
+  if (idSort) {
+    const str = ''+idSort;
+    const match = str.match(/^(\d)_?$/);
+    if (match) {
+      const n = +match[1];
+      const asc = /_/.test(str) ? true : false;
+      sorter = asc
+        ? (a,b) => typeof a[n]==='number' ? a[n] - b[n] : a[n].localeCompare(b[n], 'fa')  // ascending
+        : (a,b) => typeof a[n]==='number' ? b[n] - a[n] : b[n].localeCompare(a[n], 'fa'); // descending
+    }
+  }
+  
+  if (idMarket) {
+    const rdy = raw.Flow.map(([id,desc,count]) => [id,count,desc]).sort(sorter)
+    printTable(rdy, ['id','count','desc']);
+  }
+  
+  if (idSymbol) {
+    const rdy = raw.YVal.map(([id,group,desc,count]) => [id, count, group, desc]).sort(sorter);
+    printTable(rdy, ['id','count','group','desc']);
+    if (sorter) rdy.sort(sorter);
+  }
+  
+  if (idIndustry) {
+    const rdy = raw.CSecVal.map(([id,desc,count]) => [id,count,desc]).sort(sorter);
+    printTable(rdy, ['id','count','desc']);
+  }
+  
+  if (idBoard) {
+    const rdy = raw.CComVal.map(([id,desc,count]) => [id,count,desc]).sort(sorter);
+    printTable(rdy, ['id','count','desc']);
+  }
+  
+  if (idMarketCode) {
+    const rdy = raw.YMarNSC.map(([id,desc,count]) => [id,count,desc]).sort(sorter);
+    printTable(rdy, ['id','count','desc']);
+  }
+  
+  if (idSymbolGcode) {
+    const rdy = raw.CGrValCot.map(([id,desc,count]) => [id,count,desc]).sort(sorter);
+    printTable(rdy, ['id','count','desc']);
+  }
+} 
