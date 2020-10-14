@@ -33,7 +33,7 @@ cmd
   .option('-x, --file-extension <string>',   '', 'csv')
   .option('-l, --file-delimiter <string>',   '', ',')
   .option('-e, --file-encoding <string>',    'utf8|utf8bom|ascii', 'utf8bom')
-  .option('-H, --file-headers',              'true/false', false)
+  .option('-H, --file-no-headers',           'true/false', false)
   .option('--save',                          'true/false', false)
   .option('--save-reset',                    'true/false', false)
   .option('--cache-dir [path]',              'Show or change the location of cacheDir.\n\t\t\t\t\t  if [path] is provided, new location is set and\n\t\t\t\t\t  existing content is moved to the new location.')
@@ -114,7 +114,7 @@ if (symbols.length) {
     return;
   }
   
-  const { fileDelimiter, fileHeaders } = cmd;
+  const { fileDelimiter, fileNoHeaders: fileHeaders } = cmd;
   
   if ( !/^.$/.test(fileDelimiter) ) { abort('Invalid option:', '--file-delimiter', '\n\tPattern not matched:'.red, '^.$'); return; }
   
@@ -319,7 +319,7 @@ function resetDefaults() {
     fileName:              4,
     fileExtension:         'csv',
     fileDelimiter:         ',',
-    fileNoHeaders:         false
+    fileHeaders:           true
   }, null, 2));
 }
 function printTable(table=[], cols=[]) {
