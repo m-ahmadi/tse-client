@@ -37,7 +37,7 @@ cmd
   .option('--save',                          'true/false', false)
   .option('--save-reset',                    'true/false', false)
   .option('--cache-dir [path]',              'Show or change the location of cacheDir.\n\t\t\t\t\t  if [path] is provided, new location is set and\n\t\t\t\t\t  existing content is moved to the new location.')
-  .version(''+JSON.parse(readFileSync(join(__dirname, 'package.json'), 'utf8')).version, '-v, --version', 'Show version number.')
+  .version(''+JSON.parse(readFileSync(join(__dirname, 'package.json'), 'utf8')).version, '-v, --version', 'Show version number.');
 cmd.command('list').alias('ls').description('Show information about current settings and more. (help: tse ls -h)')
   .option('-S, --saved-symbols',             'List saved symbols.')
   .option('-D, --saved-settings',            'List saved settings.')
@@ -432,7 +432,7 @@ async function list(opts) {
     }
   }
   
-  if (search) {
+  if (typeof search === 'string') {
     const str = search;
     if (str.length > 1) {
       const ins = await tse.getInstruments(true, true);
