@@ -340,6 +340,7 @@ function resetDefaults() {
     fileName:              4,
     fileExtension:         'csv',
     fileDelimiter:         ',',
+    fileEncoding:          'utf8bom',
     fileHeaders:           true
   }, null, 2));
 }
