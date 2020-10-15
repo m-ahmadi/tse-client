@@ -437,8 +437,8 @@ async function getLastPossibleDeven() {
   if ( shouldUpdate(lastPossibleDeven) ) {
     let error;
     const res = await rq.LastPossibleDeven().catch(err => error = err);
-    if (error)                        throw new Error('Failed request: ',      'LastPossibleDeven: ', `(${error})`);
-    if ( !/^\d{8};\d{8}$/.test(res) ) throw new Error('Invalid server response: LastPossibleDeven');
+    if (error)                        return { title: 'Failed request: LastPossibleDeven', detail: error };
+    if ( !/^\d{8};\d{8}$/.test(res) ) return { title: 'Invalid server response: LastPossibleDeven' };
     lastPossibleDeven = res.split(';')[0] || res.split(';')[1];
     storage.setItem('tse.lastPossibleDeven', lastPossibleDeven);
   }
@@ -469,7 +469,7 @@ async function updateInstruments() {
   
   let error;
   const res = await rq.InstrumentAndShare(lastDeven, lastId).catch(err => error = err);
-  if (error) { warn('Failed request: InstrumentAndShare', `(${error})`); return; } // TODO: better handling
+  if (error) return { title: 'Failed request: InstrumentAndShare', detail: error };
   
   const splitted  = res.split('@');
   let instruments = splitted[0];
@@ -551,7 +551,13 @@ async function updatePricesRetrier(updateNeeded={}, count=0, result={}) {
 }
 async function updatePrices(instruments=[], startDeven) {
   if (!instruments.length) return;
+  const result = { succs: {}, fails: {}, error: undefined };
+  
   const lastPossibleDeven = await getLastPossibleDeven();
+  if (typeof lastPossibleDeven !== 'number') {
+    result.error = lastPossibleDeven;
+    return result;
+  }
   
   const updateNeeded = {}; // redundant insCode needed due to splitArr & updatePricesRequester
   for (const instrument of instruments) {
@@ -576,7 +582,7 @@ async function updatePrices(instruments=[], startDeven) {
       }
     }
   }
-  if (!Object.keys(updateNeeded).length) return { succs: {}, fails: {} };
+  if (!Object.keys(updateNeeded).length) return result;
   
   const { succs, fails } = await updatePricesRetrier(updateNeeded);
   
@@ -600,7 +606,7 @@ async function updatePrices(instruments=[], startDeven) {
   
   await storage.setItemAsync('tse.prices', str, true);
   
-  return { succs, fails };
+  return { ...result, succs, fails };
 }
 
 async function getInstruments(struct=true, arr=true, structKey='InsCode') {
@@ -612,12 +618,18 @@ async function getPrices(symbols=[], settings={}) {
   if (!symbols.length) return;
   const result = { prices: [], error: undefined };
   
-  await updateInstruments();
+  const err = await updateInstruments();
+  if (err) {
+    const { title, detail } = err;
+    result.error = { code: 1, title, detail };
+    return result;
+  }
+  
   const instruments = parseInstruments(true, undefined, 'Symbol');
   const selection = symbols.map(i => instruments[i]);
   const notFounds = symbols.filter((v,i) => !selection[i]);
   if (notFounds.length) {
-    result.error = { code: 1, title: 'Incorrect Symbol', symbols: notFounds };
+    result.error = { code: 2, title: 'Incorrect Symbol', symbols: notFounds };
     return result;
   }
   
@@ -626,10 +638,15 @@ async function getPrices(symbols=[], settings={}) {
   
   await parseStoredPrices();
   
-  const { succs, fails } = await updatePrices(selection, startDate);
+  const { succs, fails, error } = await updatePrices(selection, startDate);
+  if (error) {
+    const { title, detail } = error;
+    result.error = { code: 1, title, detail };
+    return result;
+  }
   
   if (fails.length) {
-    result.error = { code: 2, title: 'Incomplete Price Update', fails, succs };
+    result.error = { code: 3, title: 'Incomplete Price Update', fails, succs };
     const failKeys = Object.keys(fails);
     selection.forEach((v,i,a) => failKeys.includes(v.InsCode) ? a[i] = undefined : 0);
   }
