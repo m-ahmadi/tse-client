@@ -10,8 +10,21 @@ const { join, resolve } = require('path');
 const { toGregorian } = require('jalaali-js');
 require('./lib/colors.js');
 
-if ( !existsSync(join(__dirname,'settings.json')) ) resetDefaults();
-const settings = require('./settings.json');
+const defaultSettings = {
+  symbols:               [],
+  priceColumns:          '4:DATE 6:OPEN 7:HIGH 8:LOW 9:LAST 10:CLOSE 12:VOL',
+  priceAdjust:           0,
+  priceStartDate:        '3m',
+  priceDaysWithoutTrade: false,
+  fileOutdir:            './',
+  fileName:              4,
+  fileExtension:         'csv',
+  fileDelimiter:         ',',
+  fileEncoding:          'utf8bom',
+  fileHeaders:           true
+};
+if ( !existsSync(join(__dirname,'settings.json')) ) saveSettings(defaultSettings);
+const savedSettings = require('./settings.json');
 const { log } = console;
 
 cmd
@@ -22,20 +35,20 @@ cmd
   .option('-s, --symbol <string>',           '"faSymbol faSymbol ..."')
   .option('-f, --symbol-file <string>',      'path/to/file "faSymbol \\n fasymbol ..."')
   .option('-m, --symbol-filter <string>',    '"m=id,id... t=id,id... i=id,id..."')
-  .option('-d, --symbol-delete',             'true/false', false)
-  .option('-a, --symbol-all',                'true/false', false)
-  .option('-c, --price-columns <string>',    '1,2 | 1:a 2:b', '4:DATE 6:OPEN 7:HIGH 8:LOW 9:LAST 10:CLOSE 12:VOL')
-  .option('-j, --price-adjust <number>',     '0|1|2 as none|capinc + dividend|capinc', 0)
-  .option('-b, --price-start-date <string>', 'Shamsi YYYYMMDD min: 13800101 as ^\\d{8}$ or Relative as ^\\d+(y|m|d)$', '3m') // 13800101
-  .option('-t, --price-days-without-trade',  'true/false', false)
-  .option('-o, --file-outdir <string>',      '', './')
-  .option('-n, --file-name <number>',        '0|1|2|3|4 as isin_code|latin_name|latin_symbol|farsi_name|farsi_symbol', '4')
-  .option('-x, --file-extension <string>',   '', 'csv')
-  .option('-l, --file-delimiter <string>',   '', ',')
-  .option('-e, --file-encoding <string>',    'utf8|utf8bom|ascii', 'utf8bom')
-  .option('-H, --file-no-headers',           'true/false', false)
-  .option('--save',                          'true/false', false)
-  .option('--save-reset',                    'true/false', false)
+  .option('-d, --symbol-delete',             'true/false. default: false')
+  .option('-a, --symbol-all',                'true/false. default: false')
+  .option('-c, --price-columns <string>',    '1,2 | 1:a 2:b  default: "4:DATE 6:OPEN 7:HIGH 8:LOW 9:LAST 10:CLOSE 12:VOL"')
+  .option('-j, --price-adjust <number>',     '0|1|2 as none|capinc + dividend|capinc. default: 0')
+  .option('-b, --price-start-date <string>', 'Shamsi YYYYMMDD min: 13800101 as ^\\d{8}$ or Relative as ^\\d+(y|m|d)$  default: 3m') // 13800101
+  .option('-t, --price-days-without-trade',  'true/false. default: false')
+  .option('-o, --file-outdir <string>',      'default: ./')
+  .option('-n, --file-name <number>',        '0|1|2|3|4 as isin_code|latin_name|latin_symbol|farsi_name|farsi_symbol. default: 4')
+  .option('-x, --file-extension <string>',   'default: csv')
+  .option('-l, --file-delimiter <string>',   'default: ,')
+  .option('-e, --file-encoding <string>',    'utf8|utf8bom|ascii. default: utf8bom')
+  .option('-H, --file-no-headers',           'true/false default: true')
+  .option('--save',                          'true/false. default: false')
+  .option('--save-reset',                    'true/false. default: false')
   .option('--cache-dir [path]',              'Show or change the location of cacheDir.\n\t\t\t\t\t  if [path] is provided, new location is set and\n\t\t\t\t\t  existing content is moved to the new location.')
   .version(''+JSON.parse(readFileSync(join(__dirname, 'package.json'), 'utf8')).version, '-v, --version', 'Show version number.');
 cmd.command('list').alias('ls').description('Show information about current settings and more. (help: tse ls -h)')
@@ -50,7 +63,7 @@ cmd.command('list').alias('ls').description('Show information about current sett
   .option('-B, --id-board',                  'Show all possible board IDs. "Instrument.CComVal"')
   .option('-Y, --id-market-code',            'Show all possible market-code IDs. "Instrument.YMarNSC"')
   .option('-G, --id-symbol-gcode',           'Show all possible symbol-group IDs. "Instrument.CGrValCot"')
-  .option('-O, --id-sort [columnIndex]',     'Sort the IDs table by specifying the index of the column. put underline at end for ascending sort: 1_', 1)
+  .option('-O, --id-sort [columnIndex]',     'Sort the IDs table by specifying the index of the column. default: 1. put underline at end for ascending sort: 1_')
   .option('--search <query>',                'Search symbols.')
   .action(list);
 cmd.parse(process.argv);
@@ -59,16 +72,19 @@ const subs = new Set( cmd.commands.map(i=>[i.name(),i.alias()]).reduce((a,c)=>a=
 if (cmd.rawArgs.find(i=> subs.has(i))) return;
 if (cmd.cacheDir) { handleCacheDir(cmd.cacheDir); return; }
 
+let settings;
+
 (async function () {
 const instruments = await tse.getInstruments();
 const allSymbols = instruments.map(i => i.Symbol);
-const symbols = resolveSymbols(allSymbols, settings.symbols, cmd);
+const symbols = resolveSymbols(allSymbols, savedSettings.symbols, cmd);
+settings = resolveSettings(symbols, defaultSettings, savedSettings, cmd.opts());
 
 log('Total symbols:'.grey, (symbols.length+'').yellow );
 
 if (symbols.length) {
-  const { priceColumns, priceStartDate, priceDaysWithoutTrade } = cmd;
-  let { priceAdjust } = cmd;
+  const { priceColumns, priceStartDate, priceDaysWithoutTrade } = settings;
+  let { priceAdjust } = settings;
   priceAdjust = +priceAdjust;
 
   let priceStartDateParsed;
@@ -132,7 +148,7 @@ if (symbols.length) {
     return;
   }
   
-  const { fileDelimiter, fileNoHeaders: fileHeaders } = cmd;
+  const { fileDelimiter, fileHeaders } = settings;
   
   if ( !/^.$/.test(fileDelimiter) ) { abort('Invalid option:', '--file-delimiter', '\n\tPattern not matched:'.red, '^.$'); return; }
   
@@ -153,8 +169,8 @@ if (symbols.length) {
     files.push(file);
   }
   
-  const { fileOutdir, fileExtension } = cmd;
-  let { fileName, fileEncoding } = cmd;
+  const { fileOutdir, fileExtension } = settings;
+  let { fileName, fileEncoding } = settings;
   fileName = +fileName;
   
 //if (!existsSync(fileOutdir))                      { abort('Invalid option:', '--file-outdir',    '\n\tDirectory doesn\'t exist:'.red, resolve(fileOutdir).grey); return; }
@@ -182,31 +198,11 @@ if (symbols.length) {
 }
 
 const { save, saveReset } = cmd;
-if (save) {
-  const {
-    priceColumns, priceAdjust, priceStartDate, priceDaysWithoutTrade,
-    fileOutdir, fileName, fileExtension, fileDelimiter, fileEncoding, fileNoHeaders: fileHeaders
-  } = cmd;
-  const opts = {
-    symbols,
-    priceColumns,
-    priceAdjust,
-    priceStartDate,
-    priceDaysWithoutTrade,
-    fileOutdir,
-    fileName,
-    fileExtension,
-    fileDelimiter,
-    fileEncoding,
-    fileHeaders,
-  };
-  writeFileSync(join(__dirname,'settings.json'), JSON.stringify(opts,null,2));
-}
-
-if (saveReset) resetDefaults();
+if (save) saveSettings(settings);
+if (saveReset) savedSettings(defaultSettings);
 
 })();
-function resolveSymbols(allSymbols, savedSymbols, { args, symbol, symbolFile, symbolFilter, symbolDelete, symbolAll }) {
+function resolveSymbols(allSymbols, savedSymbols=[], { args, symbol, symbolFile, symbolFilter, symbolDelete, symbolAll }) {
   if (symbolAll) return symbolDelete ? [] : allSymbols;
   
   let symbols = [...args];
@@ -256,6 +252,30 @@ function resolveSymbols(allSymbols, savedSymbols, { args, symbol, symbolFile, sy
   });
   
   return finalSymbols;
+}
+function resolveSettings(symbols, defaults, saved, _cli) {
+  const {
+    priceColumns, priceAdjust, priceStartDate, priceDaysWithoutTrade,
+    fileOutdir, fileName, fileExtension, fileDelimiter, fileEncoding, fileNoHeaders: fileHeaders
+  } = _cli;
+  
+  const cli = {
+    symbols,
+    priceColumns,
+    priceAdjust,
+    priceStartDate,
+    priceDaysWithoutTrade,
+    fileOutdir,
+    fileName,
+    fileExtension,
+    fileDelimiter,
+    fileEncoding,
+    fileHeaders,
+  };
+  
+  Object.keys(cli).forEach(key => cli[key] === undefined && delete cli[key]);
+  
+  return { ...defaults, ...saved, ...cli };
 }
 function handleCacheDir(newdir) {
   if (typeof newdir === 'string') {
@@ -329,20 +349,8 @@ function getFilename(filename, instrument, adjust) {
   
   return str;
 }
-function resetDefaults() {
-  writeFileSync(join(__dirname,'settings.json'), JSON.stringify({
-    symbols:               [],
-    priceColumns:          '4:DATE 6:OPEN 7:HIGH 8:LOW 9:LAST 10:CLOSE 12:VOL',
-    priceAdjust:           0,
-    priceStartDate:        '3m',
-    priceDaysWithoutTrade: false,
-    fileOutdir:            './',
-    fileName:              4,
-    fileExtension:         'csv',
-    fileDelimiter:         ',',
-    fileEncoding:          'utf8bom',
-    fileHeaders:           true
-  }, null, 2));
+function saveSettings(obj) {
+  writeFileSync(join(__dirname,'settings.json'), JSON.stringify(obj, null, 2));
 }
 function printTable(table=[], cols=[]) {
   if (!table.length) return '';
@@ -393,18 +401,18 @@ function printTable(table=[], cols=[]) {
 }
 
 async function list(opts) {
-  const { savedSymbols, savedSettings, allColumns, lastUpdate, filterMatch, search } = opts;
+  const { savedSymbols, savedSettings: _savedSettings, allColumns, lastUpdate, filterMatch, search } = opts;
   const { table } = console;
   
   if (savedSymbols) {
-    const selins = settings.symbols.join('\n');
+    const selins = savedSettings.symbols.join('\n');
     log('\nSaved symbols:'.yellow);
     table( selins.length ? selins.yellowBold : 'none'.yellow );
   }
   
-  if (savedSettings) {
+  if (_savedSettings) {
     log('\nSaved settings:'.yellow);
-    const t = {...settings};
+    const t = {...savedSettings};
     delete t.symbols;
     const o = {};
     Object.keys(t).forEach(k => o[ '--'+k.replace(/([A-Z])/g, '-$1').toLowerCase() ] = t[k]);
