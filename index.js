@@ -177,30 +177,33 @@ if (symbols.length) {
     const name = getFilename(fileName, instrument, priceAdjust);
     writeFileSync(join(fileOutdir, name+'.'+fileExtension), bom+file, fileEncoding);
   });
-  
-  const { save, saveReset } = cmd;
-  if (save) {
-    const opts = {
-      symbols,
-      priceColumns,
-      priceAdjust,
-      priceStartDate,
-      priceDaysWithoutTrade,
-      fileOutdir,
-      fileName,
-      fileExtension,
-      fileDelimiter,
-      fileEncoding,
-      fileHeaders,
-    };
-    writeFileSync(join(__dirname,'settings.json'), JSON.stringify(opts,null,2));
-  }
-  
-  if (saveReset) resetDefaults();
 } else {
-  abort('No symbols to process.', '');
-  return;
+  log('\nNo symbols to process.'.redBold);
 }
+
+const { save, saveReset } = cmd;
+if (save) {
+  const {
+    priceColumns, priceAdjust, priceStartDate, priceDaysWithoutTrade,
+    fileOutdir, fileName, fileExtension, fileDelimiter, fileEncoding, fileNoHeaders: fileHeaders
+  } = cmd;
+  const opts = {
+    symbols,
+    priceColumns,
+    priceAdjust,
+    priceStartDate,
+    priceDaysWithoutTrade,
+    fileOutdir,
+    fileName,
+    fileExtension,
+    fileDelimiter,
+    fileEncoding,
+    fileHeaders,
+  };
+  writeFileSync(join(__dirname,'settings.json'), JSON.stringify(opts,null,2));
+}
+
+if (saveReset) resetDefaults();
 
 })();
 function resolveSymbols(allSymbols, savedSymbols, { args, symbol, symbolFile, symbolFilter, symbolDelete, symbolAll }) {
