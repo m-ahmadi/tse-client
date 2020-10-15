@@ -576,8 +576,7 @@ async function updatePrices(instruments=[], startDeven) {
       }
     }
   }
-  const res = { succs: {}, fails: {} };
-  if (!Object.keys(updateNeeded).length) return res;
+  if (!Object.keys(updateNeeded).length) return { succs: {}, fails: {} };
   
   const { succs, fails } = await updatePricesRetrier(updateNeeded);
   
@@ -601,7 +600,7 @@ async function updatePrices(instruments=[], startDeven) {
   
   await storage.setItemAsync('tse.prices', str, true);
   
-  return res;
+  return { succs, fails };
 }
 
 async function getInstruments(struct=true, arr=true, structKey='InsCode') {
