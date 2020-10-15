@@ -110,7 +110,25 @@ if (symbols.length) {
   const { error, prices } = await tse.getPrices(symbols, _settings);
   
   if (error) {
-    log(error);
+    const { code, title } = error;
+    const fatal = ('Fatal Error #'+code+':').red +'  '+ title.red +'\n\n';
+    
+    if (code === 1) {
+      const { detail } = error;
+      const msg = typeof detail === 'object' ? detail.message : detail;
+      log(fatal + msg.red);
+    } else if (code === 2) {
+      const { symbols } = error;
+      log(fatal + symbols.join('\n').red);
+    } else if (code === 3) {
+      const { fails, succs } = error;
+      const msg = ''
+        + ('\n'+title+':').redBold + '\n\t'
+        + ('X fail: '+fails.length).red + '\n\t'
+        + ('√ done: '+succs.length).green;
+      log(msg);
+    }
+    process.exitCode = 1;
     return;
   }
   
