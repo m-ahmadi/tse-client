@@ -475,9 +475,9 @@ async function updateInstruments() {
   let instruments = splitted[0];
   let shares      = splitted[1];
   
-  if (instruments === '*') warn('Cannot update during trading session hours.');
-  if (instruments === '')  warn('Already updated: ', 'Instruments');
-  if (shares === '')       warn('Already updated: ', 'Shares');
+  // if (instruments === '*') warn('Cannot update during trading session hours.');
+  // if (instruments === '')  warn('Already updated: ', 'Instruments');
+  // if (shares === '')       warn('Already updated: ', 'Shares');
   
   if (instruments !== '' && instruments !== '*') {
     if (currentInstruments && Object.keys(currentInstruments).length) {
