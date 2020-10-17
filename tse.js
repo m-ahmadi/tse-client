@@ -233,7 +233,7 @@ function parseInstruments(struct=false, arr=false, structKey='InsCode') {
     if (arr) {
       instruments.push(item);
     } else {
-      const key = struct ? item[structKey] : row.match(/^\d+\b/)[0];
+      const key = struct ? item[structKey] : row.split(',', 1)[0];
       instruments[key] = item;
     }
   }
@@ -409,7 +409,7 @@ async function parseStoredPrices() {
   for (let i=0, n=strs.length; i<n; i++) {
     const str = strs[i];
     if (!str) continue;
-    storedPrices[ str.match(/^\b\d+\b/)[0] ] = str;
+    storedPrices[ str.split(',',1)[0] ] = str;
   }
 }
 
@@ -459,7 +459,7 @@ async function updateInstruments() {
   } else {
     currentInstruments = parseInstruments();
     currentShares      = parseShares();
-    const insDevens = Object.keys(currentInstruments).map( k => parseInt(currentInstruments[k].match(/\b\d{8}\b/)[0]) );
+    const insDevens = Object.keys(currentInstruments).map( k => parseInt(currentInstruments[k].split(',',9)[8]) );
     const shareIds = Object.keys(currentShares).map( k => parseInt(currentShares[k].split(',',1)[0]) );
     lastDeven = Math.max(...insDevens);
     lastId    = Math.max(...shareIds);
@@ -481,7 +481,7 @@ async function updateInstruments() {
   
   if (instruments !== '' && instruments !== '*') {
     if (currentInstruments && Object.keys(currentInstruments).length) {
-      instruments.split(';').forEach(i => currentInstruments[ i.match(/^\d+\b/)[0] ] = i);
+      instruments.split(';').forEach(i => currentInstruments[ i.split(',',1)[0] ] = i);
       instruments = Object.keys(currentInstruments).map(k => currentInstruments[k]).join(';');
     }
     storage.setItem('tse.instruments', instruments);
