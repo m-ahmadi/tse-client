@@ -459,8 +459,8 @@ async function updateInstruments() {
   } else {
     currentInstruments = parseInstruments();
     currentShares      = parseShares();
-    const insDevens = Object.keys(currentInstruments).map( k => parseInt(currentInstruments[k].split(',',9)[8]) );
-    const shareIds = Object.keys(currentShares).map( k => parseInt(currentShares[k].split(',',1)[0]) );
+    const insDevens = Object.keys(currentInstruments).map( k => +currentInstruments[k].split(',',9)[8] );
+    const shareIds = Object.keys(currentShares).map( k => +currentShares[k].split(',',1)[0] );
     lastDeven = Math.max(...insDevens);
     lastId    = Math.max(...shareIds);
   }
