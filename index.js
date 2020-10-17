@@ -26,36 +26,36 @@ const defaultSettings = {
 if ( !existsSync(join(__dirname,'settings.json')) ) saveSettings(defaultSettings);
 const savedSettings = require('./settings.json');
 const { log } = console;
+const t = '\n\t\t\t\t\t';
 
 cmd
   .helpOption('-h, --help', 'Show help.')
   .name('tse')
-  .usage('[symbols] [options]\n  tse faSymbol1 faSymbol2 -o /tsedata -x txt -e utf8 -H')
+  .usage('[symbols] [options]\n  tse faSymbol1 faSymbol2 -o /tsedata -j 1 -x txt -e utf8 -H')
   .description('A client for receiving stock data from the Tehran Stock Exchange (TSE).')
-  .option('-s, --symbol <string>',           '"faSymbol faSymbol ..."')
-  .option('-f, --symbol-file <string>',      'path/to/file "faSymbol \\n fasymbol ..."')
-  .option('-m, --symbol-filter <string>',    '"m=id,id... t=id,id... i=id,id..."')
-  .option('-d, --symbol-delete',             'true/false. default: false')
-  .option('-a, --symbol-all',                'true/false. default: false')
-  .option('-c, --price-columns <string>',    '1,2 | 1:a 2:b  default: "4:DATE 6:OPEN 7:HIGH 8:LOW 9:LAST 10:CLOSE 12:VOL"')
-  .option('-j, --price-adjust <number>',     '0|1|2 as none|capinc + dividend|capinc. default: 0')
-  .option('-b, --price-start-date <string>', 'Shamsi YYYYMMDD min: 13800101 as ^\\d{8}$ or Relative as ^\\d+(y|m|d)$  default: 3m') // 13800101
-  .option('-t, --price-days-without-trade',  'true/false. default: false')
-  .option('-o, --file-outdir <string>',      'default: ./')
-  .option('-n, --file-name <number>',        '0|1|2|3|4 as isin_code|latin_name|latin_symbol|farsi_name|farsi_symbol. default: 4')
-  .option('-x, --file-extension <string>',   'default: csv')
-  .option('-l, --file-delimiter <string>',   'default: ,')
-  .option('-e, --file-encoding <string>',    'utf8|utf8bom|ascii. default: utf8bom')
-  .option('-H, --file-no-headers',           'true/false default: true')
-  .option('--save',                          'true/false. default: false')
-  .option('--save-reset',                    'true/false. default: false')
-  .option('--cache-dir [path]',              'Show or change the location of cacheDir.\n\t\t\t\t\t  if [path] is provided, new location is set and\n\t\t\t\t\t  existing content is moved to the new location.')
+  .option('-s, --symbol <string>',           'A space-separated string of symbols.')
+  .option('-f, --symbol-file <string>',      'Path to a file that contains newline-separated symbols.')
+  .option('-m, --symbol-filter <string>',    'Select symbols based on a filter string. (AND-based)'+t+'market type:     m=id,id,... (help: tse ls -M)'+t+'symbol type:     t=id,id,... (help: tse ls -T)'+t+'industry sector: i=id,id,... (help: tse ls -I)'+t+'example:  tse -m "t=300,303 i=27"'+t+'only see: tse ls -F "t=300,303 i=27"')
+  .option('-d, --symbol-delete',             'Boolean. Delete specified symbols from selection. default: false')
+  .option('-a, --symbol-all',                'Boolean. Select all symbols. default: false')
+  .option('-c, --price-columns <string>',    'A comma/space separated list of column indexes with optional headers.'+t+'index only:      1,2,3'+t+'index & header:  1:a 2:b 3:c'+t+'default: "4:DATE 6:OPEN 7:HIGH 8:LOW 9:LAST 10:CLOSE 12:VOL"')
+  .option('-j, --price-adjust <number>',     'Type of adjustment applied to prices. options: 0|1|2 default: 0'+t+'0: none'+t+'1: capital increase + dividends'+t+'2: capital increase')
+  .option('-b, --price-start-date <string>', 'Generate prices from this date onwards. default: "3m" Two valid patterns:'+t+'shamsi YYYYMMDD as ^\\d{8}$ with lowest possible value of 13800101'+t+'relative date as ^\\d{1,3}(y|m|d)$ for example:'+t+'  3m: last 3 months'+t+'  2y: last 2 years'+t+'  7d: last 7 days')
+  .option('-t, --price-days-without-trade',  'Boolean. Include days without trade in generated files. default: false')
+  .option('-o, --file-outdir <string>',      'Location of the generated files. default: ./')
+  .option('-n, --file-name <number>',        'Filename of the generated files. options: 0|1|2|3|4 default: 4'+t+'0: isin_code'+t+'1: latin_name'+t+'2: latin_symbol'+t+'3: farsi_name'+t+'4: farsi_symbol')
+  .option('-x, --file-extension <string>',   'Extension of the generated files. default: csv')
+  .option('-l, --file-delimiter <string>',   'A single character to use as delimiter in generated files. default: ,')
+  .option('-e, --file-encoding <string>',    'Encoding of the generated files. options: utf8|utf8bom|ascii. default: utf8bom')
+  .option('-H, --file-no-headers',           'Boolean. Generate files without the header row. default: false')
+  .option('--save',                          'Boolean. Save options for later use. default: false')
+  .option('--save-reset',                    'Boolean. Reset saved options back to defaults. default: false')
+  .option('--cache-dir [path]',              'Show or change the location of cache directory.'+t+'if [path] is provided, new location is set but'+t+'existing content is not moved to the new location.')
   .version(''+JSON.parse(readFileSync(join(__dirname, 'package.json'), 'utf8')).version, '-v, --version', 'Show version number.');
 cmd.command('list').alias('ls').description('Show information about current settings and more. (help: tse ls -h)')
   .option('-S, --saved-symbols',             'List saved symbols.')
   .option('-D, --saved-settings',            'List saved settings.')
-  .option('-L, --last-update',               'Show the date of last instruments update.')
-  .option('-F, --filter-match <string>',     'List symbols that match a filter string. (same string syntax as: tse s -f)')
+  .option('-F, --filter-match <string>',     'List symbols that match a filter string. (same string syntax as: tse -m)')
   .option('-A, --all-columns',               'Show all possible column indexes.')
   .option('-M, --id-market',                 'Show all possible market-type IDs. "Instrument.Flow"')
   .option('-T, --id-symbol',                 'Show all possible symbol-type IDs. "Instrument.YVal"')
@@ -63,7 +63,7 @@ cmd.command('list').alias('ls').description('Show information about current sett
   .option('-B, --id-board',                  'Show all possible board IDs. "Instrument.CComVal"')
   .option('-Y, --id-market-code',            'Show all possible market-code IDs. "Instrument.YMarNSC"')
   .option('-G, --id-symbol-gcode',           'Show all possible symbol-group IDs. "Instrument.CGrValCot"')
-  .option('-O, --id-sort [columnIndex]',     'Sort the IDs table by specifying the index of the column. default: 1. put underline at end for ascending sort: 1_')
+  .option('-O, --id-sort [columnIndex]',     'Sort the IDs table by specifying the index of the column. default: 1'+t+'put underline at end for ascending sort: 1_')
   .option('--search <query>',                'Search symbols.')
   .action(list);
 cmd.parse(process.argv);
@@ -104,7 +104,7 @@ if (symbols.length) {
       const res = (gy*10000) + (gm*100) + gd;
       priceStartDateParsed = res < mindate ? ''+mindate : ''+res;
     } else {
-      abort('Invalid option:', '--price-start-date');
+      abort('Invalid option:', '--price-start-date', '\n\tPattern not matched:'.red, '^\\d{1,3}(y|m|d)$');
       return;
     }
   }
@@ -433,8 +433,8 @@ async function list(opts) {
       const ins = await tse.getInstruments(true, true);
       const { flow, yval, csecval } = filters;
       const matchedSymbols = ins.filter(i => (
-        (flow && flow.includes(i.Flow)) ||
-        (yval && yval.includes(i.YVal)) ||
+        (flow && flow.includes(i.Flow)) &&
+        (yval && yval.includes(i.YVal)) &&
         (csecval && csecval.includes(i.CSecVal))
       )).map(i => i.Symbol);
       
