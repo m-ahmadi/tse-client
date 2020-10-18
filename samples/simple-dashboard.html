@@ -6,21 +6,21 @@
 	<option value="شاخص کل (هم وزن)6">شاخص کل هم وزن</option>
 	<option value="شاخص کل فرابورس6">شاخص فرابورس</option>
 </select>
-<input id="_w" type="number" min="600" value="1900">
+<input id="_w" type="number" min="600" value="1890">
 <input id="_h" type="number" min="400" value="600">
 last<input id="_b" type="number" min="1" value="1" style="width:40px;">month(s)
 <button onclick="charts.forEach(i=>{i.canvas.parentElement.remove(); i.destroy(true)}), charts=[]">clear</button>
 
 <div id="_charts" style="display: grid; grid-template-columns: auto auto auto; row-gap: .5rem; column-gap: .2rem;"></div>
 
-<script src='https://cdn.jsdelivr.net/npm/tse-browser-client/dist/tse.bundle.min.js'></script>
-<script src='https://cdn.jsdelivr.net/npm/chart.js'></script>
+<script src="../dist/tse.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 let data = {};
 let charts = [];
 
 async function makeChart(_symbol='', title='', w=+_w.value, h=+_h.value, monthsBack=+_b.value) {
-	const [symbol] = await tse.getPrices([_symbol], {startDate: lastMonths(monthsBack)});
+	const { prices: [symbol] } = await tse.getPrices([_symbol], {startDate: lastMonths(monthsBack)});
 	_add.disabled = false; _add.innerText = _add.innerText.slice(0,-3);
 	data[_symbol] = {...symbol};
 	
