@@ -97,6 +97,7 @@ if (symbols.length) {
       const m = ({y:'FullYear',m:'Month',d:'Date'})[ relative[2] ];
       const d = new Date();
       d['set'+m](d['get'+m]() - n);
+      d.setDate(d.getDate() - 1);
       const res = (d.getFullYear()*10000) + ((d.getMonth()+1)*100) + d.getDate();
       priceStartDateParsed = res < mindate ? ''+mindate : ''+res;
     } else if (/^\d{8}$/.test(s)) {
