@@ -1,0 +1,60 @@
+<meta charset="utf8" />
+<script src="https://cdn.jsdelivr.net/npm/big.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jalaali-js/dist/jalaali.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/localforage"></script>
+<script src="https://cdn.jsdelivr.net/npm/pako/dist/pako.min.js"></script>
+<script src="../../tse.js"></script>
+
+<button onclick="test()">getPrices(...)</button>
+
+last<input id="n" type="number" min="1" value="7" style="width:40px;">
+<select id="t">
+	<option value="d" selected>day</option>
+	<option value="m">month</option>
+	<option value="y">year</option>
+</select>&nbsp;(s)
+&emsp;
+<button onclick="localStorage.clear(), localforage.clear()">clear storage</button>
+
+<br><br>
+
+<span id="stat" style="font-size: 3em"></span>
+<pre id="detail" style="padding-left:2em;"></pre>
+
+<script>
+function test() {
+	stat.innerText = '';
+	detail.innerHTML = '';
+	
+	const startDate = reldate(+n.value, t.selectedOptions[0].value);
+	tse.getPrices(['ذوب'], {startDate}).then(r => {
+		const { prices: [sym] } = r;
+		const {date: devens} = sym;
+		
+		console.log(devens);
+		
+		const invalids = [];
+		for (let i=1; i < devens.length - 1; i++) {
+			const deven = devens[i];
+			const valid = deven > devens[i-1] && deven < devens[i+1];
+			if (!valid) invalids.push(i);
+		}
+		
+		stat.innerText = invalids.length ? '❌' : '✔';
+		stat.style.color = invalids.length ? 'red' : 'green';
+		
+		detail.innerHTML = devens.map(n => '<span>'+n+'</span>').join('\n');
+		[...detail.children].forEach((span, i) => invalids.indexOf(i) !== -1 && (span.style.color = 'red'));
+	});
+}
+
+function reldate(n=1, type='m') {
+	const t = ({y:'FullYear',m:'Month',d:'Date'})[ type ];
+	const d = new Date();
+	d['set'+t](d['get'+t]() - n);
+	d.setDate(d.getDate() - 1);
+	const res = (d.getFullYear()*10000) + ((d.getMonth()+1)*100) + d.getDate();
+	const min = 20010321;
+	return res < min ? ''+min : ''+res;
+}
+</script>
