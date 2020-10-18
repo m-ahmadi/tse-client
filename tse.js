@@ -571,13 +571,19 @@ async function updatePrices(instruments=[], startDeven) {
       };
     } else { // has data
       const rows = insData.split(';');
-      const lastRow = new ClosingPrice( rows[rows.length-1] );
-      const lastRowDEven = +lastRow.DEven;
-      if (dayDiff(''+lastRowDEven, ''+lastPossibleDeven) >= UPDATE_INTERVAL) { // but outdated
+      const firstDeven = +new ClosingPrice( rows[0] ).DEven;
+      const lastDeven  =  new ClosingPrice( rows[rows.length-1] ).DEven;
+      
+      if (dayDiff(lastDeven, ''+lastPossibleDeven) >= UPDATE_INTERVAL) { // but outdated
         updateNeeded[insCode] = {
-          uriSegs: [insCode, lastRowDEven, market],
+          uriSegs: [insCode, lastDeven, market],
           insCode,
           oldContent: insData
+        };
+      } else if (+startDeven < firstDeven) { // but older requested
+        updateNeeded[insCode] = {
+          uriSegs: [insCode, startDeven, market],
+          insCode
         };
       }
     }
@@ -681,7 +687,7 @@ async function getPrices(symbols=[], settings={}) {
       : prices[insCode];
     
     for (const closingPrice of closingPrices) {
-      if ( Big(closingPrice.DEven).lt(startDate) ) continue;
+      if ( Big(closingPrice.DEven).lte(startDate) ) continue;
       if ( Big(closingPrice.ZTotTran).eq(0) && !daysWithoutTrade ) continue;
       
       for (const {header, name} of columns) {
