@@ -52,8 +52,8 @@ tse کگل -H        # file without headers
 ```
 #### Select symbols from file:
 ```shell
-tse ls F "i=34" > car.txt
-tse ls F "i=27" > iron.txt
+tse ls -F "i=34" > car.txt
+tse ls -F "i=27" > iron.txt
 tse -i car.txt -o ./car-group
 tse -i iron.txt -o ./iron-group
 ```
