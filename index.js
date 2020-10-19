@@ -402,7 +402,7 @@ function printTable(table=[], cols=[]) {
 }
 
 async function list(opts) {
-  const { savedSymbols, savedSettings: _savedSettings, allColumns, lastUpdate, filterMatch, search } = opts;
+  const { savedSymbols, savedSettings: _savedSettings, allColumns, filterMatch, search } = opts;
   const { table } = console;
   
   if (savedSymbols) {
