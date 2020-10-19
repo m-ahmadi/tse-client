@@ -6,7 +6,6 @@ const Big     = isNode ? require('big.js')     : isBrowser ? window.Big     : un
 const jalaali = isNode ? require('jalaali-js') : isBrowser ? window.jalaali : undefined;
 if (isBrowser) {
   if (!Big)         throw new Error('Cannot find required dependecy: Big');
-  if (!jalaali)     throw new Error('Cannot find required dependecy: jalaali');
   if (!localforage) throw new Error('Cannot find required dependecy: localforage');
 }
 //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -364,7 +363,7 @@ function getCell(columnName, instrument, closingPrice) {
     c === 'Symbol'         ? instrument.Symbol.replace(' ', '_') :
     c === 'Name'           ? instrument.Name.replace(' ', '_') :
     c === 'Date'           ? closingPrice.DEven :
-    c === 'ShamsiDate'     ? gregToShamsi(closingPrice.DEven) :
+    c === 'ShamsiDate'     ? jalaali && gregToShamsi(closingPrice.DEven) :
     c === 'PriceFirst'     ? closingPrice.PriceFirst :
     c === 'PriceMax'       ? closingPrice.PriceMax :
     c === 'PriceMin'       ? closingPrice.PriceMin :
