@@ -11,8 +11,13 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "files": [
-    "*",
-    "!scripts"
+    "tse.js",
+    "index.js",
+    "info.json",
+    "dist",
+    "lib",
+    "samples",
+    "test"
   ],
   "repository": {
     "type": "git",
