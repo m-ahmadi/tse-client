@@ -225,12 +225,8 @@ function resolveSymbols(allSymbols, savedSymbols=[], { args, symbol, symbolFile,
   if (symbolFilter) {
     const filters = parseFilterStr(symbolFilter);
     if (filters) {
-      const { flow, yval, csecval } = filters;
-      const syms = instruments.filter(i => (
-        (flow && flow.includes(i.Flow)) &&
-        (yval && yval.includes(i.YVal)) &&
-        (csecval && csecval.includes(i.CSecVal))
-      )).map(i => i.Symbol);
+      const predicate = getFilterPredicate(filters);
+      const syms = predicate ? instruments.filter(predicate).map(i => i.Symbol) : [];
       symbols.push(...syms);
     } else {
       log('Invalid filter string.'.redBold);
@@ -318,6 +314,20 @@ function parseColstr(str='') {
     return row;
   });
   return res.filter(i=>!i).length ? undefined : res;
+}
+function getFilterPredicate(filters) {
+  const { flow, yval, csecval } = {flow:[], yval:[], csecval:[], ...filters};
+  const [f,y,c] = [flow, yval, csecval].map(i => i.length);
+  const predicate = 
+    y &&  f &&  c ? i => yval.includes(i.YVal) && flow.includes(i.Flow) && csecval.includes(i.CSecVal) :
+    y &&  f && !c ? i => yval.includes(i.YVal) && flow.includes(i.Flow) :
+    y && !f &&  c ? i => yval.includes(i.YVal) && csecval.includes(i.CSecVal) :
+   !y &&  f &&  c ? i => flow.includes(i.Flow) && csecval.includes(i.CSecVal) :
+    y && !f && !c ? i => yval.includes(i.YVal) :
+   !y &&  f && !c ? i => flow.includes(i.Flow) :
+   !y && !f &&  c ? i => csecval.includes(i.CSecVal) :
+   undefined;
+  return predicate;
 }
 function abort(m1, m2, ...rest) {
   console.log(m1.redBold, m2.whiteBold, ...rest);
@@ -429,16 +439,10 @@ async function list(opts) {
   
   if (filterMatch) {
     const filters = parseFilterStr(filterMatch);
-    
     if (filters) {
       const ins = await tse.getInstruments(true, true);
-      const { flow, yval, csecval } = filters;
-      const matchedSymbols = ins.filter(i => (
-        (flow && flow.includes(i.Flow)) &&
-        (yval && yval.includes(i.YVal)) &&
-        (csecval && csecval.includes(i.CSecVal))
-      )).map(i => i.Symbol);
-      
+      const predicate = getFilterPredicate(filters);
+      const matchedSymbols = predicate ? ins.filter(predicate).map(i => i.Symbol) : [];
       log(matchedSymbols.sort().join('\n'));
     } else {
       log('Invalid filter string.'.redBold);
