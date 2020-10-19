@@ -215,7 +215,7 @@ function resolveSymbols(allSymbols, savedSymbols=[], { args, symbol, symbolFile,
 
   if (symbolFile) {
     try {
-      const syms = readFileSync(symbolsFile, 'utf8').replace(/\ufeff/,'').replace(/\r\n/g, '\n').split('\n');
+      const syms = readFileSync(symbolFile, 'utf8').replace(/\ufeff/,'').replace(/\r\n/g, '\n').trim().split('\n');
       symbols.push(...syms);
     } catch (e) {
       log(e.message.red);
