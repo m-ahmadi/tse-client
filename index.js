@@ -77,7 +77,7 @@ let settings;
 (async function () {
 const instruments = await tse.getInstruments();
 const allSymbols = instruments.map(i => i.Symbol);
-const symbols = resolveSymbols(allSymbols, savedSettings.symbols, cmd);
+const symbols = resolveSymbols(allSymbols, savedSettings.symbols, instruments, cmd);
 settings = resolveSettings(symbols, defaultSettings, savedSettings, cmd.opts());
 
 log('Total symbols:'.grey, (symbols.length+'').yellow );
@@ -203,7 +203,7 @@ if (save) saveSettings(settings);
 if (saveReset) savedSettings(defaultSettings);
 
 })();
-function resolveSymbols(allSymbols, savedSymbols=[], { args, symbol, symbolFile, symbolFilter, symbolDelete, symbolAll }) {
+function resolveSymbols(allSymbols, savedSymbols=[], instruments, { args, symbol, symbolFile, symbolFilter, symbolDelete, symbolAll }) {
   if (symbolAll) return symbolDelete ? [] : allSymbols;
   
   let symbols = [...args];
