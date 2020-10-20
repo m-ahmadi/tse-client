@@ -23,7 +23,7 @@ async function update() {
 	const toUpdate = instruments.slice(0,+howmany.value).map(i => i.Symbol);
 	
 	var t0 = performance.now();
-	data = (await tse.getPrices(toUpdate)).prices;
+	data = (await tse.getPrices(toUpdate)).data;
 	var t1 = performance.now();
 	write('tse.getPrices() took <strong>', +(t1-t0).toFixed(1), '</strong> ms');
 	

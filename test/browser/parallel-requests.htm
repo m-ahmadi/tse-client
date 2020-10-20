@@ -26,7 +26,7 @@ async function update() {
 	const instruments = await tse.getInstruments();
 	
 	const toUpdate = instruments.slice(0,+howmany.value).map(i => i.Symbol);
-	const { prices: data } = await tse.getPrices(toUpdate);
+	const { data } = await tse.getPrices(toUpdate);
 	
 	console.log(data);
 }

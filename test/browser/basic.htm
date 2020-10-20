@@ -15,16 +15,16 @@
 
 <script>
 (async function () {
-	const { prices: data } = await tse.getPrices(['ذوب', 'فولاد']);
-	const { prices: adjustedData } = await tse.getPrices(['خساپا'], {adjustPrices: 1});
+	const { data } = await tse.getPrices(['ذوب', 'فولاد']);
+	const { data: adjusted } = await tse.getPrices(['خساپا'], {adjustPrices: 1});
 
-	const { prices: customCols1 } = await tse.getPrices(['شپنا'], {columns: [4,7,8]}); // default names
-	const { prices: customCols2 } = await tse.getPrices(['شپنا'], {columns: [[4,'DATE'],[7,'MAX'],[8,'MIN']]}); // custom names
+	const { data: customCols1 } = await tse.getPrices(['شپنا'], {columns: [4,7,8]}); // default names
+	const { data: customCols2 } = await tse.getPrices(['شپنا'], {columns: [[4,'DATE'],[7,'MAX'],[8,'MIN']]}); // custom names
 	
 	// making some charts:
 	makeChart(data[0], 'ذوب (پایانی)');
 	makeChart(data[1], 'فولاد (پایانی)');
-	makeChart(adjustedData[0], 'خساپا (پایانی)');
+	makeChart(adjusted[0], 'خساپا (پایانی)');
 	makeChart(customCols1[0], 'شپنا (بیشترین)', {date:'Date',price:'PriceMax'});
 	makeChart(customCols2[0], 'شپنا (کمترین)', {date:'DATE',price:'MIN'});
 	

@@ -621,7 +621,7 @@ async function getInstruments(struct=true, arr=true, structKey='InsCode') {
 
 async function getPrices(symbols=[], settings={}) {
   if (!symbols.length) return;
-  const result = { prices: [], error: undefined };
+  const result = { data: [], error: undefined };
   
   const err = await updateInstruments();
   if (err) {
@@ -673,7 +673,7 @@ async function getPrices(symbols=[], settings={}) {
     return { ...column, header: finalHeader };
   });
   
-  result.prices = selection.map(instrument => {
+  result.data = selection.map(instrument => {
     if (!instrument) return;
     const res = {};
     columns.forEach(col => res[col.header] = []);

@@ -124,7 +124,7 @@ if (symbols.length) {
     daysWithoutTrade: priceDaysWithoutTrade,
     startDate:        priceStartDateParsed
   };
-  const { error, prices } = await tse.getPrices(symbols, _settings);
+  const { error, data } = await tse.getPrices(symbols, _settings);
   
   if (error) {
     const { code, title } = error;
@@ -156,8 +156,8 @@ if (symbols.length) {
   const files = [];
   const headers = priceColumnsParsed.map(i=>i[1]);
   const headerRow = headers.join(fileDelimiter) + '\n';
-  for (let i=0, n=prices.length; i<n; i++) {
-    const sym = prices[i];
+  for (let i=0, n=data.length; i<n; i++) {
+    const sym = data[i];
     const fcol = sym[ headers[0] ];
     let file = fileHeaders ? headerRow : '';
     for (let j=0, m=fcol.length; j<m; j++) {

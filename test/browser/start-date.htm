@@ -28,7 +28,7 @@ function test() {
 	
 	const startDate = reldate(+n.value, t.selectedOptions[0].value);
 	tse.getPrices(['ذوب'], {startDate}).then(r => {
-		const { prices: [sym] } = r;
+		const { data: [sym] } = r;
 		const {date: devens} = sym;
 		
 		console.log(devens);
