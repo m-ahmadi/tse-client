@@ -4,7 +4,7 @@
 # TSE Client
 A client for receiving stock data from the Tehran Stock Exchange (TSE).  
 Works in Browser, Node, and as CLI.  
-The previous versions `0.x` and `1.x` were a direct port of the [official Windows app](http://cdn.tsetmc.com/Site.aspx?ParTree=111A11).  
+The `0.x` and `1.x` versions were a direct port of the [official Windows app](http://cdn.tsetmc.com/Site.aspx?ParTree=111A11).  
 
 # CLI
 
@@ -71,6 +71,8 @@ tse ls -F "i=27 t=303" # گروه فلزات بازار فرابورس
 tse ls -F "i=27 t=309" # گروه فلزات بازار پایه
 tse ls -F "i=34 t=303" # گروه خودرو بازار بورس
 tse ls -F "i=34 t=309" # گروه خودرو بازار پایه
+tse ls -F "t=68"       # شاخص های بازار بورس
+tse ls -F "t=69"       # شاخص های بازار فرابورس
 ```
 #### Save settings:
 ```
@@ -104,16 +106,23 @@ npm install tse-client
 const tse = require('tse');
 
 (async () => {
-  let { prices, error } = await tse.getPrices(['ذوب', 'فولاد']);
-  if (!error) console.log(prices);
-
-  let { prices } = await tse.getPrices(['خساپا'], {adjustPrices: 1});
-
-  let { prices } = await tse.getPrices(['شپنا'], {columns: [4,7,8]});
-
-  let { prices } = await tse.getPrices(['شپنا'], {columns: [[4,'DATE'],[7,'MAX'],[8,'MIN']]}); 
   
+  // basic
+  let { error, data } = await tse.getPrices(['ذوب', 'فولاد']);
+  if (!error) console.log(data);
+  
+  // adjusted data
+  let { data } = await tse.getPrices(['خساپا'], {adjustPrices: 1});
+  
+  // select columns (default names)
+  let { data } = await tse.getPrices(['شپنا'], {columns: [4,7,8]});
+  
+  // select columns (custom names)
+  let { data } = await tse.getPrices(['شپنا'], {columns: [[4,'DATE'],[7,'MAX'],[8,'MIN']]});
+  
+  // view column info
   console.table(tse.columnList);
+  
 })();
 ```
 
@@ -124,15 +133,23 @@ const tse = require('tse');
 <script src="https://cdn.jsdelivr.net/npm/tse-client/dist/tse.bundle.min.js"></script>
 <script>
   (async () => {
-    const { prices: data, error } = await tse.getPrices(['ذوب', 'فولاد']);
+
+    // basic
+    let { error, data } = await tse.getPrices(['ذوب', 'فولاد']);
     if (!error) console.log(data);
     
-    const { prices: adjustedData } = await tse.getPrices(['خساپا'], {adjustPrices: 1});
-  
-    const { prices: customCols1 } = await tse.getPrices(['شپنا'], {columns: [4,7,8]}); // default names
-    const { prices: customCols2 } = await tse.getPrices(['شپنا'], {columns: [[4,'DATE'],[7,'MAX'],[8,'MIN']]}); // custom names
+    // adjusted data
+    let { data } = await tse.getPrices(['خساپا'], {adjustPrices: 1});
     
-    console.table(tse.columnList); // view column indexes and their names
+    // select columns (default names)
+    let { data } = await tse.getPrices(['شپنا'], {columns: [4,7,8]});
+    
+    // select columns (custom names)
+    let { data } = await tse.getPrices(['شپنا'], {columns: [[4,'DATE'],[7,'MAX'],[8,'MIN']]});
+    
+    // view column info
+    console.table(tse.columnList);
+    
   })();
 </script>
 ```
@@ -144,9 +161,10 @@ const tse = require('tse');
 <script src="https://cdn.jsdelivr.net/npm/localforage"></script>
 <script src="https://cdn.jsdelivr.net/npm/jalaali-js/dist/jalaali.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/pako/dist/pako.min.js"></script>
+
 <script src="https://cdn.jsdelivr.net/npm/tse-client/dist/tse.min.js"></script>
 <script>
-  tse.getPrices(['فولاد']).then(([prices]) => console.log(prices));
+  tse.getPrices(['فولاد']).then(({data}) => console.log(data[0]));
 </script>
 ```
 
@@ -163,9 +181,7 @@ echo file_get_contents("http://service.tsetmc.com/tsev2/data/TseClient2.aspx?t=$
 ```
 ```javascript
 tse.API_URL = 'http://path/to/proxy.php';
-(async function () {
-  const data = await tse.getPrices(['فملی']);
-})();
+tse.getPrices(['فولاد']).then(({data}) => console.log(data[0]));
 ```
 #### Some Info:
 | file | desc
@@ -184,34 +200,34 @@ dependency | desc
 
 # API
 
-### `tse.API_URL`
+#### `tse.API_URL`
 The API URL to use for HTTP requests.  
 Only string and valid URL.  
 Default: `http://service.tsetmc.com/tsev2/data/TseClient2.aspx`
-### `tse.UPDATE_INTERVAL`
+#### `tse.UPDATE_INTERVAL`
 Update data only if these many days have passed since the last update.  
 Only integers.  
 Default: `1`
-### `tse.PRICES_UPDATE_CHUNK`
+#### `tse.PRICES_UPDATE_CHUNK`
 Amount of instruments per request.  
 Only integers.  
 Min: `1`  
 Max: `60`  
 Default: `10` in *Browser*. `50` in *Node*.
-### `tse.PRICES_UPDATE_CHUNK_DELAY`
+#### `tse.PRICES_UPDATE_CHUNK_DELAY`
 Amount of delay (in ms) to wait before requesting another chunk of instruments.  
 Default: `500` in *Browser*. `3000` in *Node*.
-### `tse.PRICES_UPDATE_RETRY_COUNT`
+#### `tse.PRICES_UPDATE_RETRY_COUNT`
 Amount of retry attempts before giving up.  
 Only integers.  
 Default: `3`
-### `tse.PRICES_UPDATE_RETRY_DELAY`
+#### `tse.PRICES_UPDATE_RETRY_DELAY`
 Amount of delay (in ms) to wait before making another retry.  
 Only integers.  
 Default: `5000`
-### `tse.getInstruments(struct=true, arr=true, structKey='InsCode')`
+#### `tse.getInstruments(struct=true, arr=true, structKey='InsCode')`
 Update (if needed) and return list of instruments.
-### `tse.getPrices(symbols=['','',...], ?settings={...})`
+#### `tse.getPrices(symbols=['','',...], ?settings={...})`
 Update (if needed) and return prices of instruments.
 ```javascript
 const defaultSettings = {
@@ -229,10 +245,11 @@ const defaultSettings = {
   startDate: '20010321'
 };
 
-const prices = await tse.getPrices(symbols=['sym1', 'sym2', ...], defaultSettings);
-/*
-  prices: [
-    // sym1 prices
+const result = await tse.getPrices(symbols=['sym1', 'sym2', ...], defaultSettings);
+
+result.data /*
+  [
+    // sym1
     {
       open:  [0, 0, ...],
       high:  [0, 0, ...],
@@ -241,25 +258,36 @@ const prices = await tse.getPrices(symbols=['sym1', 'sym2', ...], defaultSetting
       close: [0, 0, ...],
       vol:   [0, 0, ...]
     },
-    
-    // sym2 prices
+
+    // sym2
     {
       open: [],
       high: [],
       ...
     },
-    
+
     ...
   ]
 */
+
+result.error // possible values:
+
+undefined
+
+{ code: 1, title: 'Failed request...',       detail: '' | Error }
+
+{ code: 2, title: 'Incorrect Symbol',        symbols: [] }
+
+{ code: 3, title: 'Incomplete Price Update', fails: [], succs: [] }
+
 ```
 adjustPrices | desc | desc fa
 -------------|------|---------
 0 | none | بدون تعدیل
-1 | capital increase + dividends | افزایش سرمایه + سود
+1 | capital increase + dividends | افزایش سرمایه + سود نقدی
 2 | capital increase | افزایش سرمایه
 
-### `tse.columnList`
+#### `tse.columnList`
 A list of all possible columns.
 index | name | fname
 ------|------|------------------
