@@ -15,9 +15,7 @@
     "index.js",
     "info.json",
     "dist",
-    "lib",
-    "samples",
-    "test"
+    "lib"
   ],
   "repository": {
     "type": "git",
