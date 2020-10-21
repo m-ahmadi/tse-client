@@ -503,7 +503,7 @@ async function updatePricesRequester(chunk=[]) {
   let res;
   const mkRes = (result, error, reqError) => ({ result, error, reqError });
   
-  const insCodes = chunk.map(i => i.uriSegs.join(',')).join(';');
+  const insCodes = chunk.map(i => i.join(',')).join(';');
   
   let error;
   const resp = await rq.ClosingPrices(insCodes).catch(r => error = r);
@@ -511,15 +511,13 @@ async function updatePricesRequester(chunk=[]) {
   if ( !/^[\d.,;@-]*$/.test(resp) ) { res = mkRes(chunk, 'Invalid server response: ClosingPrices'); return res; }
   if (resp === '')                  { res = mkRes(chunk, 'Unknown Error.');                         return res; }
   
-  const o = {};
-  resp.split('@').forEach((v,i)=> o[chunk[i].insCode] = v);
-  res = mkRes(o)
+  const chunkRes = resp.split('@').map((v,i)=> [chunk[i][0], v]);
+  res = mkRes(chunkRes);
   
   return res;
 }
-async function updatePricesRetrier(updateNeeded={}, count=0, result={}) {
-  const keys = Object.keys(updateNeeded);
-  const chunks = splitArr(keys, PRICES_UPDATE_CHUNK).map( i => i.map(k=> updateNeeded[k]) );
+async function updatePricesRetrier(updateNeeded=[], count=0, result={succs:[], fails:[]}) {
+  const chunks = splitArr(updateNeeded, PRICES_UPDATE_CHUNK);
   
   const proms = [];
   for (const chunk of chunks) {
@@ -529,16 +527,16 @@ async function updatePricesRetrier(updateNeeded={}, count=0, result={}) {
   const settled = await Promise.allSettled(proms);
   const res = settled.map(i => i.value);
   
-  const fails = res.filter(i => i.error).reduce((a,{result:c})=> c.forEach(i=> a[i.insCode] = i) || a, {});
-  const succs = res.filter(i => !i.error).reduce((a,{result:c}) => Object.keys(c).forEach(k=> a[k] = c[k]) || a, {});
+  const fails = res.filter(i => i.error).map(i => i.result).reduce((a,c) => (a = a.concat(c), a), []);
+  const succs = res.filter(i => !i.error).map(i => i.result).reduce((a,c) => (a = a.concat(c), a), []);
   
-  result.succs = {...result.succs, ...succs};
-  result.fails = {...fails};
+  result.succs = [...result.succs, ...succs];
+  result.fails = [...fails];
   
   count++;
   if (count > PRICES_UPDATE_RETRY_COUNT) return result;
   
-  if (Object.keys(fails).length) {
+  if (fails.length) {
     result = await new Promise(async (resolve, reject) => {
       await sleep(PRICES_UPDATE_RETRY_DELAY);
       const r = await updatePricesRetrier(fails, count, result);
@@ -558,32 +556,25 @@ async function updatePrices(instruments=[], startDeven) {
     return result;
   }
   
-  const updateNeeded = {}; // redundant insCode needed due to splitArr & updatePricesRequester
+  const updateNeeded = [];
+  const oldContents = {};
   for (const instrument of instruments) {
     const insCode = instrument.InsCode;
     const market = instrument.YMarNSC === 'NO' ? 0 : 1;
     const insData = storedPrices[insCode];
+    
     if (!insData) { // doesn't have data
-      updateNeeded[insCode] = {
-        uriSegs: [insCode, startDeven, market],
-        insCode
-      };
+      updateNeeded.push( [insCode, startDeven, market] );
     } else { // has data
       const rows = insData.split(';');
       const firstDeven = +new ClosingPrice( rows[0] ).DEven;
       const lastDeven  =  new ClosingPrice( rows[rows.length-1] ).DEven;
       
       if (dayDiff(lastDeven, ''+lastPossibleDeven) >= UPDATE_INTERVAL) { // but outdated
-        updateNeeded[insCode] = {
-          uriSegs: [insCode, lastDeven, market],
-          insCode,
-          oldContent: insData
-        };
+        updateNeeded.push( [insCode, lastDeven, market] );
+        oldContents[insCode] = insData;
       } else if (+startDeven < firstDeven) { // but older requested
-        updateNeeded[insCode] = {
-          uriSegs: [insCode, startDeven, market],
-          insCode
-        };
+        updateNeeded.push( [insCode, startDeven, market] );
       }
     }
   }
@@ -591,17 +582,15 @@ async function updatePrices(instruments=[], startDeven) {
   
   const { succs, fails } = await updatePricesRetrier(updateNeeded);
   
-  const suckeys = Object.keys(succs);
-  for (const k of suckeys) {
-    const { oldContent } = updateNeeded[k];
-    const newContent = succs[k];
+  for (const [insCode, newContent] of succs) {
+    const oldContent = oldContents[insCode];
     
     let content = oldContent || '';
     if (newContent) {
       content = oldContent ? oldContent+';'+newContent : newContent;
     }
     
-    storedPrices[k] = content;
+    storedPrices[insCode] = content;
   }
   
   let str = '';
@@ -611,7 +600,11 @@ async function updatePrices(instruments=[], startDeven) {
   
   await storage.setItemAsync('tse.prices', str, true);
   
-  return { ...result, succs, fails };
+  return {
+    ...result,
+    succs: succs.map(([insCode]) => insCode),
+    fails: fails.map(([insCode]) => insCode)
+  };
 }
 
 async function getInstruments(struct=true, arr=true, structKey='InsCode') {
@@ -651,9 +644,12 @@ async function getPrices(symbols=[], settings={}) {
   }
   
   if (fails.length) {
-    result.error = { code: 3, title: 'Incomplete Price Update', fails, succs };
-    const failKeys = Object.keys(fails);
-    selection.forEach((v,i,a) => failKeys.includes(v.InsCode) ? a[i] = undefined : 0);
+    const _selection = selection.reduce((a, {InsCode,Symbol}) => (a[InsCode] = Symbol, a), {});
+    result.error = { code: 3, title: 'Incomplete Price Update',
+      fails: fails.map(k => _selection[k]),
+      succs: succs.map(k => _selection[k])
+    };
+    selection.forEach((v,i,a) => fails.includes(v.InsCode) ? a[i] = undefined : 0);
   }
   
   const prices = {};
