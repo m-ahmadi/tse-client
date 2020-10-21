@@ -20,7 +20,7 @@ let data = {};
 let charts = [];
 
 async function makeChart(_symbol='', title='', w=+_w.value, h=+_h.value, monthsBack=+_b.value) {
-	const { prices: [symbol] } = await tse.getPrices([_symbol], {startDate: lastMonths(monthsBack)});
+	const { data: [symbol] } = await tse.getPrices([_symbol], {startDate: lastMonths(monthsBack)});
 	_add.disabled = false; _add.innerText = _add.innerText.slice(0,-3);
 	data[_symbol] = {...symbol};
 	
