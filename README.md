@@ -1,4 +1,4 @@
-[![NPM](https://nodei.co/npm/tse-client.png)](https://nodei.co/npm/tse-client/)  
+[![NPM](https://nodei.co/npm/tse-client.png?downloads=true&downloadRank=true&stars=true)](https://nodei.co/npm/tse-client/)  
 [![GitHub tag](https://img.shields.io/github/tag/m-ahmadi/tse-client.svg)](https://GitHub.com/m-ahmadi/tse-client/tags/)
 [![GitHub issues](https://img.shields.io/github/issues/m-ahmadi/tse-client.svg)](https://GitHub.com/m-ahmadi/tse-client/issues/)
 # TSE Client
@@ -80,7 +80,7 @@ tse ls -F "t=68"       # شاخص های بازار بورس
 tse ls -F "t=69"       # شاخص های بازار فرابورس
 ```
 #### Save settings:
-```
+```shell
 tse ذوب فولاد -o ./mytse --save
 tse
 tse -x txt
@@ -89,7 +89,7 @@ tse -o ./myother --save
 tse
 ```
 #### View saved settings and more:
-```
+```shell
 tse ls -S
 tse ls -D
 tse ls -F "i=34"
@@ -100,8 +100,8 @@ tse ls -T -O 1_ # order by count (ascending)
 tse ls -h
 ```
 
-
 # Node
+
 #### Install:
 ```shell
 npm install tse-client
