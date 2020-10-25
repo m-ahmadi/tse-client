@@ -503,53 +503,90 @@ async function updateInstruments() {
   }
 }
 
-async function updatePricesRequester(chunk=[]) {
-  let res;
-  const mkRes = (result, error, reqError) => ({ result, error, reqError });
+const updatePricesManager = (function () {
+  let total = 0;
+  let succs = [];
+  let fails = [];
+  let retries = 0;
+  let retrychunks = [];
+  let timeouts = new Map();
+  let qeudRetry = -1;
+  let resolve;
   
-  const insCodes = chunk.map(i => i.join(',')).join(';');
-  
-  let error;
-  const resp = await rq.ClosingPrices(insCodes).catch(r => error = r);
-  if (error)                        { res = mkRes(chunk, 'Failed request: ClosingPrices', error);   return res; }
-  if ( !/^[\d.,;@-]*$/.test(resp) ) { res = mkRes(chunk, 'Invalid server response: ClosingPrices'); return res; }
-  if (resp === '')                  { res = mkRes(chunk, 'Unknown Error.');                         return res; }
-  
-  const chunkRes = resp.split('@').map((v,i)=> [chunk[i][0], v]);
-  res = mkRes(chunkRes);
-  
-  return res;
-}
-async function updatePricesRetrier(updateNeeded=[], count=0, result={succs:[], fails:[]}) {
-  const chunks = splitArr(updateNeeded, PRICES_UPDATE_CHUNK);
-  
-  const proms = [];
-  for (const chunk of chunks) {
-    proms.push( updatePricesRequester(chunk) );
-    await sleep(PRICES_UPDATE_CHUNK_DELAY);
-  }
-  const settled = await Promise.allSettled(proms);
-  const res = settled.map(i => i.value);
-  
-  const fails = res.filter(i => i.error).map(i => i.result).reduce((a,c) => (a = a.concat(c), a), []);
-  const succs = res.filter(i => !i.error).map(i => i.result).reduce((a,c) => (a = a.concat(c), a), []);
-  
-  result.succs = [...result.succs, ...succs];
-  result.fails = [...fails];
-  
-  count++;
-  if (count > PRICES_UPDATE_RETRY_COUNT) return result;
-  
-  if (fails.length) {
-    result = await new Promise(async (resolve, reject) => {
-      await sleep(PRICES_UPDATE_RETRY_DELAY);
-      const r = await updatePricesRetrier(fails, count, result);
-      resolve(r);
-    });
+  function poll() {
+    if (timeouts.size > 0 || qeudRetry > 0) {
+      setTimeout(poll, 500);
+      return;
+    }
+    
+    if (succs.length === total || retries >= PRICES_UPDATE_RETRY_COUNT) {
+      resolve( {succs, fails} );
+      return;
+    }
+    
+    if (retrychunks.length) {
+      const inscodes = retrychunks.reduce((a,c)=>(a=[...a,...c.map(i=>i[0])],a),[]);
+      fails = fails.filter(i => inscodes.indexOf(i) === -1);
+      retries++;
+      qeudRetry = setTimeout(batch, PRICES_UPDATE_RETRY_DELAY, retrychunks);
+      retrychunks = [];
+      setTimeout(poll, PRICES_UPDATE_RETRY_DELAY);
+    }
   }
   
-  return result;
-}
+  function onresult(response, chunk, id) {
+    const inscodes = chunk.map(([insCode]) => insCode);
+    
+    if ( typeof response === 'string' && /^[\d.,;@-]+$/.test(response) ) {
+      const succ = response.split('@').map((v,i)=> [chunk[i][0], v]);
+      succs.push(...succ);
+      fails = fails.filter(i => inscodes.indexOf(i) === -1);
+    } else {
+      fails.push(...inscodes);
+      retrychunks.push(chunk);
+    }
+    
+    timeouts.delete(id);
+  }
+  
+  function request(chunk=[], id) {
+    const insCodes = chunk.map(i => i.join(',')).join(';');
+    
+    rq.ClosingPrices(insCodes)
+      .then( r => onresult(r, chunk, id) )
+      .catch( () => onresult(undefined, chunk, id) );
+  }
+  
+  function batch(chunks=[]) {
+    if (qeudRetry > 0) qeudRetry = -1;
+    const ids = chunks.map((v,i) => 'a'+i);
+    for (let i=0, delay=0, n=chunks.length; i<n; i++, delay+=PRICES_UPDATE_CHUNK_DELAY) {
+      const id = ids[i];
+      const t = setTimeout(request, delay, chunks[i], id);
+      timeouts.set(id, t);
+    }
+  }
+  
+  function start(updateNeeded=[]) {
+    total = updateNeeded.length;
+    succs = [];
+    fails = [];
+    retries = 0;
+    retrychunks = [];
+    timeouts = new Map();
+    qeudRetry = -1;
+    
+    const chunks = splitArr(updateNeeded, PRICES_UPDATE_CHUNK);
+    
+    batch(chunks);
+    
+    poll();
+    
+    return new Promise(r => resolve = r);
+  }
+  
+  return start;
+})();
 async function updatePrices(instruments=[], startDeven) {
   if (!instruments.length) return;
   const result = { succs: {}, fails: {}, error: undefined };
@@ -584,7 +621,7 @@ async function updatePrices(instruments=[], startDeven) {
   }
   if (!Object.keys(updateNeeded).length) return result;
   
-  const { succs, fails } = await updatePricesRetrier(updateNeeded);
+  const { succs, fails } = await updatePricesManager(updateNeeded);
   
   for (const [insCode, newContent] of succs) {
     const oldContent = oldContents[insCode];
@@ -607,7 +644,7 @@ async function updatePrices(instruments=[], startDeven) {
   return {
     ...result,
     succs: succs.map(([insCode]) => insCode),
-    fails: fails.map(([insCode]) => insCode)
+    fails
   };
 }
 
