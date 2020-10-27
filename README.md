@@ -128,6 +128,12 @@ const tse = require('tse');
   // view column info
   console.table(tse.columnList);
   
+  // list of instruments
+  let instruments = await tse.getInstruments();
+  console.log(
+    instruments.filter(i => i.YVal === '300' && i.CSecVal === '27') // گروه فلزات بازار بورس
+  );
+  
 })();
 ```
 
@@ -154,6 +160,12 @@ const tse = require('tse');
     
     // view column info
     console.table(tse.columnList);
+    
+    // list of instruments
+    let instruments = await tse.getInstruments();
+    console.log(
+      instruments.filter(i => i.YVal === '300' && i.CSecVal === '27') // گروه فلزات بازار بورس
+    );
     
   })();
 </script>
