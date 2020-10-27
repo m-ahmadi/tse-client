@@ -463,7 +463,7 @@ async function updateInstruments() {
     currentInstruments = parseInstruments();
     currentShares      = parseShares();
     const insDevens = Object.keys(currentInstruments).map( k => +currentInstruments[k].split(',',9)[8] );
-    const shareIds = Object.keys(currentShares).map( k => +currentShares[k].split(',',1)[0] );
+    const shareIds  = Object.keys(currentShares).map( k => +currentShares[k].split(',',1)[0] );
     lastDeven = Math.max(...insDevens);
     lastId    = Math.max(...shareIds);
   }
