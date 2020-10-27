@@ -649,7 +649,9 @@ async function updatePrices(instruments=[], startDeven) {
 }
 
 async function getInstruments(struct=true, arr=true, structKey='InsCode') {
-  await updateInstruments();
+  const lastUpdate = storage.getItem('tse.lastInstrumentUpdate');
+  const err = await updateInstruments();
+  if (err && !lastUpdate) return;
   return parseInstruments(struct, arr, structKey);
 }
 
