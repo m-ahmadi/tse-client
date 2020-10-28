@@ -242,6 +242,11 @@ Default: `3`
 Amount of delay (in ms) to wait before making another retry.  
 Only integers.  
 Default: `5000`
+#### `tse.CACHE_DIR`
+Only in `Node`.  
+Location of the cache directory.  
+If the location is changed, existing content is not moved to the new location.  
+Default: &ensp; *`User's home directoy:`* &ensp; `require('os').homedir()`  
 #### `tse.getInstruments(struct=true, arr=true, structKey='InsCode')`
 Update (if needed) and return list of instruments.
 #### `tse.getPrices(symbols=['','',...], ?settings={...})`
@@ -329,3 +334,4 @@ index | name | fname
 - The price adjustment algorithm is still a direct port of the [official Windows app](http://cdn.tsetmc.com/Site.aspx?ParTree=111A11).
 - In Browser, the `InstrumentAndShare` data is stored in `localStorage`.
 - In Browser, the `ClosingPrices` data is stored in `indexedDB`.
+- In Node, data compression is done with the `zlib` module.
