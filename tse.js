@@ -605,17 +605,15 @@ async function updatePrices(instruments=[], startDeven) {
     const insData = storedPrices[insCode];
     
     if (!insData) { // doesn't have data
-      updateNeeded.push( [insCode, startDeven, market] );
+      const firstPossibleDeven = defaultSettings.startDate;
+      updateNeeded.push( [insCode, firstPossibleDeven, market] );
     } else { // has data
       const rows = insData.split(';');
-      const firstDeven = +new ClosingPrice( rows[0] ).DEven;
       const lastDeven  =  new ClosingPrice( rows[rows.length-1] ).DEven;
       
       if (dayDiff(lastDeven, ''+lastPossibleDeven) >= UPDATE_INTERVAL) { // but outdated
         updateNeeded.push( [insCode, lastDeven, market] );
         oldContents[insCode] = insData;
-      } else if (+startDeven < firstDeven) { // but older requested
-        updateNeeded.push( [insCode, startDeven, market] );
       }
     }
   }
