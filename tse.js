@@ -148,12 +148,6 @@ const rq = {
         res.status === 200 ? resolve(await res.text()) : reject(res.status +' '+ res.statusText);
       }).catch(err => reject(err));
     });
-    
-    /* return $.ajax({
-      url: API_URL,
-      method: 'GET',
-      data: params
-    }); */
   }
 };
 //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
