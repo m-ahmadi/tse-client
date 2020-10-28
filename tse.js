@@ -395,7 +395,7 @@ const { warn } = console;
 let storedPrices;
 
 function shouldUpdate(latest='') {
-  if (!latest) return true; // first time (never updated before)
+  if (!latest || latest === '0') return true; // first time (never updated before)
   
   const today = new Date();
   const daysPassed = dayDiff(dateToStr(today), latest);
