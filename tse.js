@@ -398,9 +398,12 @@ const defaultSettings = {
 };
 const { warn } = console;
 
-const storedPrices = {};
+let storedPrices;
 
 async function parseStoredPrices() {
+  if (storedPrices) return storedPrices;
+  storedPrices = {};
+  
   const storedStr = await storage.getItemAsync('tse.prices', true);
   if (!storedStr) return storedPrices;
   
