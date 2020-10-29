@@ -629,9 +629,13 @@ async function updatePrices(instruments=[], startDeven) {
 }
 
 async function getInstruments(struct=true, arr=true, structKey='InsCode') {
+  const valids = Object.keys(new Instrument([...Array(18).keys()].join(',')));
+  if (valids.indexOf(structKey) === -1) structKey = 'InsCode';
+  
   const lastUpdate = storage.getItem('tse.lastInstrumentUpdate');
   const err = await updateInstruments();
   if (err && !lastUpdate) return;
+  
   return parseInstruments(struct, arr, structKey);
 }
 
