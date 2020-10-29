@@ -2,10 +2,33 @@
 [![GitHub tag](https://img.shields.io/github/tag/m-ahmadi/tse-client.svg)](https://GitHub.com/m-ahmadi/tse-client/tags/)
 [![GitHub issues](https://img.shields.io/github/issues/m-ahmadi/tse-client.svg)](https://GitHub.com/m-ahmadi/tse-client/issues/)
 # TSE Client
-A client for receiving stock data from the Tehran Stock Exchange (TSE).  
+A client for fetching stock data from the Tehran Stock Exchange (TSETMC).  
 Works in Browser, Node, and as CLI.  
 The `0.x` and `1.x` versions were a direct port of the [official Windows app](http://cdn.tsetmc.com/Site.aspx?ParTree=111A11).  
 
+- [CLI](#CLI)
+	+ [Install](#install)
+	+ [Usage examples](#basic)
+- [Node](#Node)
+	+ [Install](#install-1)
+	+ [Usage example](#usage)
+- [Browser](#Browser)
+	+ [Usage example 1](#using-standalone-bundle)
+	+ [Usage example 2](#using-the-module-itself)
+	+ [Some Info](#some-info)
+- [API](#api)
+	+ [`API_URL`](#tseapi_url)
+	+ [`UPDATE_INTERVAL`](#tseupdate_interval)
+	+ [`PRICES_UPDATE_CHUNK`](#tseprices_update_chunk)
+	+ [`PRICES_UPDATE_CHUNK_DELAY`](#tseprices_update_chunk_delay)
+	+ [`PRICES_UPDATE_RETRY_COUNT`](#tseprices_update_retry_count)
+	+ [`PRICES_UPDATE_RETRY_DELAY`](#tseprices_update_retry_delay)
+	+ [`CACHE_DIR`](#tsecache_dir)
+	+ [`getInstruments()`](#tsegetinstrumentsstruct-boolean-arr-boolean-structkey-string)
+	+ [`getPrices()`](#tsegetpricessymbols-string-settings-pricesettings)
+	+ [`columnList`](#tsecolumnlist)
+- [Some Notes](#some-notes)	
+	
 # CLI
 
 #### Install:
@@ -247,10 +270,114 @@ Only in `Node`.
 Location of the cache directory.  
 If the location is changed, existing content is not moved to the new location.  
 Default: &ensp; *`User's home directoy:`* &ensp; `require('os').homedir()`  
-#### `tse.getInstruments(struct=true, arr=true, structKey='InsCode')`
-Update (if needed) and return list of instruments.
-#### `tse.getPrices(symbols=['','',...], ?settings={...})`
-Update (if needed) and return prices of instruments.
+#### `tse.getInstruments(struct: boolean, arr: boolean, structKey: string)`
+Update (if needed) and return list of instruments.  
+- **`struct`:** Determine the return type for each instrument. Default `true`
+	+ `true`: return an `Instrument` object for each instrument.
+	+ `false`: return a CSV string for each instrument.
+- **`arr`:** Determine the return type. Default: `true`
+	+ `true`: return an array.
+	+ `false` return an `Instruments` object.
+- **`structKey`:** Which key of `Instrument` to use when `struct` is set to `true`. Default `InsCode`
+
+**return:** `Array<Instrument | string> | Instruments`  
+
+Visit the [official documentation](http://cdn.tsetmc.com/Site.aspx?ParTree=1114111118&LnkIdn=83) for description of each `Instrument` field.  
+```typescript
+interface Instrument {
+//                         👇 C# equivalent
+  InsCode:      string; // long (int64)
+  InstrumentID: string;
+  LatinSymbol:  string;
+  LatinName:    string;
+  CompanyCode:  string;
+  Symbol:       string;
+  Name:         string;
+  CIsin:        string;
+  DEven:        string; // int (int32)
+  Flow:         string; // byte
+  LSoc30:       string;
+  CGdSVal:      string;
+  CGrValCot:    string;
+  YMarNSC:      string;
+  CComVal:      string;
+  CSecVal:      string;
+  CSoSecVal:    string;
+  YVal:         string;
+}
+
+interface Instruments {
+  [Instrument.InsCode]: Instrument | string;
+}
+```
+#### `tse.getPrices(symbols: string[], settings?: PriceSettings)`
+Update (if needed) and return prices of instruments.  
+- **`symbols`:** An array of *`Farsi`* instrument symbols.  
+- **`settings`:** A settings object.
+	+ **`columns`:** Select which `ClosingPrice` props to return and specify optional string for the prop.  
+		Default: `[ [4,'date'], [6,'open'], [7,'high'], [8,'low'], [9,'last'], [10,'close'], [12,'vol'] ]`
+	+ **`adjustPrices`:** The type of adjustment applied to returned prices.  
+		`0`: None &emsp; &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;(*`بدون تعدیل`*)  
+		`1`: Capital Increase + Dividends &emsp; (*`افزایش سرمایه + سود نقدی`*)  
+		`2`: Capital Increase &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;(*`افزایش سرمایه`*)
+	+ **`startDate`:** Only return prices after this date. Min: `'20010321'`. Default `'20010321'`
+	+ **`daysWithoutTrade`:** Whether to include days that have `0` trades.
+
+**return:** `Result`
+```typescript
+interface Result {
+  data:   Array<ClosingPrice>;
+  error?: CustomError;
+}
+
+interface ClosingPrice {
+//                              👇 C# equivalent of array item
+  CompanyCode:    string[];  // string
+  LatinName:      string[];  // string
+  Symbol:         string[];  // string
+  Name:           string[];  // string
+  Date:           number[];  // int     (int32)
+  ShamsiDate:     number[];  // int     (int32)
+  PriceFirst:     number[];  // decimal (float128)
+  PriceMax:       number[];  // decimal (float128)
+  PriceMin:       number[];  // decimal (float128)
+  LastPrice:      number[];  // decimal (float128)
+  ClosingPrice:   number[];  // decimal (float128)
+  Price:          number[];  // decimal (float128)
+  Volume:         number[];  // decimal (float128)
+  Count:          number[];  // decimal (float128)
+  PriceYesterday: number[];  // decimal (float128)
+}
+
+interface PriceSettings {               
+  columns?:          Array<[number, string?]>;
+  adjustPrices?:     AdjustOption;
+  daysWithoutTrade?: boolean;
+  startDate?:        string;
+}
+
+interface CustomError {
+  code:     ErrorType;
+  title:    string;
+  detail?:  string | Error;
+  symbols?: string[];
+  fails?:   string[];
+  succs?:   string[];
+}
+
+enum AdjustOption {
+  None = 0,
+  CapitalIncreasePlusDividends = 1,
+  CapitalIncrease = 2
+}
+
+enum ErrorType {
+  FailedRequest = 1,
+  IncorrectSymbol = 2,
+  IncompletePriceUpdate = 3
+}
+```
+**Example:**
 ```javascript
 const defaultSettings = {
   columns: [
@@ -303,11 +430,6 @@ undefined
 { code: 3, title: 'Incomplete Price Update', fails: [], succs: [] }
 
 ```
-adjustPrices | desc | desc fa
--------------|------|---------
-0 | none | بدون تعدیل
-1 | capital increase + dividends | افزایش سرمایه + سود نقدی
-2 | capital increase | افزایش سرمایه
 
 #### `tse.columnList`
 A list of all possible columns.
