@@ -394,6 +394,21 @@ const { warn } = console;
 
 let storedPrices;
 
+async function parseStoredPrices() {
+  if (storedPrices) return storedPrices;
+  storedPrices = {};
+  
+  const storedStr = await storage.getItemAsync('tse.prices', true);
+  if (!storedStr) return storedPrices;
+  
+  const strs = storedStr.split('@');
+  for (let i=0, n=strs.length; i<n; i++) {
+    const str = strs[i];
+    if (!str) continue;
+    storedPrices[ str.split(',',1)[0] ] = str;
+  }
+}
+
 function shouldUpdate(latest='') {
   if (!latest || latest === '0') return true; // first time (never updated before)
   
@@ -658,18 +673,7 @@ async function getPrices(symbols=[], settings={}) {
     return result;
   }
   
-  if (!storedPrices) {
-    storedPrices = {};
-    const storedStr = await storage.getItemAsync('tse.prices', true);
-    if (storedStr) {
-      const strs = storedStr.split('@');
-      for (let i=0, n=strs.length; i<n; i++) {
-        const str = strs[i];
-        if (!str) continue;
-        storedPrices[ str.split(',',1)[0] ] = str;
-      }
-    }
-  }
+  await parseStoredPrices();
   
   const { succs, fails, error } = await updatePrices(selection);
   if (error) {
