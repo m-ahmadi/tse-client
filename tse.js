@@ -654,7 +654,7 @@ async function getInstruments(struct=true, arr=true, structKey='InsCode') {
   return parseInstruments(struct, arr, structKey);
 }
 
-async function getPrices(symbols=[], settings={}) {
+async function getPrices(symbols=[], _settings={}) {
   if (!symbols.length) return;
   const result = { data: [], error: undefined };
   
@@ -700,7 +700,7 @@ async function getPrices(symbols=[], settings={}) {
     prices[insCode] = strPrices.split(';').map(i => new ClosingPrice(i));
   }
   
-  settings = {...defaultSettings, ...settings};
+  const settings = {...defaultSettings, ..._settings};
   
   const columns = settings.columns.map(i => {
     const row = !Array.isArray(i) ? [i] : i;
