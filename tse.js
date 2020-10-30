@@ -569,7 +569,7 @@ const updatePricesManager = (function () {
   
   return start;
 })();
-async function updatePrices(instruments=[], startDeven) {
+async function updatePrices(instruments=[]) {
   if (!instruments.length) return;
   const result = { succs: {}, fails: {}, error: undefined };
   
@@ -674,7 +674,7 @@ async function getPrices(symbols=[], settings={}) {
     }
   }
   
-  const { succs, fails, error } = await updatePrices(selection, startDate);
+  const { succs, fails, error } = await updatePrices(selection);
   if (error) {
     const { title, detail } = error;
     result.error = { code: 1, title, detail };
