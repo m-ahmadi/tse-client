@@ -658,9 +658,6 @@ async function getPrices(symbols=[], settings={}) {
     return result;
   }
   
-  settings = {...defaultSettings, ...settings};
-  const { adjustPrices, startDate, daysWithoutTrade } = settings;
-  
   if (!storedPrices) {
     storedPrices = {};
     const storedStr = await storage.getItemAsync('tse.prices', true);
@@ -699,13 +696,17 @@ async function getPrices(symbols=[], settings={}) {
     prices[insCode] = strPrices.split(';').map(i => new ClosingPrice(i));
   }
   
-  const shares = parseShares(true, true);
+  settings = {...defaultSettings, ...settings};
+  
   const columns = settings.columns.map(i => {
     const row = !Array.isArray(i) ? [i] : i;
     const column = new Column(row);
     const finalHeader = column.header || column.name;
     return { ...column, header: finalHeader };
   });
+  
+  const { adjustPrices, startDate, daysWithoutTrade } = settings;
+  const shares = parseShares(true, true);
   
   result.data = selection.map(instrument => {
     if (!instrument) return;
