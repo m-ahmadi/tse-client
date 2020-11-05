@@ -488,7 +488,7 @@ async function updateInstruments() {
   }
   
   if (shares !== '') {
-    if (currentShares && currentShares.length) {
+    if (currentShares && Object.keys(currentShares).length) {
       shares.split(';').forEach(i => currentShares[ i.split(',',1)[0] ] = i);
       shares = Object.keys(currentShares).map(k => currentShares[k]).join(';');
     }
