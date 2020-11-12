@@ -522,7 +522,7 @@ const updatePricesManager = (function () {
     }
     
     if (retrychunks.length) {
-      const inscodes = retrychunks.reduce((a,c)=>(a=[...a,...c.map(i=>i[0])],a),[]);
+      const inscodes = retrychunks.flat().map(i => i[0]);
       fails = fails.filter(i => inscodes.indexOf(i) === -1);
       retries++;
       qeudRetry = setTimeout(batch, PRICES_UPDATE_RETRY_DELAY, retrychunks);
