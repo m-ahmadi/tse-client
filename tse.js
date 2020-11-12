@@ -507,11 +507,11 @@ const updatePricesManager = (function () {
   let retries = 0;
   let retrychunks = [];
   let timeouts = new Map();
-  let qeudRetry = -1;
+  let qeudRetry;
   let resolve;
   
   function poll() {
-    if (timeouts.size > 0 || qeudRetry > 0) {
+    if (timeouts.size > 0 || qeudRetry) {
       setTimeout(poll, 500);
       return;
     }
@@ -555,7 +555,7 @@ const updatePricesManager = (function () {
   }
   
   function batch(chunks=[]) {
-    if (qeudRetry > 0) qeudRetry = -1;
+    if (qeudRetry) qeudRetry = undefined;
     const ids = chunks.map((v,i) => 'a'+i);
     for (let i=0, delay=0, n=chunks.length; i<n; i++, delay+=PRICES_UPDATE_CHUNK_DELAY) {
       const id = ids[i];
@@ -571,7 +571,7 @@ const updatePricesManager = (function () {
     retries = 0;
     retrychunks = [];
     timeouts = new Map();
-    qeudRetry = -1;
+    qeudRetry = undefined;
     
     const chunks = splitArr(updateNeeded, PRICES_UPDATE_CHUNK);
     
