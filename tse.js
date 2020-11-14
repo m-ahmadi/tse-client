@@ -739,7 +739,354 @@ async function getPrices(symbols=[], _settings={}) {
   
   return result;
 }
+//@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+let INTRADAY_UPDATE_CHUNK_DELAY = 100;
+let INTRADAY_UPDATE_RETRY_COUNT = 6;
+let INTRADAY_UPDATE_RETRY_DELAY = 1000;
+const defaultIntradaySettings = {
+  prices: true,
+  trades: true,
+  orders: true,
+  client: true,
+  misc: true,
+  startDate: '20010321'
+};
 
+function parseRaw(separator, text) {
+  let str = text.split(separator)[1].split('];',1)[0];
+  str = '['+ str.replace(/'/g, '"') +']';
+  let arr = JSON.parse(str);
+  return arr;
+}
+
+const intradayDownloadManager = (function () {
+  let total = 0;
+  let succs = [];
+  let fails = [];
+  let retries = 0;
+  let retrychunks = [];
+  let timeouts = new Map();
+  let qeudRetry = -1;
+  let resolve;
+  let server = 0;
+  let inc = (i => () => i<7 ? ++i : i=0)(-1);
+  
+  function poll() {
+    if (timeouts.size > 0 || qeudRetry) {
+      setTimeout(poll, 500);
+      return;
+    }
+    
+    if (succs.length === total || retries >= INTRADAY_UPDATE_RETRY_COUNT) {
+      let all = [...succs, ...fails];
+      let res = new Map();
+      
+      for (let [inscode, deven, text] of all) {
+        if ( !res.has(inscode) )            res.set(inscode, new Map());
+        if ( !res.get(inscode).has(deven) ) res.get(inscode).set(deven, new Map());
+        res.get(inscode).set(deven, text);
+      }
+      
+      resolve({
+        inscode__deven_text: res,
+        succs: succs.map(i=>i.slice(0,-1)),
+        fails
+      });
+      return;
+    }
+    
+    if (retrychunks.length) {
+      let joined = retrychunks.map(i => i.join(''));
+      fails = fails.filter(i => joined.indexOf(i.join('')) === -1);
+      retries++;
+      qeudRetry = setTimeout(batch, INTRADAY_UPDATE_RETRY_DELAY, retrychunks, true);
+      retrychunks = [];
+      setTimeout(poll, INTRADAY_UPDATE_RETRY_DELAY);
+    }
+  }
+  
+  function onresult(text, chunk, id) {
+    if (typeof text === 'string') { // TODO: maybe better checks
+      let res = 'var StaticTreshholdData' + text.split('var StaticTreshholdData')[1];
+      succs.push([...chunk, res]);
+      fails = fails.filter(i => i.join('') !== chunk.join(''));
+    } else {
+      fails.push(chunk);
+      retrychunks.push(chunk);
+    }
+    
+    timeouts.delete(id);
+  }
+  
+  async function request(chunk=[], id, changeServer) {
+    let [inscode, deven] = chunk;
+    if (changeServer) server = inc();
+    
+    fetch('http://cdn'+(server?server:'')+'.tsetmc.com/Loader.aspx?ParTree=15131P&i='+inscode+'&d='+deven)
+      .then(async res => 
+        res.status === 200
+          ? onresult(await res.text(), chunk, id)
+          : onresult(undefined, chunk, id)
+      )
+      .catch(() => onresult(undefined, chunk, id));
+  }
+  
+  function batch(chunks=[], changeServer=false) {
+    if (qeudRetry) qeudRetry = undefined;
+    let ids = chunks.map((v,i) => 'a'+i);
+    for (let i=0, delay=0, n=chunks.length; i<n; i++, delay+=INTRADAY_UPDATE_CHUNK_DELAY) {
+      let id = ids[i];
+      let t = setTimeout(request, delay, chunks[i], id, changeServer);
+      timeouts.set(id, t);
+    }
+  }
+  
+  async function start(inscode_devens) {
+    let chunks = [...inscode_devens].reduce((r,[inscode,devens]) => r=[...r, ...devens.map(i=>[inscode,i]) ], []);
+    total = chunks.length;
+    succs = [];
+    fails = [];
+    retries = 0;
+    retrychunks = [];
+    timeouts = new Map();
+    qeudRetry = undefined;
+    
+    batch(chunks);
+    
+    poll();
+    
+    return new Promise(r => resolve = r);
+  }
+  
+  return start;
+})();
+
+async function getIntraday(symbols=[], _settings={}) {
+  if (!symbols.length) return;
+  const result = { data: [], error: undefined };
+  
+  const err = await updateInstruments();
+  if (err) {
+    const { title, detail } = err;
+    result.error = { code: 1, title, detail };
+    return result;
+  }
+  
+  const instruments = parseInstruments(true, undefined, 'Symbol');
+  const selection = symbols.map(i => instruments[i]);
+  const notFounds = symbols.filter((v,i) => !selection[i]);
+  if (notFounds.length) {
+    result.error = { code: 2, title: 'Incorrect Symbol', symbols: notFounds };
+    return result;
+  }
+  
+  await parseStoredPrices();
+  
+  const { succs, fails, error } = await updatePrices(selection);
+  if (error) {
+    const { title, detail } = error;
+    result.error = { code: 1, title, detail };
+    return result;
+  }
+  
+  if (fails.length) {
+    const _selection = selection.reduce((a, {InsCode,Symbol}) => (a[InsCode] = Symbol, a), {});
+    result.error = { code: 3, title: 'Incomplete Price Update',
+      fails: fails.map(k => _selection[k]),
+      succs: succs.map(k => _selection[k])
+    };
+    selection.forEach((v,i,a) => fails.includes(v.InsCode) ? a[i] = undefined : 0);
+  }
+  
+  //tmp
+  const {
+    existsSync:    exists,
+    readFileSync:  read,
+    writeFileSync: write,
+    readdirSync:   readdir,
+    mkdirSync:     mkdir
+  } = require('fs');
+  const { gzipSync: zip, gunzipSync: unzip } = require('zlib');
+  const { join } = require('path');
+  const dir = join(require('os').homedir(), 'tse-cache').replace(/\\/g,'/');
+  //tmp
+  
+  const settings = {...defaultIntradaySettings, ..._settings};
+
+  /** note:  ↓... let == const (mostly) */
+  
+  let selins = selection.map(i => i.InsCode);
+  let { startDate } = settings;
+  let toUpdate = new Map();
+  let stored = new Map();
+  let inscode_devens = new Map();
+  
+  for (let inscode of selins) {
+    if (!inscode) continue;
+    let strprices = storedPrices[inscode];
+    if (!strprices) continue;
+    
+    let allDevens = strprices.split(';').map(i => i.split(',',2)[1] );
+    let askedDevens = allDevens.filter(i => +i >= +startDate);
+    
+    if ( exists(dir+'/'+inscode) ) {
+      let storedDevens = readdir(dir+'/'+inscode).map(i => i.replace(/\.gz$/,'') );
+      let mustupdate = askedDevens.filter(i => storedDevens.indexOf(i) === -1);
+      
+      if (mustupdate.length) toUpdate.set(inscode, mustupdate);
+      
+      let day = stored.set(inscode, new Map()).get(inscode);
+      for (let deven of storedDevens) {
+        let zip = read(dir+'/'+inscode+'/'+deven+'.gz');
+        day.set(deven, zip);
+      }
+    } else {
+      toUpdate.set(inscode, askedDevens);
+    }
+    
+    inscode_devens.set(inscode, askedDevens);
+  }
+  
+  if (toUpdate.size > 0) {
+    let { inscode__deven_text, succs, fails } = await intradayDownloadManager(toUpdate);
+    
+    if (fails.length) {
+      let k = selection.reduce((a, {InsCode,Symbol}) => (a[InsCode] = Symbol, a), {});
+      let reducer = (o,[i,d]) => (!o[k[i]] && (o[k[i]]=[]), o[k[i]].push(d), o);
+      result.error = { code: 4, title: 'Incomplete Intraday Update',
+        fails: fails.reduce(reducer, {}),
+        succs: succs.reduce(reducer, {})
+      };
+    }
+    
+    for (let [inscode, deven_text] of inscode__deven_text) {
+      let storedInstr = stored.set(inscode, new Map()).get(inscode);
+      
+      if (!exists(dir+'/'+inscode)) mkdir(dir+'/'+inscode);
+      
+      for (let [deven, text] of deven_text) {
+        if (!text) continue;
+        let ClosingPrice    = parseRaw('var ClosingPriceData=[', text);
+        let BestLimit       = parseRaw('var BestLimitData=[', text);
+        let IntraTrade      = parseRaw('var IntraTradeData=[', text);
+        let ClientType      = parseRaw('var ClientTypeData=[', text);
+        let InstrumentState = parseRaw('var InstrumentStateData=[', text);
+        let StaticTreshhold = parseRaw('var StaticTreshholdData=[', text);
+        // let ShareHolder     = parseRaw('var ShareHolderData=[', text);
+        // let ShareHolderYesterday = parseRaw('var ShareHolderDataYesterday=[', text);
+        
+        let coli;
+        
+        coli = [12,2,3,4,6,7,8,9,10,11];
+        let price = ClosingPrice.map(row => coli.map(i=> row[i]).join(',') ).join(';');
+        
+        coli = [0,1,2,3,4,5,6,7];
+        let order = BestLimit.map(row => coli.map(i=> row[i]).join(',') ).join(';');
+        
+        coli = [1,0,2,3,4];
+        let trade = IntraTrade.map(row => {
+          let [h,m,s] = row[1].split(':');
+          let timeint = (+h*10000) + (+m*100) + (+s) + '';
+          row[1] = timeint;
+          return coli.map(i => row[i]).join(',');
+        }).join(';');
+        
+        coli = [4,0,12,16,8,6,2,14,18,10,5,1,13,17,9,7,3,15,19,11,20];
+        let client = coli.map(i=> ClientType[i]).join(',');
+        
+        let other = [ InstrumentState[0][2].trim(), StaticTreshhold[1][2], StaticTreshhold[1][1] ].join(',');
+        
+        
+        let file = [price, order, trade, client, other].join('@');
+        let buff = zip(file);
+        storedInstr.set(deven, file); // avoid redundant unzip later (since definitely asked)
+        write(dir+'/'+inscode+'/'+deven+'.gz', buff);
+      }
+    }
+  }
+  
+  let group_cols = [
+    [ 'prices',  ['time','last','close','open','high','low','count','volume','value','discarded'] ],
+    [ 'orders',  ['time','row','askcount','askvol','askprice','bidprice','bidvol','bidcount'] ],
+    [ 'trades',  ['time','count','volume','price','discarded'] ],
+    [ 'client', [
+        'pbvol','pscount','pbval','psprice','pbvolpot',
+        'psvol','pscount','psval','pbprice','psvolpot',
+        'lbvol','lbcount','lbval','lbprice','lbvolpot',
+        'lsvol','lscount','lsval','lsprice','lsvolpot', 'plchg']
+    ],
+    [ 'misc',  ['state','daymin','daymax'] ]
+  ];
+  
+  let finalGroupCols = group_cols.map(([group,defcols]) => {
+    let usercols = settings[group];
+    let cols =
+      Array.isArray(usercols) ? usercols.map(c => defcols.includes(c) ? c : undefined).filter(i=>i) :
+      !usercols               ? [] :
+      defcols;
+    if (!['client','misc'].includes(group) && cols.indexOf('time') === -1) cols.unshift('time');
+    return cols.length ? [group, cols] : undefined;
+  }).filter(i=>i);
+  
+  let selres = [];
+  
+  for (let [inscode, devens] of inscode_devens) {
+    if (!inscode) continue;
+    let days = [...Array(devens.length)].map(()=>[]);
+    let ires = finalGroupCols.reduce((r, [group, cols]) => (
+      r[group] = cols.reduce((o,k) => (o[k]=group==='client'||group==='misc'?[]:days, o), {}), r
+    ), {});
+    
+    
+    ires.date = devens.map(parseFloat);
+    
+    let day = 0;
+    for (let deven of devens) {
+      let data = stored.get(inscode).get(deven);
+      
+      if (!data) {
+        for (let [group, cols] of finalGroupCols) cols.forEach(col => ires[group][col][day] = undefined);
+        day++;
+        continue;
+      }
+      
+      if ( (isNode && data instanceof Buffer) || (isBrowser && data instanceof Uint8Array) ) {
+        data = unzip(data).toString();
+      }
+      
+      data = data.split('@').map((v,i) =>
+        i < 3   ? v.split(';').map(row => row.split(',').map(parseFloat) ) :
+        i === 3 ? v.split(',').map(parseFloat) :
+        i === 4 ? v.split(',').map((j,n) => n>0 ? +j : j) : undefined
+      );
+      
+      finalGroupCols.forEach(([group,cols]) => {
+        let idx = group_cols.findIndex(i => i[0] === group);	
+        let arr = data[idx];
+        
+        // cols.forEach(col => ires[group][col] = arr); // same as orig structure
+        
+        if (group==='client'||group==='misc') {
+          let [, defs] = group_cols[idx];//
+          cols.forEach(col => ires[group][col][day] = arr[ defs.indexOf(col) ] );
+        } else {
+          for (let row of arr) {
+            cols.forEach(col => ires[group][col][day].push(row) );
+          }
+        }
+      });
+      
+      day++;
+    }
+    
+    selres.push(ires);
+  }
+  
+  result.data = selres;
+  
+  return result;
+}
+//@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 const instance = {
   getInstruments,
   getPrices,
@@ -776,6 +1123,7 @@ if (isNode) {
     get: () => storage.CACHE_DIR,
     set: v => storage.CACHE_DIR = v
   });
+  instance.getIntraday = getIntraday;
   module.exports = instance;
 } else if (isBrowser) {
   window.tse = instance;
