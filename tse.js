@@ -768,8 +768,7 @@ const intradayDownloadManager = (function () {
   let timeouts = new Map();
   let qeudRetry = -1;
   let resolve;
-  let server = 0;
-  let inc = (i => () => i<7 ? ++i : i=0)(-1);
+  let nextsrv = n => n<7 ? ++n : 0;
   
   function poll() {
     if (timeouts.size > 0 || qeudRetry) {
@@ -778,7 +777,7 @@ const intradayDownloadManager = (function () {
     }
     
     if (succs.length === total || retries >= INTRADAY_UPDATE_RETRY_COUNT) {
-      let all = [...succs, ...fails];
+      let all = [ ...succs, ...fails.map(i => i.slice(1)) ];
       let res = new Map();
       
       for (let [inscode, deven, text] of all) {
@@ -799,6 +798,7 @@ const intradayDownloadManager = (function () {
       let joined = retrychunks.map(i => i.join(''));
       fails = fails.filter(i => joined.indexOf(i.join('')) === -1);
       retries++;
+      retrychunks.forEach(chunk => chunk[0] = nextsrv(chunk[0]));
       qeudRetry = setTimeout(batch, INTRADAY_UPDATE_RETRY_DELAY, retrychunks, true);
       retrychunks = [];
       setTimeout(poll, INTRADAY_UPDATE_RETRY_DELAY);
@@ -808,7 +808,7 @@ const intradayDownloadManager = (function () {
   function onresult(text, chunk, id) {
     if (typeof text === 'string') { // TODO: maybe better checks
       let res = 'var StaticTreshholdData' + text.split('var StaticTreshholdData')[1];
-      succs.push([...chunk, res]);
+      succs.push([...chunk.slice(1), res]);
       fails = fails.filter(i => i.join('') !== chunk.join(''));
     } else {
       fails.push(chunk);
@@ -818,9 +818,8 @@ const intradayDownloadManager = (function () {
     timeouts.delete(id);
   }
   
-  async function request(chunk=[], id, changeServer) {
-    let [inscode, deven] = chunk;
-    if (changeServer) server = inc();
+  async function request(chunk=[], id) {
+    let [server, inscode, deven] = chunk;
     
     fetch('http://cdn'+(server?server:'')+'.tsetmc.com/Loader.aspx?ParTree=15131P&i='+inscode+'&d='+deven)
       .then(async res => 
@@ -831,18 +830,18 @@ const intradayDownloadManager = (function () {
       .catch(() => onresult(undefined, chunk, id));
   }
   
-  function batch(chunks=[], changeServer=false) {
+  function batch(chunks=[]) {
     if (qeudRetry) qeudRetry = undefined;
     let ids = chunks.map((v,i) => 'a'+i);
     for (let i=0, delay=0, n=chunks.length; i<n; i++, delay+=INTRADAY_UPDATE_CHUNK_DELAY) {
       let id = ids[i];
-      let t = setTimeout(request, delay, chunks[i], id, changeServer);
+      let t = setTimeout(request, delay, chunks[i], id);
       timeouts.set(id, t);
     }
   }
   
   async function start(inscode_devens) {
-    let chunks = [...inscode_devens].reduce((r,[inscode,devens]) => r=[...r, ...devens.map(i=>[inscode,i]) ], []);
+    let chunks = [...inscode_devens].reduce((r,[inscode,devens]) => r=[...r, ...devens.map(i=>[0,inscode,i]) ], []);
     total = chunks.length;
     succs = [];
     fails = [];
