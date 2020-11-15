@@ -1023,7 +1023,7 @@ async function getIntraday(symbols=[], _settings={}) {
       Array.isArray(usercols) ? usercols.map(c => defcols.includes(c) ? c : undefined).filter(i=>i) :
       !usercols               ? [] :
       defcols;
-    if (!['client','misc'].includes(group) && cols.indexOf('time') === -1) cols.unshift('time');
+    if (!['client','misc'].includes(group) && cols.length && cols.indexOf('time') === -1) cols.unshift('time');
     return cols.length ? [group, cols] : undefined;
   }).filter(i=>i);
   
