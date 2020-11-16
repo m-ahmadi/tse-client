@@ -786,9 +786,12 @@ const intradayDownloadManager = (function () {
         res.get(inscode).set(deven, text);
       }
       
+      let _succs = succs.map(i => i.slice(2));
+      succs = [];
+      
       resolve({
         inscode__deven_text: res,
-        succs: succs.map(i=>i.slice(0,-1)),
+        succs: _succs,
         fails
       });
       return;
