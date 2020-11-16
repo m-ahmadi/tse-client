@@ -1,0 +1,22 @@
+<meta charset="utf8" />
+<script src="https://cdn.jsdelivr.net/npm/big.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jalaali-js/dist/jalaali.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/localforage"></script>
+<script src="https://cdn.jsdelivr.net/npm/pako/dist/pako.min.js"></script>
+<script src="../../tse.js"></script>
+
+<script>
+(async () => {
+	const { data, error } = await tse.getIntraday(['ذوب', 'فولاد', 'خساپا', 'شپنا'], {
+		prices: ['close', 'volume', 'count'],
+		orders: false,
+		trades: ['volume', 'count'],
+		client: ['pbvol', 'psvol'],
+		misc: true,
+		startDate: '20201111'
+	});
+	
+	console.log(data);
+	console.log(error);
+})();
+</script>
