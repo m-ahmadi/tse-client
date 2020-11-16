@@ -900,56 +900,39 @@ async function getIntraday(symbols=[], _settings={}) {
     selection.forEach((v,i,a) => fails.includes(v.InsCode) ? a[i] = undefined : 0);
   }
   
-  //tmp
-  const {
-    existsSync:    exists,
-    readFileSync:  read,
-    writeFileSync: write,
-    readdirSync:   readdir,
-    mkdirSync:     mkdir
-  } = require('fs');
-  const { gzipSync: zip, gunzipSync: unzip } = require('zlib');
-  const { join } = require('path');
-  const dir = join(require('os').homedir(), 'tse-cache').replace(/\\/g,'/');
-  //tmp
-  
   const settings = {...defaultIntradaySettings, ..._settings};
 
   /** note:  ↓... let == const (mostly) */
   
   let selins = selection.map(i => i.InsCode);
   let { startDate } = settings;
-  let toUpdate = new Map();
-  let stored = new Map();
-  let inscode_devens = new Map();
   
-  for (let inscode of selins) {
-    if (!inscode) continue;
+  let inscode_devens = selins.map(inscode => {
+    if (!inscode) return [];
     let strprices = storedPrices[inscode];
-    if (!strprices) continue;
-    
+    if (!strprices) return [inscode];
     let allDevens = strprices.split(';').map(i => i.split(',',2)[1] );
     let askedDevens = allDevens.filter(i => +i >= +startDate);
-    
-    if ( exists(dir+'/'+inscode) ) {
-      let storedDevens = readdir(dir+'/'+inscode).map(i => i.replace(/\.gz$/,'') );
-      let mustupdate = askedDevens.filter(i => storedDevens.indexOf(i) === -1);
-      
-      if (mustupdate.length) toUpdate.set(inscode, mustupdate);
-      
-      let day = stored.set(inscode, new Map()).get(inscode);
-      for (let deven of storedDevens) {
-        let zip = read(dir+'/'+inscode+'/'+deven+'.gz');
-        day.set(deven, zip);
-      }
-    } else {
-      toUpdate.set(inscode, askedDevens);
-    }
-    
-    inscode_devens.set(inscode, askedDevens);
-  }
+    return [inscode, askedDevens];
+  });
   
-  if (toUpdate.size > 0) {
+  let stored = {};
+  await localforage.iterate((val, key) => {
+    let k = key.replace('tse.', '');
+    if (selins.indexOf(k) !== -1) stored[k] = val;
+  });
+  
+  let toUpdate = inscode_devens.filter(([inscode, devens]) => {
+    if (!stored[inscode]) return [inscode, devens];
+    let needupdate = devens.filter(deven => !stored[inscode][deven]);
+    if (needupdate.length) return [inscode, needupdate];
+  });
+  
+  let zip = pako.gzip;
+  let unzip = buf => pako.ungzip(buf, {to: 'string'});
+  
+  
+  if (toUpdate.length > 0) {
     let { inscode__deven_text, succs, fails } = await intradayDownloadManager(toUpdate);
     
     if (fails.length) {
@@ -962,9 +945,8 @@ async function getIntraday(symbols=[], _settings={}) {
     }
     
     for (let [inscode, deven_text] of inscode__deven_text) {
-      let storedInstr = stored.set(inscode, new Map()).get(inscode);
-      
-      if (!exists(dir+'/'+inscode)) mkdir(dir+'/'+inscode);
+      stored[inscode] = {};
+      let storedInstrument = stored[inscode];
       
       for (let [deven, text] of deven_text) {
         if (!text) continue;
@@ -1000,10 +982,10 @@ async function getIntraday(symbols=[], _settings={}) {
         
         
         let file = [price, order, trade, client, other].join('@');
-        let buff = zip(file);
-        storedInstr.set(deven, file); // avoid redundant unzip later (since definitely asked)
-        write(dir+'/'+inscode+'/'+deven+'.gz', buff);
+        storedInstrument[deven] = zip(file);
       }
+      
+      await localforage.setItem('tse.'+inscode, storedInstrument);
     }
   }
   
@@ -1038,13 +1020,13 @@ async function getIntraday(symbols=[], _settings={}) {
     let ires = finalGroupCols.reduce((r, [group, cols]) => (
       r[group] = cols.reduce((o,k) => (o[k]=group==='client'||group==='misc'?[]:days, o), {}), r
     ), {});
-    
-    
     ires.date = devens.map(parseFloat);
     
+    let storedInstrument = stored[inscode];
     let day = 0;
+    
     for (let deven of devens) {
-      let data = stored.get(inscode).get(deven);
+      let data = storedInstrument[deven];
       
       if (!data) {
         for (let [group, cols] of finalGroupCols) cols.forEach(col => ires[group][col][day] = undefined);
@@ -1052,9 +1034,7 @@ async function getIntraday(symbols=[], _settings={}) {
         continue;
       }
       
-      if ( (isNode && data instanceof Buffer) || (isBrowser && data instanceof Uint8Array) ) {
-        data = unzip(data).toString();
-      }
+      data = unzip(data);
       
       data = data.split('@').map((v,i) =>
         i < 3   ? v.split(';').map(row => row.split(',').map(parseFloat) ) :
@@ -1125,9 +1105,9 @@ if (isNode) {
     get: () => storage.CACHE_DIR,
     set: v => storage.CACHE_DIR = v
   });
-  instance.getIntraday = getIntraday;
   module.exports = instance;
 } else if (isBrowser) {
+  instance.getIntraday = getIntraday;
   window.tse = instance;
 }
 })();
