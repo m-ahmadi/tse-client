@@ -979,10 +979,10 @@ async function getIntraday(symbols=[], _settings={}) {
         coli = [4,0,12,16,8,6,2,14,18,10,5,1,13,17,9,7,3,15,19,11,20];
         let client = coli.map(i=> ClientType[i]).join(',');
         
-        let other = [ InstrumentState[0][2].trim(), StaticTreshhold[1][2], StaticTreshhold[1][1] ].join(',');
+        let misc = [ InstrumentState[0][2].trim(), StaticTreshhold[1][2], StaticTreshhold[1][1] ].join(',');
         
         
-        let file = [price, order, trade, client, other].join('@');
+        let file = [price, order, trade, client, misc].join('@');
         storedInstrument[deven] = zip(file);
       }
       
