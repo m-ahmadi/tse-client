@@ -1040,7 +1040,7 @@ async function getIntraday(symbols=[], _settings={}) {
       
       data = data.split('@').map((v,i) =>
         i < 3   ? v.split(';').map(row => row.split(',').map(parseFloat) ) :
-        i === 3 ? v.split(',').map(parseFloat) :
+        i === 3 ? v.split(',').map(j => j ? parseFloat(j) : undefined) :
         i === 4 ? v.split(',').map((j,n) => n>0 ? +j : j) : undefined
       );
       
