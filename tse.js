@@ -749,7 +749,8 @@ const defaultIntradaySettings = {
   orders: true,
   client: true,
   misc: true,
-  startDate: '20010321'
+  startDate: '20010321',
+  endDate: ''
 };
 
 function parseRaw(separator, text) {
@@ -905,14 +906,18 @@ async function getIntraday(symbols=[], _settings={}) {
   /** note:  ↓... let == const (mostly) */
   
   let selins = selection.map(i => i && i.InsCode);
-  let { startDate } = settings;
+  let [startDate, endDate] = [+settings.startDate, +settings.endDate];
+  
+  let isInRange = endDate
+    ? i => i >= startDate && i <= endDate
+    : i => i >= startDate;
   
   let inscode_devens = selins.map(inscode => {
     if (!inscode) return [];
     let strprices = storedPrices[inscode];
     if (!strprices) return [inscode];
-    let allDevens = strprices.split(';').map(i => i.split(',',2)[1] );
-    let askedDevens = allDevens.filter(i => +i >= +startDate);
+    let allDevens = strprices.split(';').map(i => +i.split(',',2)[1] );
+    let askedDevens = allDevens.filter(isInRange);
     return [inscode, askedDevens];
   });
   
