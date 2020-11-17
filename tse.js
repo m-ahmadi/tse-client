@@ -1051,7 +1051,7 @@ async function getIntraday(symbols=[], _settings={}) {
         // cols.forEach(col => ires[group][col] = arr); // same as orig structure
         
         if (group==='client'||group==='misc') {
-          let [, defs] = group_cols[idx];//
+          let [, defs] = group_cols[idx];
           cols.forEach(col => ires[group][col][day] = arr[ defs.indexOf(col) ] );
         } else {
           for (let row of arr) {
