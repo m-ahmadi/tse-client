@@ -844,7 +844,7 @@ const intradayDownloadManager = (function () {
   }
   
   async function start(inscode_devens) {
-    let chunks = [...inscode_devens].reduce((r,[inscode,devens]) => r=[...r, ...devens.map(i=>[0,inscode,i]) ], []);
+    let chunks = [...inscode_devens].reduce((r,[inscode,devens]) => r=[...r, ...(devens ? devens.map(i=>[0,inscode,i]) : []) ], []);
     total = chunks.length;
     succs = [];
     fails = [];
@@ -904,7 +904,7 @@ async function getIntraday(symbols=[], _settings={}) {
 
   /** note:  ↓... let == const (mostly) */
   
-  let selins = selection.map(i => i.InsCode);
+  let selins = selection.map(i => i && i.InsCode);
   let { startDate } = settings;
   
   let inscode_devens = selins.map(inscode => {
@@ -923,6 +923,7 @@ async function getIntraday(symbols=[], _settings={}) {
   });
   
   let toUpdate = inscode_devens.filter(([inscode, devens]) => {
+    if (!inscode) return;
     if (!stored[inscode]) return [inscode, devens];
     let needupdate = devens.filter(deven => !stored[inscode][deven]);
     if (needupdate.length) return [inscode, needupdate];
