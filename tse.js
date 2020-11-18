@@ -928,7 +928,7 @@ async function getIntraday(symbols=[], _settings={}) {
   });
   
   let toUpdate = inscode_devens.filter(([inscode, devens]) => {
-    if (!inscode) return;
+    if (!inscode || !devens.length) return;
     if (!stored[inscode]) return [inscode, devens];
     let needupdate = devens.filter(deven => !stored[inscode][deven]);
     if (needupdate.length) return [inscode, needupdate];
