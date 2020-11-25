@@ -886,7 +886,7 @@ async function getIntraday(symbols=[], _settings={}) {
   const selins = new Set(selection.map(i => i && i.InsCode));
   
   let storedInscodeDevens = await storage.getItemAsync('tse.inscode_devens', true);
-  storedInscodeDevens = storedInscodeDevens ? storedInscodeDevens.split('@').map(i=>i.split(';')).map(([i,d]) => [i,d.split(',')]): [];
+  storedInscodeDevens = storedInscodeDevens ? storedInscodeDevens.split('@').map(i=>i.split(';')).map(([i,d]) => [i,d.split(',').map(i=>+i)]): [];
   const storedInscodes = new Set(storedInscodeDevens.map(i => i[0]));
   
   if ( !storedInscodeDevens || [...selins].find(i => !storedInscodes.has(i)) ) {
@@ -911,7 +911,7 @@ async function getIntraday(symbols=[], _settings={}) {
     storedInscodeDevens = Object.keys(storedPrices).map(inscode => {
       const prices = storedPrices[inscode];
       if (!prices) return;
-      const devens = prices.split(';').map(i => i.split(',',2)[1]);
+      const devens = prices.split(';').map(i => +i.split(',',2)[1]);
       return [inscode, devens];
     }).filter(i=>i);
     
@@ -934,7 +934,7 @@ async function getIntraday(symbols=[], _settings={}) {
     if (!inscode) return [];
     let allDevens = storedInscodeDevens[inscode];
     if (!allDevens) return [inscode, []];
-    let askedDevens = allDevens.map(parseFloat).filter(isInRange);
+    let askedDevens = allDevens.filter(isInRange);
     return [inscode, askedDevens];
   });
   
