@@ -1001,8 +1001,8 @@ async function getIntraday(symbols=[], _settings={}) {
     [ 'orders',  ['time','row','askcount','askvol','askprice','bidprice','bidvol','bidcount'] ],
     [ 'trades',  ['time','count','volume','price','discarded'] ],
     [ 'client', [
-        'pbvol','pscount','pbval','psprice','pbvolpot',
-        'psvol','pscount','psval','pbprice','psvolpot',
+        'pbvol','pbcount','pbval','pbprice','pbvolpot',
+        'psvol','pscount','psval','psprice','psvolpot',
         'lbvol','lbcount','lbval','lbprice','lbvolpot',
         'lsvol','lscount','lsval','lsprice','lsvolpot', 'plchg']
     ],
