@@ -883,41 +883,58 @@ async function getIntraday(symbols=[], _settings={}) {
     return result;
   }
   
-  await parseStoredPrices();
+  const selins = selection.map(i => i && i.InsCode);
   
-  const { succs, fails, error } = await updatePrices(selection);
-  if (error) {
-    const { title, detail } = error;
-    result.error = { code: 1, title, detail };
-    return result;
-  }
+  let storedInscodeDevens = await storage.getItemAsync('tse.inscode_devens', true);
+  storedInscodeDevens = storedInscodeDevens ? storedInscodeDevens.split('@').map(i=>i.split(';')).map(([i,d]) => [i,d.split(',')]): [];
+  const storedInscodes = storedInscodeDevens.map(i => i[0]);
   
-  if (fails.length) {
-    const _selection = selection.reduce((a, {InsCode,Symbol}) => (a[InsCode] = Symbol, a), {});
-    result.error = { code: 3, title: 'Incomplete Price Update',
-      fails: fails.map(k => _selection[k]),
-      succs: succs.map(k => _selection[k])
-    };
-    selection.forEach((v,i,a) => fails.includes(v.InsCode) ? a[i] = undefined : 0);
+  if ( !storedInscodeDevens || selins.find(i => storedInscodes.indexOf(i) === -1) ) {
+    await parseStoredPrices();
+    
+    const { succs, fails, error } = await updatePrices(selection);
+    if (error) {
+      const { title, detail } = error;
+      result.error = { code: 1, title, detail };
+      return result;
+    }
+    
+    if (fails.length) {
+      const _selection = selection.reduce((a, {InsCode,Symbol}) => (a[InsCode] = Symbol, a), {});
+      result.error = { code: 3, title: 'Incomplete Price Update',
+        fails: fails.map(k => _selection[k]),
+        succs: succs.map(k => _selection[k])
+      };
+      selection.forEach((v,i,a) => fails.includes(v.InsCode) ? a[i] = undefined : 0);
+    }
+    
+    storedInscodeDevens = Object.keys(storedPrices).map(inscode => {
+      const prices = storedPrices[inscode];
+      if (!prices) return;
+      const devens = prices.split(';').map(i => i.split(',',2)[1]);
+      return [inscode, devens];
+    }).filter(i=>i);
+    
+    const str = storedInscodeDevens.map(([i,d]) => [i, d.join(',')]).map(i => i.join(';')).join('@');
+    await storage.setItemAsync('tse.inscode_devens', str, true);
   }
+  storedInscodeDevens = Object.fromEntries(storedInscodeDevens);
   
   const settings = {...defaultIntradaySettings, ..._settings};
-
+  
   /** note:  ↓... let == const (mostly) */
   
-  let selins = selection.map(i => i && i.InsCode);
   let [startDate, endDate] = [+settings.startDate, +settings.endDate];
   
   let isInRange = endDate
     ? i => i >= startDate && i <= endDate
     : i => i >= startDate;
   
-  let inscode_devens = selins.map(inscode => {
+  let askedInscodeDevens = selins.map(inscode => {
     if (!inscode) return [];
-    let strprices = storedPrices[inscode];
-    if (!strprices) return [inscode];
-    let allDevens = strprices.split(';').map(i => +i.split(',',2)[1] );
-    let askedDevens = allDevens.filter(isInRange);
+    let allDevens = storedInscodeDevens[inscode];
+    if (!allDevens) return [inscode, []];
+    let askedDevens = allDevens.map(parseFloat).filter(isInRange);
     return [inscode, askedDevens];
   });
   
@@ -927,12 +944,12 @@ async function getIntraday(symbols=[], _settings={}) {
     if (selins.indexOf(k) !== -1) stored[k] = val;
   });
   
-  let toUpdate = inscode_devens.filter(([inscode, devens]) => {
+  let toUpdate = askedInscodeDevens.map(([inscode, devens]) => {
     if (!inscode || !devens.length) return;
     if (!stored[inscode]) return [inscode, devens];
     let needupdate = devens.filter(deven => !stored[inscode][deven]);
     if (needupdate.length) return [inscode, needupdate];
-  });
+  }).filter(i=>i);
   
   let zip = pako.gzip;
   let unzip = buf => pako.ungzip(buf, {to: 'string'});
@@ -1021,7 +1038,7 @@ async function getIntraday(symbols=[], _settings={}) {
   
   let selres = [];
   
-  for (let [inscode, devens] of inscode_devens) {
+  for (let [inscode, devens] of askedInscodeDevens) {
     if (!inscode) continue;
     let days = [...Array(devens.length)].map(()=>[]);
     let ires = finalGroupCols.reduce((r, [group, cols]) => (
