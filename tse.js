@@ -883,13 +883,13 @@ async function getIntraday(symbols=[], _settings={}) {
     return result;
   }
   
-  const selins = selection.map(i => i && i.InsCode);
+  const selins = new Set(selection.map(i => i && i.InsCode));
   
   let storedInscodeDevens = await storage.getItemAsync('tse.inscode_devens', true);
   storedInscodeDevens = storedInscodeDevens ? storedInscodeDevens.split('@').map(i=>i.split(';')).map(([i,d]) => [i,d.split(',')]): [];
-  const storedInscodes = storedInscodeDevens.map(i => i[0]);
+  const storedInscodes = new Set(storedInscodeDevens.map(i => i[0]));
   
-  if ( !storedInscodeDevens || selins.find(i => storedInscodes.indexOf(i) === -1) ) {
+  if ( !storedInscodeDevens || [...selins].find(i => !storedInscodes.has(i)) ) {
     await parseStoredPrices();
     
     const { succs, fails, error } = await updatePrices(selection);
@@ -930,7 +930,7 @@ async function getIntraday(symbols=[], _settings={}) {
     ? i => i >= startDate && i <= endDate
     : i => i >= startDate;
   
-  let askedInscodeDevens = selins.map(inscode => {
+  let askedInscodeDevens = [...selins].map(inscode => {
     if (!inscode) return [];
     let allDevens = storedInscodeDevens[inscode];
     if (!allDevens) return [inscode, []];
@@ -941,7 +941,7 @@ async function getIntraday(symbols=[], _settings={}) {
   let stored = {};
   await localforage.iterate((val, key) => {
     let k = key.replace('tse.', '');
-    if (selins.indexOf(k) !== -1) stored[k] = val;
+    if (selins.has(k)) stored[k] = val;
   });
   
   let toUpdate = askedInscodeDevens.map(([inscode, devens]) => {
