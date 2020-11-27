@@ -939,10 +939,18 @@ async function getIntraday(symbols=[], _settings={}) {
   });
   
   let stored = {};
-  await localforage.iterate((val, key) => {
-    let k = key.replace('tse.', '');
-    if (selins.has(k)) stored[k] = val;
-  });
+  if (isBrowser) {
+    await localforage.iterate((val, key) => {
+      let k = key.replace('tse.', '');
+      if (selins.has(k)) stored[k] = val;
+    });
+  } else {
+    var fs = require('fs');
+    var d = storage.CACHE_DIR;
+    var dirs = fs.readdirSync(d).filter(i=>fs.statSync(d+'/'+i).isDirectory());
+    stored = dirs.map(i => [i, Object.fromEntries(fs.readdirSync(d+'/'+i).map(j=> [j.slice(0,-3), fs.readFileSync(d+'/'+i+'/'+j)]) ) ]);
+    stored = Object.fromEntries(stored);
+  }
   
   let toUpdate = askedInscodeDevens.map(([inscode, devens]) => {
     if (!inscode || !devens.length) return;
@@ -951,8 +959,17 @@ async function getIntraday(symbols=[], _settings={}) {
     if (needupdate.length) return [inscode, needupdate];
   }).filter(i=>i);
   
-  let zip = pako.gzip;
-  let unzip = buf => pako.ungzip(buf, {to: 'string'});
+  let zip;
+  let unzip;
+  if (isNode) {
+    let { gzipSync, gunzipSync } = require('zlib');
+    zip   = str => gzipSync(str);
+    unzip = buf => gunzipSync(buf).toString();
+  } else if (isBrowser) {
+    let { gzip, ungzip } = pako || {};
+    zip   = str => gzip(str);
+    unzip = buf => ungzip(buf, {to: 'string'});
+  }
   
   
   if (toUpdate.length > 0) {
@@ -1012,7 +1029,18 @@ async function getIntraday(symbols=[], _settings={}) {
         storedInstrument[deven] = zip(file);
       }
       
-      await localforage.setItem('tse.'+inscode, storedInstrument);
+      if (isBrowser) {
+        await localforage.setItem('tse.'+inscode, storedInstrument);
+      } else {
+        var fs = require('fs');
+        var d = storage.CACHE_DIR;
+        var p = d+'/'+inscode;
+        if (!fs.existsSync(p)) fs.mkdirSync(p);
+        Object.keys(storedInstrument).forEach(deven => {
+          fs.writeFileSync(p+'/'+deven+'.gz', storedInstrument[deven]);
+        });
+      }
+      
     }
   }
   
@@ -1099,6 +1127,7 @@ async function getIntraday(symbols=[], _settings={}) {
 const instance = {
   getInstruments,
   getPrices,
+  getIntraday,
   
   get API_URL() { return API_URL; },
   set API_URL(v) {
@@ -1134,7 +1163,6 @@ if (isNode) {
   });
   module.exports = instance;
 } else if (isBrowser) {
-  instance.getIntraday = getIntraday;
   window.tse = instance;
 }
 })();
