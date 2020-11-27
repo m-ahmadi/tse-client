@@ -808,7 +808,6 @@ const itdstore = (function () {
   return { getItems, setItem };
 })();
 
-
 function parseRaw(separator, text) {
   let str = text.split(separator)[1].split('];',1)[0];
   str = '['+ str.replace(/'/g, '"') +']';
@@ -1014,7 +1013,6 @@ async function getIntraday(symbols=[], _settings={}) {
     zip   = str => gzip(str);
     unzip = buf => ungzip(buf, {to: 'string'});
   }
-  
   
   if (toUpdate.length > 0) {
     let { inscode__deven_text, succs, fails } = await intradayDownloadManager(toUpdate);
