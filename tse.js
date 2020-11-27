@@ -753,6 +753,53 @@ const defaultIntradaySettings = {
   endDate: ''
 };
 
+const itdstore = (function () {
+  let setItem;
+  let getItems;
+  
+  if (isNode) {
+    const { readdirSync, statSync, readFileSync, writeFileSync, existsSync, mkdirSync } = require('fs');
+    const { join } = require('path');
+    
+    getItems = async function (selins=new Set()) {
+      const d = storage.CACHE_DIR;
+      const dirs = readdirSync(d).filter( i => statSync(join(d,i)).isDirectory() && selins.has(i) );
+      const result = dirs.map(i => {
+        const files = readdirSync(join(d,i)).map(j => [ j.slice(0,-3), readFileSync(join(d,i,j)) ])
+        return [ i, Object.fromEntries(files) ];
+      }).filter(i=>i);
+      return Object.fromEntries(result);
+    };
+    
+    setItem = async function (key, obj) {
+      key = key.replace('tse.', '');
+      const d = storage.CACHE_DIR;
+      const dir = join(d, key);
+      if ( !existsSync(dir) ) mkdirSync(dir);
+      Object.keys(obj).forEach(k => {
+        writeFileSync(join(dir, k+'.gz'), obj[k]);
+      });
+    };
+    
+  } else if (isBrowser) {
+    
+    getItems = async function	(selins=new Set()) {
+      const result = {};
+      await localforage.iterate((val, key) => {
+        let k = key.replace('tse.', '');
+        if (selins.has(k)) result[k] = val;
+      });
+      return result;
+    };
+    
+    setItem = storage.setItemAsync;
+    
+  }
+  
+  return { getItems, setItem };
+})();
+
+
 function parseRaw(separator, text) {
   let str = text.split(separator)[1].split('];',1)[0];
   str = '['+ str.replace(/'/g, '"') +']';
@@ -938,19 +985,7 @@ async function getIntraday(symbols=[], _settings={}) {
     return [inscode, askedDevens];
   });
   
-  let stored = {};
-  if (isBrowser) {
-    await localforage.iterate((val, key) => {
-      let k = key.replace('tse.', '');
-      if (selins.has(k)) stored[k] = val;
-    });
-  } else {
-    var fs = require('fs');
-    var d = storage.CACHE_DIR;
-    var dirs = fs.readdirSync(d).filter(i=>fs.statSync(d+'/'+i).isDirectory());
-    stored = dirs.map(i => [i, Object.fromEntries(fs.readdirSync(d+'/'+i).map(j=> [j.slice(0,-3), fs.readFileSync(d+'/'+i+'/'+j)]) ) ]);
-    stored = Object.fromEntries(stored);
-  }
+  let stored = await itdstore.getItems(selins);
   
   let toUpdate = askedInscodeDevens.map(([inscode, devens]) => {
     if (!inscode || !devens.length) return;
@@ -1029,18 +1064,7 @@ async function getIntraday(symbols=[], _settings={}) {
         storedInstrument[deven] = zip(file);
       }
       
-      if (isBrowser) {
-        await localforage.setItem('tse.'+inscode, storedInstrument);
-      } else {
-        var fs = require('fs');
-        var d = storage.CACHE_DIR;
-        var p = d+'/'+inscode;
-        if (!fs.existsSync(p)) fs.mkdirSync(p);
-        Object.keys(storedInstrument).forEach(deven => {
-          fs.writeFileSync(p+'/'+deven+'.gz', storedInstrument[deven]);
-        });
-      }
-      
+      await itdstore.setItem('tse.'+inscode, storedInstrument);
     }
   }
   
