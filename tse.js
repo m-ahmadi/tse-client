@@ -744,14 +744,23 @@ let INTRADAY_UPDATE_CHUNK_DELAY = 100;
 let INTRADAY_UPDATE_RETRY_COUNT = 6;
 let INTRADAY_UPDATE_RETRY_DELAY = 1000;
 const defaultIntradaySettings = {
-  prices: true,
-  trades: true,
-  orders: true,
-  client: true,
-  misc: true,
   startDate: '20010321',
-  endDate: ''
+  endDate: '',
+  gzip: true
 };
+
+const itdGroupCols = [
+  [ 'prices',  ['time','last','close','open','high','low','count','volume','value','discarded'] ],
+  [ 'orders',  ['time','row','askcount','askvol','askprice','bidprice','bidvol','bidcount'] ],
+  [ 'trades',  ['time','count','volume','price','discarded'] ],
+  [ 'client', [
+      'pbvol','pbcount','pbval','pbprice','pbvolpot',
+      'psvol','pscount','psval','psprice','psvolpot',
+      'lbvol','lbcount','lbval','lbprice','lbvolpot',
+      'lsvol','lscount','lsval','lsprice','lsvolpot', 'plchg']
+  ],
+  [ 'misc',  ['state','daymin','daymax'] ]
+];
 
 const itdstore = (function () {
   let setItem;
@@ -1068,82 +1077,17 @@ async function getIntraday(symbols=[], _settings={}) {
     }
   }
   
-  let group_cols = [
-    [ 'prices',  ['time','last','close','open','high','low','count','volume','value','discarded'] ],
-    [ 'orders',  ['time','row','askcount','askvol','askprice','bidprice','bidvol','bidcount'] ],
-    [ 'trades',  ['time','count','volume','price','discarded'] ],
-    [ 'client', [
-        'pbvol','pbcount','pbval','pbprice','pbvolpot',
-        'psvol','pscount','psval','psprice','psvolpot',
-        'lbvol','lbcount','lbval','lbprice','lbvolpot',
-        'lsvol','lscount','lsval','lsprice','lsvolpot', 'plchg']
-    ],
-    [ 'misc',  ['state','daymin','daymax'] ]
-  ];
+  let { gzip } = settings;
   
-  let finalGroupCols = group_cols.map(([group,defcols]) => {
-    let usercols = settings[group];
-    let cols =
-      Array.isArray(usercols) ? usercols.map(c => defcols.includes(c) ? c : undefined).filter(i=>i) :
-      !usercols               ? [] :
-      defcols;
-    if (!['client','misc'].includes(group) && cols.length && cols.indexOf('time') === -1) cols.unshift('time');
-    return cols.length ? [group, cols] : undefined;
-  }).filter(i=>i);
-  
-  let selres = [];
-  
-  for (let [inscode, devens] of askedInscodeDevens) {
-    if (!inscode) continue;
-    let days = [...Array(devens.length)].map(()=>[]);
-    let ires = finalGroupCols.reduce((r, [group, cols]) => (
-      r[group] = cols.reduce((o,k) => (o[k]=group==='client'||group==='misc'?[]:days, o), {}), r
-    ), {});
-    ires.date = devens.map(parseFloat);
-    
-    let storedInstrument = stored[inscode];
-    let day = 0;
-    
-    for (let deven of devens) {
-      let data = storedInstrument[deven];
-      
-      if (!data) {
-        for (let [group, cols] of finalGroupCols) cols.forEach(col => ires[group][col][day] = undefined);
-        day++;
-        continue;
-      }
-      
-      data = unzip(data);
-      
-      data = data.split('@').map((v,i) =>
-        i < 3   ? v.split(';').map(row => row.split(',').map(parseFloat) ) :
-        i === 3 ? v.split(',').map(j => j ? parseFloat(j) : undefined) :
-        i === 4 ? v.split(',').map((j,n) => n>0 ? +j : j) : undefined
-      );
-      
-      finalGroupCols.forEach(([group,cols]) => {
-        let idx = group_cols.findIndex(i => i[0] === group);	
-        let arr = data[idx];
-        
-        // cols.forEach(col => ires[group][col] = arr); // same as orig structure
-        
-        if (group==='client'||group==='misc') {
-          let [, defs] = group_cols[idx];
-          cols.forEach(col => ires[group][col][day] = arr[ defs.indexOf(col) ] );
-        } else {
-          for (let row of arr) {
-            cols.forEach(col => ires[group][col][day].push(row) );
-          }
-        }
-      });
-      
-      day++;
+  result.data = askedInscodeDevens.map(([inscode]) => {
+    let instr = stored[inscode];
+    if (!instr) return;
+    if (gzip) {
+      return Object.keys(instr).map(deven => [ deven, instr[deven] ]);
+    } else {
+      return Object.keys(instr).map(deven => [ deven, unzip(instr[deven]) ]);
     }
-    
-    selres.push(ires);
-  }
-  
-  result.data = selres;
+  });
   
   return result;
 }
@@ -1178,7 +1122,8 @@ const instance = {
   
   get columnList() {
     return [...Array(15)].map((v,i) => ({name: cols[i], fname: colsFa[i]}));
-  }
+  },
+  itdGroupCols
 };
 if (isNode) {
   Object.defineProperty(instance, 'CACHE_DIR', {
