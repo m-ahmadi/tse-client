@@ -743,7 +743,7 @@ async function getPrices(symbols=[], _settings={}) {
 let INTRADAY_UPDATE_CHUNK_DELAY = 100;
 let INTRADAY_UPDATE_RETRY_COUNT = 6;
 let INTRADAY_UPDATE_RETRY_DELAY = 1000;
-const defaultIntradaySettings = {
+const itdDefaultSettings = {
   startDate: '20010321',
   endDate: '',
   gzip: true
@@ -815,7 +815,7 @@ function parseRaw(separator, text) {
   return arr;
 }
 
-const intradayDownloadManager = (function () {
+const itdDownloadManager = (function () {
   let total = 0;
   let succs = [];
   let fails = [];
@@ -975,7 +975,7 @@ async function getIntraday(symbols=[], _settings={}) {
   }
   storedInscodeDevens = Object.fromEntries(storedInscodeDevens);
   
-  const settings = {...defaultIntradaySettings, ..._settings};
+  const settings = {...itdDefaultSettings, ..._settings};
   
   /** note:  ↓... let == const (mostly) */
   
@@ -1015,7 +1015,7 @@ async function getIntraday(symbols=[], _settings={}) {
   }
   
   if (toUpdate.length > 0) {
-    let { inscode__deven_text, succs, fails } = await intradayDownloadManager(toUpdate);
+    let { inscode__deven_text, succs, fails } = await itdDownloadManager(toUpdate);
     
     if (fails.length) {
       let k = selection.reduce((a, {InsCode,Symbol}) => (a[InsCode] = Symbol, a), {});
