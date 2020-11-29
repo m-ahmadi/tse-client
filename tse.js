@@ -762,6 +762,20 @@ const itdGroupCols = [
   [ 'misc',  ['state','daymin','daymax'] ]
 ];
 
+let stored = {};
+
+let zip;
+let unzip;
+if (isNode) {
+  const { gzipSync, gunzipSync } = require('zlib');
+  zip   = str => gzipSync(str);
+  unzip = buf => gunzipSync(buf).toString();
+} else if (isBrowser) {
+  const { gzip, ungzip } = pako || {};
+  zip   = str => gzip(str);
+  unzip = buf => ungzip(buf, {to: 'string'});
+}
+
 const itdstore = (function () {
   let setItem;
   let getItems;
@@ -808,6 +822,16 @@ const itdstore = (function () {
   return { getItems, setItem };
 })();
 
+function objify(map, r={}) {
+  for (let [k,v] of map) {
+    if (Map.prototype.toString.call(v) === '[object Map]' || Array.isArray(v)) {
+      r[k] = objify(v, r[k]);
+    } else {
+      r[k] = v;
+    }
+  }
+  return r;
+}
 function parseRaw(separator, text) {
   let str = text.split(separator)[1].split('];',1)[0];
   str = '['+ str.replace(/'/g, '"') +']';
@@ -815,7 +839,56 @@ function parseRaw(separator, text) {
   return arr;
 }
 
-const itdDownloadManager = (function () {
+async function extractAndStore(inscode='', deven_text=[]) {
+  if (!stored[inscode]) stored[inscode] = {};
+  let storedInstrument = stored[inscode];
+  
+  for (let [deven, text] of deven_text) {
+    if (!text) continue;
+    let ClosingPrice    = parseRaw('var ClosingPriceData=[', text);
+    let BestLimit       = parseRaw('var BestLimitData=[', text);
+    let IntraTrade      = parseRaw('var IntraTradeData=[', text);
+    let ClientType      = parseRaw('var ClientTypeData=[', text);
+    let InstrumentState = parseRaw('var InstrumentStateData=[', text);
+    let StaticTreshhold = parseRaw('var StaticTreshholdData=[', text);
+    // let ShareHolder     = parseRaw('var ShareHolderData=[', text);
+    // let ShareHolderYesterday = parseRaw('var ShareHolderDataYesterday=[', text);
+    
+    let coli;
+    
+    coli = [12,2,3,4,6,7,8,9,10,11];
+    let price = ClosingPrice.map(row => coli.map(i=> row[i]).join(',') ).join(';');
+    
+    coli = [0,1,2,3,4,5,6,7];
+    let order = BestLimit.map(row => coli.map(i=> row[i]).join(',') ).join(';');
+    
+    coli = [1,0,2,3,4];
+    let trade = IntraTrade.map(row => {
+      let [h,m,s] = row[1].split(':');
+      let timeint = (+h*10000) + (+m*100) + (+s) + '';
+      row[1] = timeint;
+      return coli.map(i => row[i]).join(',');
+    }).join(';');
+    
+    coli = [4,0,12,16,8,6,2,14,18,10,5,1,13,17,9,7,3,15,19,11,20];
+    let client = coli.map(i=> ClientType[i]).join(',');
+    
+    let [a, b] = [InstrumentState, StaticTreshhold];
+    let state = a.length && a[0].length && a[0][2].trim();
+    let daymin, daymax;
+    if (b.length && b[1].length) { daymin = b[1][2]; daymax = b[1][1]; }
+    let misc = [state, daymin, daymax].join(',');
+    
+    
+    let file = [price, order, trade, client, misc].join('@');
+    storedInstrument[deven] = zip(file);
+  }
+  
+  return itdstore.setItem('tse.'+inscode, storedInstrument);
+}
+
+const itdUpdateManager = (function () {
+  let src = {};
   let total = 0;
   let succs = [];
   let fails = [];
@@ -825,6 +898,7 @@ const itdDownloadManager = (function () {
   let qeudRetry = -1;
   let resolve;
   let nextsrv = n => n<7 ? ++n : 0;
+  let writing = [];
   
   function poll() {
     if (timeouts.size > 0 || qeudRetry) {
@@ -833,22 +907,15 @@ const itdDownloadManager = (function () {
     }
     
     if (succs.length === total || retries >= INTRADAY_UPDATE_RETRY_COUNT) {
-      let all = [ ...succs, ...fails.map(i => i.slice(1)) ];
-      let res = new Map();
-      
-      for (let [inscode, deven, text] of all) {
-        if ( !res.has(inscode) )            res.set(inscode, new Map());
-        if ( !res.get(inscode).has(deven) ) res.get(inscode).set(deven, new Map());
-        res.get(inscode).set(deven, text);
-      }
-      
-      let _succs = succs.map(i => i.slice(2));
+      let _succs = [ ...succs ];
+      let _fails = [ ...fails.map(i => i.slice(1)) ];
       succs = [];
+      fails = [];
+      src = {};
       
-      resolve({
-        inscode__deven_text: res,
-        succs: _succs,
-        fails
+      Promise.all(writing).then(() => {
+        writing = [];
+        resolve({succs: _succs, fails: _fails});
       });
       return;
     }
@@ -867,8 +934,18 @@ const itdDownloadManager = (function () {
   function onresult(text, chunk, id) {
     if (typeof text === 'string') { // TODO: maybe better checks
       let res = 'var StaticTreshholdData' + text.split('var StaticTreshholdData')[1];
-      succs.push([...chunk.slice(1), res]);
-      fails = fails.filter(i => i.join('') !== chunk.join(''));
+      let _chunk = chunk.slice(1);
+      succs.push(_chunk);
+      let [inscode, deven] = _chunk;
+      let devens = src[inscode];
+      devens[deven] = res;
+      let alldone = !Object.keys(devens).find(k => !devens[k]);
+      if (alldone) {
+        let _devens = Object.keys(devens).map(k => [k, devens[k]]);
+        writing.push( extractAndStore(inscode, _devens) );
+      }
+      
+      fails = fails.filter(i => i.join() !== chunk.join());
     } else {
       fails.push(chunk);
       retrychunks.push(chunk);
@@ -900,7 +977,8 @@ const itdDownloadManager = (function () {
   }
   
   async function start(inscode_devens) {
-    let chunks = [...inscode_devens].reduce((r,[inscode,devens]) => r=[...r, ...(devens ? devens.map(i=>[0,inscode,i]) : []) ], []);
+    src = objify( inscode_devens.map(([a,b]) => [ a, b.map(i=>[i,undefined]) ]) );
+    let chunks = [...inscode_devens].reduce((r,[inscode,devens]) => r=[...r, ...(devens ? devens.map(i=>[0,inscode,''+i]) : []) ], []);
     total = chunks.length;
     succs = [];
     fails = [];
@@ -908,6 +986,7 @@ const itdDownloadManager = (function () {
     retrychunks = [];
     timeouts = new Map();
     qeudRetry = undefined;
+    writing = [];
     
     batch(chunks);
     
@@ -993,7 +1072,7 @@ async function getIntraday(symbols=[], _settings={}) {
     return [inscode, askedDevens];
   });
   
-  let stored = await itdstore.getItems(selins);
+  stored = await itdstore.getItems(selins);
   
   let toUpdate = askedInscodeDevens.map(([inscode, devens]) => {
     if (!inscode || !devens.length) return;
@@ -1002,20 +1081,8 @@ async function getIntraday(symbols=[], _settings={}) {
     if (needupdate.length) return [inscode, needupdate];
   }).filter(i=>i);
   
-  let zip;
-  let unzip;
-  if (isNode) {
-    let { gzipSync, gunzipSync } = require('zlib');
-    zip   = str => gzipSync(str);
-    unzip = buf => gunzipSync(buf).toString();
-  } else if (isBrowser) {
-    let { gzip, ungzip } = pako || {};
-    zip   = str => gzip(str);
-    unzip = buf => ungzip(buf, {to: 'string'});
-  }
-  
   if (toUpdate.length > 0) {
-    let { inscode__deven_text, succs, fails } = await itdDownloadManager(toUpdate);
+    let { succs, fails } = await itdUpdateManager(toUpdate);
     
     if (fails.length) {
       let k = selection.reduce((a, {InsCode,Symbol}) => (a[InsCode] = Symbol, a), {});
@@ -1024,54 +1091,6 @@ async function getIntraday(symbols=[], _settings={}) {
         fails: fails.reduce(reducer, {}),
         succs: succs.reduce(reducer, {})
       };
-    }
-    
-    for (let [inscode, deven_text] of inscode__deven_text) {
-      stored[inscode] = {};
-      let storedInstrument = stored[inscode];
-      
-      for (let [deven, text] of deven_text) {
-        if (!text) continue;
-        let ClosingPrice    = parseRaw('var ClosingPriceData=[', text);
-        let BestLimit       = parseRaw('var BestLimitData=[', text);
-        let IntraTrade      = parseRaw('var IntraTradeData=[', text);
-        let ClientType      = parseRaw('var ClientTypeData=[', text);
-        let InstrumentState = parseRaw('var InstrumentStateData=[', text);
-        let StaticTreshhold = parseRaw('var StaticTreshholdData=[', text);
-        // let ShareHolder     = parseRaw('var ShareHolderData=[', text);
-        // let ShareHolderYesterday = parseRaw('var ShareHolderDataYesterday=[', text);
-        
-        let coli;
-        
-        coli = [12,2,3,4,6,7,8,9,10,11];
-        let price = ClosingPrice.map(row => coli.map(i=> row[i]).join(',') ).join(';');
-        
-        coli = [0,1,2,3,4,5,6,7];
-        let order = BestLimit.map(row => coli.map(i=> row[i]).join(',') ).join(';');
-        
-        coli = [1,0,2,3,4];
-        let trade = IntraTrade.map(row => {
-          let [h,m,s] = row[1].split(':');
-          let timeint = (+h*10000) + (+m*100) + (+s) + '';
-          row[1] = timeint;
-          return coli.map(i => row[i]).join(',');
-        }).join(';');
-        
-        coli = [4,0,12,16,8,6,2,14,18,10,5,1,13,17,9,7,3,15,19,11,20];
-        let client = coli.map(i=> ClientType[i]).join(',');
-        
-        let [a, b] = [InstrumentState, StaticTreshhold];
-        let state = a.length && a[0].length && a[0][2].trim();
-        let daymin, daymax;
-        if (b.length && b[1].length) { daymin = b[1][2]; daymax = b[1][1]; }
-        let misc = [state, daymin, daymax].join(',');
-        
-        
-        let file = [price, order, trade, client, misc].join('@');
-        storedInstrument[deven] = zip(file);
-      }
-      
-      await itdstore.setItem('tse.'+inscode, storedInstrument);
     }
   }
   
