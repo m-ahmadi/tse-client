@@ -748,7 +748,6 @@ const itdDefaultSettings = {
   endDate: '',
   gzip: true
 };
-
 const itdGroupCols = [
   [ 'prices',  ['time','last','close','open','high','low','count','volume','value','discarded'] ],
   [ 'orders',  ['time','row','askcount','askvol','askprice','bidprice','bidvol','bidcount'] ],
@@ -886,7 +885,6 @@ async function extractAndStore(inscode='', deven_text=[]) {
   
   return itdstore.setItem('tse.'+inscode, storedInstrument);
 }
-
 const itdUpdateManager = (function () {
   let src = {};
   let total = 0;
