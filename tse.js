@@ -843,7 +843,10 @@ async function extractAndStore(inscode='', deven_text=[]) {
   let storedInstrument = stored[inscode];
   
   for (let [deven, text] of deven_text) {
-    if (!text) continue;
+    if (text === 'N/A') {
+      storedInstrument[deven] = text;
+      continue;
+    }
     let ClosingPrice    = parseRaw('var ClosingPriceData=[', text);
     let BestLimit       = parseRaw('var BestLimitData=[', text);
     let IntraTrade      = parseRaw('var IntraTradeData=[', text);
@@ -929,24 +932,25 @@ const itdUpdateManager = (function () {
     }
   }
   
-  function onresult(text, chunk, id) {
-    if (typeof text === 'string') { // TODO: maybe better checks
-      let res = 'var StaticTreshholdData' + text.split('var StaticTreshholdData')[1];
+  function onresult(text, chunk, id, retry=true) {
+    if (typeof text === 'string') {
+      let res = text === 'N/A' ? text : 'var StaticTreshholdData' + text.split('var StaticTreshholdData')[1];
       let _chunk = chunk.slice(1);
       succs.push(_chunk);
       let [inscode, deven] = _chunk;
       let devens = src[inscode];
       devens[deven] = res;
+      
       let alldone = !Object.keys(devens).find(k => !devens[k]);
       if (alldone) {
-        let _devens = Object.keys(devens).map(k => [k, devens[k]]);
-        writing.push( extractAndStore(inscode, _devens) );
+        let deven_text = Object.keys(devens).map(k => [k, devens[k]]);
+        writing.push( extractAndStore(inscode, deven_text) );
       }
       
       fails = fails.filter(i => i.join() !== chunk.join());
     } else {
       fails.push(chunk);
-      retrychunks.push(chunk);
+      if (retry) retrychunks.push(chunk);
     }
     
     timeouts.delete(id);
@@ -956,12 +960,23 @@ const itdUpdateManager = (function () {
     let [server, inscode, deven] = chunk;
     
     fetch('http://cdn'+(server?server:'')+'.tsetmc.com/Loader.aspx?ParTree=15131P&i='+inscode+'&d='+deven)
-      .then(async res => 
-        res.status === 200
-          ? onresult(await res.text(), chunk, id)
-          : onresult(undefined, chunk, id)
-      )
-      .catch(() => onresult(undefined, chunk, id));
+      .then(async res => {
+        let { status } = res;
+        
+        if (status === 200) {
+          let text = await res.text();
+          if (text.includes('Object moved to <a href="/GeneralError.aspx?aspxerrorpath=/Loader.aspx">here</a>')) {
+            onresult('N/A', chunk, id, false);
+          } else {
+            onresult(text, chunk, id);
+          }
+        } else if (res.status >= 500) {
+          onresult('N/A', chunk, id, false);
+        } else {
+          onresult(undefined, chunk, id);
+        }
+      })
+      .catch(() => onresult(undefined, chunk, id, false));
   }
   
   function batch(chunks=[]) {
@@ -1100,7 +1115,7 @@ async function getIntraday(symbols=[], _settings={}) {
     if (gzip) {
       return Object.keys(instr).map(deven => [ deven, instr[deven] ]);
     } else {
-      return Object.keys(instr).map(deven => [ deven, unzip(instr[deven]) ]);
+      return Object.keys(instr).map(deven => [ deven, typeof instr[deven] === 'string' ? instr[deven] : unzip(instr[deven]) ]);
     }
   });
   
