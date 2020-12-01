@@ -1109,13 +1109,13 @@ async function getIntraday(symbols=[], _settings={}) {
   
   let { gzip } = settings;
   
-  result.data = askedInscodeDevens.map(([inscode]) => {
+  result.data = askedInscodeDevens.map(([inscode, devens]) => {
     let instr = stored[inscode];
     if (!instr) return;
     if (gzip) {
-      return Object.keys(instr).map(deven => [ deven, instr[deven] ]);
+      return devens.map(deven => [ deven, instr[deven] ]);
     } else {
-      return Object.keys(instr).map(deven => [ deven, typeof instr[deven] === 'string' ? instr[deven] : unzip(instr[deven]) ]);
+      return devens.map(deven => [ deven, typeof instr[deven] === 'string' ? instr[deven] : unzip(instr[deven]) ]);
     }
   });
   
