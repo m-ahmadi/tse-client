@@ -932,7 +932,7 @@ const itdUpdateManager = (function () {
     }
   }
   
-  function onresult(text, chunk, id, retry=true) {
+  function onresult(text, chunk, id) {
     if (typeof text === 'string') {
       let res = text === 'N/A' ? text : 'var StaticTreshholdData' + text.split('var StaticTreshholdData')[1];
       let _chunk = chunk.slice(1);
@@ -950,7 +950,7 @@ const itdUpdateManager = (function () {
       fails = fails.filter(i => i.join() !== chunk.join());
     } else {
       fails.push(chunk);
-      if (retry) retrychunks.push(chunk);
+      retrychunks.push(chunk);
     }
     
     timeouts.delete(id);
@@ -966,17 +966,17 @@ const itdUpdateManager = (function () {
         if (status === 200) {
           let text = await res.text();
           if (text.includes('Object moved to <a href="/GeneralError.aspx?aspxerrorpath=/Loader.aspx">here</a>')) {
-            onresult('N/A', chunk, id, false);
+            onresult('N/A', chunk, id);
           } else {
             onresult(text, chunk, id);
           }
         } else if (res.status >= 500) {
-          onresult('N/A', chunk, id, false);
+          onresult('N/A', chunk, id);
         } else {
           onresult(undefined, chunk, id);
         }
       })
-      .catch(() => onresult(undefined, chunk, id, false));
+      .catch(() => onresult(undefined, chunk, id));
   }
   
   function batch(chunks=[]) {
