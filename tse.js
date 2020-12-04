@@ -741,7 +741,7 @@ async function getPrices(symbols=[], _settings={}) {
 }
 //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 let INTRADAY_UPDATE_CHUNK_DELAY = 100;
-let INTRADAY_UPDATE_RETRY_COUNT = 6;
+let INTRADAY_UPDATE_RETRY_COUNT = 7;
 let INTRADAY_UPDATE_RETRY_DELAY = 1000;
 const itdDefaultSettings = {
   startDate: '20010321',
