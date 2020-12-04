@@ -746,7 +746,8 @@ let INTRADAY_UPDATE_RETRY_DELAY = 1000;
 const itdDefaultSettings = {
   startDate: '20010321',
   endDate: '',
-  gzip: true
+  gzip: true,
+  onprogress: undefined
 };
 const itdGroupCols = [
   [ 'prices',  ['time','last','close','open','high','low','count','volume','value','discarded'] ],
@@ -900,6 +901,8 @@ const itdUpdateManager = (function () {
   let resolve;
   let nextsrv = n => n<7 ? ++n : 0;
   let writing = [];
+  let pf;
+  let pn = 4;
   
   function poll() {
     if (timeouts.size > 0 || qeudRetry) {
@@ -948,6 +951,7 @@ const itdUpdateManager = (function () {
       }
       
       fails = fails.filter(i => i.join() !== chunk.join());
+      if (pf) pf(pn+=96/total/2);
     } else {
       fails.push(chunk);
       retrychunks.push(chunk);
@@ -977,6 +981,8 @@ const itdUpdateManager = (function () {
         }
       })
       .catch(() => onresult(undefined, chunk, id));
+    
+    if (pf) pf(pn+=96/total/INTRADAY_UPDATE_RETRY_COUNT/2);
   }
   
   function batch(chunks=[]) {
@@ -989,7 +995,9 @@ const itdUpdateManager = (function () {
     }
   }
   
-  async function start(inscode_devens) {
+  async function start(inscode_devens, _pf) {
+    pf = _pf;
+    pn = 4;
     src = objify( inscode_devens.map(([a,b]) => [ a, b.map(i=>[i,undefined]) ]) );
     let chunks = [...inscode_devens].reduce((r,[inscode,devens]) => r=[...r, ...(devens ? devens.map(i=>[0,inscode,''+i]) : []) ], []);
     total = chunks.length;
@@ -1014,8 +1022,12 @@ const itdUpdateManager = (function () {
 async function getIntraday(symbols=[], _settings={}) {
   if (!symbols.length) return;
   const result = { data: [], error: undefined };
+  let { onprogress: pf } = _settings;
+  if (typeof pf !== 'function') pf = undefined;
+  let pn = 0;
   
   const err = await updateInstruments();
+  if (pf) pf(++pn);
   if (err) {
     const { title, detail } = err;
     result.error = { code: 1, title, detail };
@@ -1025,6 +1037,7 @@ async function getIntraday(symbols=[], _settings={}) {
   const instruments = parseInstruments(true, undefined, 'Symbol');
   const selection = symbols.map(i => instruments[i]);
   const notFounds = symbols.filter((v,i) => !selection[i]);
+  if (pf) pf(++pn);
   if (notFounds.length) {
     result.error = { code: 2, title: 'Incorrect Symbol', symbols: notFounds };
     return result;
@@ -1066,6 +1079,7 @@ async function getIntraday(symbols=[], _settings={}) {
     await storage.setItemAsync('tse.inscode_devens', str, true);
   }
   storedInscodeDevens = Object.fromEntries(storedInscodeDevens);
+  if (pf) pf(++pn);
   
   const settings = {...itdDefaultSettings, ..._settings};
   
@@ -1093,9 +1107,10 @@ async function getIntraday(symbols=[], _settings={}) {
     let needupdate = devens.filter(deven => !stored[inscode][deven]);
     if (needupdate.length) return [inscode, needupdate];
   }).filter(i=>i);
+  if (pf) pf(++pn);
   
   if (toUpdate.length > 0) {
-    let { succs, fails } = await itdUpdateManager(toUpdate);
+    let { succs, fails } = await itdUpdateManager(toUpdate, pf);
     
     if (fails.length) {
       let k = selection.reduce((a, {InsCode,Symbol}) => (a[InsCode] = Symbol, a), {});
@@ -1106,6 +1121,7 @@ async function getIntraday(symbols=[], _settings={}) {
       };
     }
   }
+  if (pf) pf(pn=96);
   
   let { gzip } = settings;
   
@@ -1118,6 +1134,7 @@ async function getIntraday(symbols=[], _settings={}) {
       return devens.map(deven => [ deven, typeof instr[deven] === 'string' ? instr[deven] : unzip(instr[deven]) ]);
     }
   });
+  if (pf) pf(100);
   
   return result;
 }
