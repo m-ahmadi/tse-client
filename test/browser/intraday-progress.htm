@@ -1,0 +1,42 @@
+<meta charset="utf8" /><style>input{width:82px;}</style>
+<script src="https://cdn.jsdelivr.net/npm/big.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jalaali-js/dist/jalaali.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/localforage"></script>
+<script src="https://cdn.jsdelivr.net/npm/pako/dist/pako.min.js"></script>
+<script src="../../tse.js"></script>
+
+<button onclick="a()">go</button>
+<button onclick="a(1)">x</button>
+
+ins<input id="count" type="number" value="10" style="width:50" />
+&emsp;start<input id="s1"type="number"value="20201101"/> end<input id="e1"type="number"value="20201101"/>
+
+<br><br>
+
+<progress id="prog" value="0" max="100"></progress>
+
+<script>
+let r;
+let ins;
+
+async function a(c) {
+	if (!ins) ins = await tse.getInstruments();
+	let syms = ins.filter(i=>i.YVal==='300').slice( -(+count.value) ).map(i=>i.Symbol); //['ذوب', 'فولاد', 'خساپا', 'شپنا'];
+	
+	if (c) {
+		let keys = (await tse.getInstruments()).filter(i => syms.includes(i.Symbol)).map(i => 'tse.'+i.InsCode);
+		for (let key of keys) await localforage.removeItem(key);
+		return;
+	}
+	
+	r = await tse.getIntraday(syms, {
+		startDate: s1.value,
+		endDate: e1.value,
+		onprogress: function (n) {
+			prog.value = n;
+		}
+	});
+	
+	console.log(r.data);
+}
+</script>
