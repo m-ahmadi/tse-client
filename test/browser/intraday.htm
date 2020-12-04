@@ -1,21 +1,60 @@
-<meta charset="utf8" />
+<meta charset="utf8" /><style>input{width:82px;}</style>
 <script src="https://cdn.jsdelivr.net/npm/big.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jalaali-js/dist/jalaali.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/localforage"></script>
 <script src="https://cdn.jsdelivr.net/npm/pako/dist/pako.min.js"></script>
 <script src="../../tse.js"></script>
 
-<button onclick="getIntraday()">getIntraday()</button>
+
+
+basic:
+<button onclick="a1()">4 ins</button><button onclick="a1(1)">x</button>
+<button onclick="a2()">14 ins</button><button onclick="a2(1)">x</button>
+<button onclick="a3()">393 ins</button><button onclick="a3(1)">x</button>
+&emsp;start<input id="s1"type="number"value="20201101"/> end<input id="e1"type="number"value="20201101"/>
+
+<br><br>
+
+<button onclick="b()">partial history</button>
+&emsp;start<input id="s2"type="number"value="20200708"/> end<input id="e2"type="number"value="20200712"/>
+
+<br><br><br><br><hr>
+
+clear:
+<button onclick="console.clear()">console</button>
+<button onclick="localforage.clear()">indexedDB</button>
+<button onclick="localStorage.clear()">localStorage</button>
 
 <script>
-async function getIntraday() {
-	const { data, error } = await tse.getIntraday(['ذوب', 'فولاد', 'خساپا', 'شپنا'], {
-		startDate: '20201122',
-		endDate:   '20201123',
-		gzip: true,
-	});
-	
-	console.log(data);
-	console.log(error);
+let log = console.log;
+let r;
+
+async function a1(c) {
+	let syms = ['ذوب', 'فولاد', 'خساپا', 'شپنا'];
+	if (c) {await clear(syms); return;}
+	r = await tse.getIntraday(syms, {startDate: s1.value, endDate: e1.value});
+	log(r.data);
+}
+async function a2(c) {
+	let syms = ['ذوب', 'فولاد', 'خساپا', 'شپنا', 'سشرق', 'فملی', 'کگل', 'خودرو', 'آپ', 'شستا', 'خاور', 'سشمال', 'چافست', 'کشرق'];
+	if (c) {await clear(syms); return;}
+	r = await tse.getIntraday(syms, {startDate: s1.value, endDate: e1.value});
+	log(r.data);
+}
+async function a3() {
+	let syms = (await tse.getInstruments()).filter(i=> i.YVal === '300').map(i => i.Symbol);
+	r = await tse.getIntraday(syms, {startDate: s1.value, endDate: e1.value});
+	log(r.data);
+}
+
+async function b() {
+	r = await tse.getIntraday(['ولپارس'], {startDate: s2.value, endDate: e2.value}); // 20200410-20200412
+	log(r.data);
+}
+
+
+async function clear(syms) {
+	let keys = (await tse.getInstruments()).filter(i => syms.includes(i.Symbol)).map(i => 'tse.'+i.InsCode);
+	for (let key of keys) await localforage.removeItem(key);
 }
 </script>
