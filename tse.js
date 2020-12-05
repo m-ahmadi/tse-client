@@ -1031,6 +1031,7 @@ async function getIntraday(symbols=[], _settings={}) {
   if (err) {
     const { title, detail } = err;
     result.error = { code: 1, title, detail };
+    if (pf) pf(100);
     return result;
   }
   
@@ -1040,6 +1041,7 @@ async function getIntraday(symbols=[], _settings={}) {
   if (pf) pf(++pn);
   if (notFounds.length) {
     result.error = { code: 2, title: 'Incorrect Symbol', symbols: notFounds };
+    if (pf) pf(100);
     return result;
   }
   
@@ -1056,6 +1058,7 @@ async function getIntraday(symbols=[], _settings={}) {
     if (error) {
       const { title, detail } = error;
       result.error = { code: 1, title, detail };
+      if (pf) pf(100);
       return result;
     }
     
