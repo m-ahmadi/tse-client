@@ -643,17 +643,6 @@ async function updatePrices(instruments=[]) {
   };
 }
 
-async function getInstruments(struct=true, arr=true, structKey='InsCode') {
-  const valids = Object.keys(new Instrument([...Array(18).keys()].join(',')));
-  if (valids.indexOf(structKey) === -1) structKey = 'InsCode';
-  
-  const lastUpdate = storage.getItem('tse.lastInstrumentUpdate');
-  const err = await updateInstruments();
-  if (err && !lastUpdate) return;
-  
-  return parseInstruments(struct, arr, structKey);
-}
-
 async function getPrices(symbols=[], _settings={}) {
   if (!symbols.length) return;
   const result = { data: [], error: undefined };
@@ -738,6 +727,17 @@ async function getPrices(symbols=[], _settings={}) {
   });
   
   return result;
+}
+
+async function getInstruments(struct=true, arr=true, structKey='InsCode') {
+  const valids = Object.keys(new Instrument([...Array(18).keys()].join(',')));
+  if (valids.indexOf(structKey) === -1) structKey = 'InsCode';
+  
+  const lastUpdate = storage.getItem('tse.lastInstrumentUpdate');
+  const err = await updateInstruments();
+  if (err && !lastUpdate) return;
+  
+  return parseInstruments(struct, arr, structKey);
 }
 //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 let INTRADAY_UPDATE_CHUNK_DELAY = 100;
@@ -1143,8 +1143,8 @@ async function getIntraday(symbols=[], _settings={}) {
 }
 //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 const instance = {
-  getInstruments,
   getPrices,
+  getInstruments,
   getIntraday,
   
   get API_URL() { return API_URL; },
