@@ -760,10 +760,10 @@ async function getPrices(symbols=[], _settings={}) {
   }
   
   if (fails.length) {
-    const _selection = selection.reduce((a, {InsCode,Symbol}) => (a[InsCode] = Symbol, a), {});
+    const syms = Object.fromEntries( selection.map(i => [i.InsCode, i.Symbol]) );
     result.error = { code: 3, title: 'Incomplete Price Update',
-      fails: fails.map(k => _selection[k]),
-      succs: succs.map(k => _selection[k])
+      fails: fails.map(k => syms[k]),
+      succs: succs.map(k => syms[k])
     };
     selection.forEach((v,i,a) => fails.includes(v.InsCode) ? a[i] = undefined : 0);
   }
@@ -1105,10 +1105,10 @@ async function getIntraday(symbols=[], _settings={}) {
     }
     
     if (fails.length) {
-      const _selection = selection.reduce((a, {InsCode,Symbol}) => (a[InsCode] = Symbol, a), {});
+      const syms = Object.fromEntries( selection.map(i => [i.InsCode, i.Symbol]) );
       result.error = { code: 3, title: 'Incomplete Price Update',
-        fails: fails.map(k => _selection[k]),
-        succs: succs.map(k => _selection[k])
+        fails: fails.map(k => syms[k]),
+        succs: succs.map(k => syms[k])
       };
       selection.forEach((v,i,a) => fails.includes(v.InsCode) ? a[i] = undefined : 0);
     }
