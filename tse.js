@@ -365,9 +365,30 @@ function splitArr(arr, size){
     .filter(i => i);
 }
 //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-// price helpers
-Big.DP = 40; // max decimal places
-Big.RM = 2;  // rounding mode: http://mikemcl.github.io/big.js/#rm
+let UPDATE_INTERVAL           = 1;
+let PRICES_UPDATE_CHUNK       = isBrowser ? 10  : 50;
+let PRICES_UPDATE_CHUNK_DELAY = isBrowser ? 500 : 3000;
+let PRICES_UPDATE_RETRY_COUNT = 3;
+let PRICES_UPDATE_RETRY_DELAY = 5000;
+const defaultSettings = {
+  columns: [
+    [4, 'date'],
+    [6, 'open'],
+    [7, 'high'],
+    [8, 'low'],
+    [9, 'last'],
+    [10, 'close'],
+    [12, 'vol']
+  ],
+  adjustPrices: 0,
+  daysWithoutTrade: false,
+  startDate: '20010321'
+};
+
+let storedPrices;
+
+Big.DP = 40;
+Big.RM = 2; // http://mikemcl.github.io/big.js/#rm
 function adjust(cond, closingPrices, shares, insCode) {
   const cp = closingPrices;
   const len = closingPrices.length;
@@ -448,28 +469,6 @@ function getCell(columnName, instrument, closingPrice) {
   
   return str;
 }
-//@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-let UPDATE_INTERVAL           = 1;
-let PRICES_UPDATE_CHUNK       = isBrowser ? 10  : 50;
-let PRICES_UPDATE_CHUNK_DELAY = isBrowser ? 500 : 3000;
-let PRICES_UPDATE_RETRY_COUNT = 3;
-let PRICES_UPDATE_RETRY_DELAY = 5000;
-const defaultSettings = {
-  columns: [
-    [4, 'date'],
-    [6, 'open'],
-    [7, 'high'],
-    [8, 'low'],
-    [9, 'last'],
-    [10, 'close'],
-    [12, 'vol']
-  ],
-  adjustPrices: 0,
-  daysWithoutTrade: false,
-  startDate: '20010321'
-};
-
-let storedPrices;
 
 async function parseStoredPrices() {
   if (storedPrices) return storedPrices;
@@ -507,7 +506,6 @@ function shouldUpdate(deven='', lastPossibleDeven) {
   
   return result; 
 }
-
 async function getLastPossibleDeven() {
   let lastPossibleDeven = storage.getItem('tse.lastPossibleDeven');
   
@@ -522,7 +520,6 @@ async function getLastPossibleDeven() {
   
   return lastPossibleDeven;
 }
-
 async function updateInstruments() {
   const lastUpdate = storage.getItem('tse.lastInstrumentUpdate');
   let lastDeven;
