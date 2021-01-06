@@ -490,13 +490,13 @@ async function parseStoredPrices() {
   }
 }
 
-function shouldUpdate(latest='') {
-  if (!latest || latest === '0') return true; // first time (never updated before)
+function shouldUpdate(deven='', lastPossibleDeven) {
+  if (!deven || deven === '0') return true; // first time (never updated before)
   
   const today = new Date();
-  const daysPassed = dayDiff(dateToStr(today), latest);
+  const daysPassed = dayDiff(lastPossibleDeven, deven);
   const inWeekend = [4,5].includes( today.getDay() );
-  const lastUpdateWeekday = strToDate(latest).getDay();
+  const lastUpdateWeekday = strToDate(lastPossibleDeven).getDay();
   
   const result = (
     daysPassed >= UPDATE_INTERVAL &&
@@ -515,7 +515,7 @@ function shouldUpdate(latest='') {
 async function getLastPossibleDeven() {
   let lastPossibleDeven = storage.getItem('tse.lastPossibleDeven');
   
-  if ( shouldUpdate(lastPossibleDeven) ) {
+  if ( !lastPossibleDeven || shouldUpdate(dateToStr(new Date()), lastPossibleDeven) ) {
     let error;
     const res = await rq.LastPossibleDeven().catch(err => error = err);
     if (error)                        return { title: 'Failed request: LastPossibleDeven', detail: error };
@@ -524,7 +524,7 @@ async function getLastPossibleDeven() {
     storage.setItem('tse.lastPossibleDeven', lastPossibleDeven);
   }
   
-  return +lastPossibleDeven;
+  return lastPossibleDeven;
 }
 
 async function updateInstruments() {
@@ -546,7 +546,10 @@ async function updateInstruments() {
     lastId    = Math.max(...shareIds);
   }
   
-  if ( !shouldUpdate(''+lastDeven) ) return;
+  const lastPossibleDeven = await getLastPossibleDeven();
+  if (typeof lastPossibleDeven === 'object') return lastPossibleDeven;
+  
+  if ( !shouldUpdate(''+lastDeven, lastPossibleDeven) ) return;
   
   let error;
   const res = await rq.InstrumentAndShare(lastDeven, lastId).catch(err => error = err);
@@ -670,7 +673,7 @@ async function updatePrices(instruments=[]) {
   const result = { succs: {}, fails: {}, error: undefined };
   
   const lastPossibleDeven = await getLastPossibleDeven();
-  if (typeof lastPossibleDeven !== 'number') {
+  if (typeof lastPossibleDeven === 'object') {
     result.error = lastPossibleDeven;
     return result;
   }
@@ -689,7 +692,7 @@ async function updatePrices(instruments=[]) {
       const rows = insData.split(';');
       const lastDeven  =  new ClosingPrice( rows[rows.length-1] ).DEven;
       
-      if ( shouldUpdate(lastDeven) ) { // but outdated
+      if ( shouldUpdate(lastDeven, lastPossibleDeven) ) { // but outdated
         updateNeeded.push( [insCode, lastDeven, market] );
         oldContents[insCode] = insData;
       }
