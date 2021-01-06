@@ -453,8 +453,8 @@ function getCell(columnName, instrument, closingPrice) {
   const str =
     c === 'CompanyCode'    ? instrument.CompanyCode :
     c === 'LatinName'      ? instrument.LatinName :
-    c === 'Symbol'         ? instrument.Symbol.replace(' ', '_') :
-    c === 'Name'           ? instrument.Name.replace(' ', '_') :
+    c === 'Symbol'         ? instrument.Symbol :
+    c === 'Name'           ? instrument.Name :
     c === 'Date'           ? closingPrice.DEven :
     c === 'ShamsiDate'     ? jalaali && gregToShamsi(closingPrice.DEven) :
     c === 'PriceFirst'     ? closingPrice.PriceFirst :
