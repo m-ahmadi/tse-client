@@ -14,7 +14,7 @@ const storage = (function () {
   let instance;
   
   if (isNode) {
-    const { existsSync, mkdirSync, readFileSync, writeFileSync, statSync } = require('fs');
+    const { existsSync, mkdirSync, readFileSync, writeFileSync, statSync, readdirSync } = require('fs');
     const { join } = require('path');
     const { gzipSync, gunzipSync } = require('zlib');
     
@@ -31,43 +31,76 @@ const storage = (function () {
       writeFileSync(pathfile, datadir);
     }
     
-    const store = Object.create(null);
-    
     const getItem = (key) => {
       key = key.replace('tse.', '');
-      const file = join(datadir, `${key}.csv`);
+      const dir = key.startsWith('prices.') ? join(datadir, 'prices') : datadir;
+      const file = join(dir, `${key}.csv`);
       if ( !existsSync(file) ) writeFileSync(file, '');
-      if ( !(key in store) ) store[key] = readFileSync(file, 'utf8');
-      return store[key];
+      return readFileSync(file, 'utf8');
     };
     
     const setItem = (key, value) => {
       key = key.replace('tse.', '');
-      store[key] = value;
-      writeFileSync(join(datadir, `${key}.csv`), value);
+      const dir = key.startsWith('prices.') ? join(datadir, 'prices') : datadir;
+      writeFileSync(join(dir, `${key}.csv`), value);
     };
     
     const getItemAsync = (key, zip=false) => new Promise((done, fail) => {
       key = key.replace('tse.', '');
-      const file = join(datadir, `${key}.csv` + (zip?'.gz':''));
-      if ( !existsSync(file) ) { done(''); return; };
-      if ( !(key in store) ) {
-        const content = readFileSync(file, zip?undefined:'utf8');
-        store[key] = zip ? gunzipSync(content).toString() : content;
+      const dir = key.startsWith('prices.') ? join(datadir, 'prices') : datadir;
+      const file = join(dir, `${key}.csv` + (zip?'.gz':''));
+      if ( !existsSync(file) ) {
+        writeFileSync(file, '');
+        done('');
+        return;
       }
-      done(store[key]);
+      const content = readFileSync(file, zip?undefined:'utf8');
+      done(zip ? gunzipSync(content).toString() : content);
     });
     
     const setItemAsync = (key, value, zip=false) => new Promise((done, fail) => {
       key = key.replace('tse.', '');
-      store[key] = value;
-      const file = join(datadir, `${key}.csv` + (zip?'.gz':''));
+      let dir = datadir;
+      if ( key.startsWith('prices.') ) {
+        dir = join(datadir, 'prices');
+        key = key.replace('prices.', '');
+      }
+      const file = join(dir, `${key}.csv` + (zip?'.gz':''));
       writeFileSync(file, zip ? gzipSync(value) : value);
       done();
     });
     
+    const getItems = async function (selins=new Set(), result={}) {
+      const d = join(datadir, 'prices');
+      if (!existsSync(d)) mkdirSync(d);
+      for (const i of readdirSync(d)) {
+        const key = i.replace('.csv','');
+        if ( !selins.has(key) ) continue;
+        result[key] = readFileSync(join(d,i),'utf8');
+      }
+    };
+    
+    const itdGetItems = async function (selins=new Set()) {
+      const d = join(datadir, 'intraday');
+      const dirs = readdirSync(d).filter( i => statSync(join(d,i)).isDirectory() && selins.has(i) );
+      const result = dirs.map(i => {
+        const files = readdirSync(join(d,i)).map(j => [ j.slice(0,-3), readFileSync(join(d,i,j)) ])
+        return [ i, Object.fromEntries(files) ];
+      }).filter(i=>i);
+      return Object.fromEntries(result);
+    };
+    const itdSetItem = async function (key, obj) {
+      key = key.replace('tse.', '');
+      const d = join(datadir, 'intraday');
+      const dir = join(d, key);
+      if ( !existsSync(dir) ) mkdirSync(dir);
+      Object.keys(obj).forEach(k => {
+        writeFileSync(join(dir, k+'.gz'), obj[k]);
+      });
+    };
+    
     instance = {
-      getItem, setItem, getItemAsync, setItemAsync,
+      getItem, setItem, getItemAsync, setItemAsync, getItems,
       get CACHE_DIR() { return datadir.replace(/\\/g,'/'); },
       set CACHE_DIR(newdir) {
         if (typeof newdir === 'string') {
@@ -77,31 +110,79 @@ const storage = (function () {
             writeFileSync(pathfile, datadir);
           }
         }
+      },
+      itd: {
+        getItems: itdGetItems,
+        setItem: itdSetItem
       }
     };
   } else if (isBrowser) {
     const pako = window.pako || undefined;
     
+    const cpstore = localforage.createInstance({name: 'tse.prices'});
+    
     const getItemAsync = async (key, zip=false) => {
-      const stored = await localforage.getItem(key);
-      if (!stored || !pako) return stored;
-      return zip ? pako.ungzip(stored, {to: 'string'}) : stored;
+      let store = localforage;
+      if ( key.startsWith('tse.prices.') ) {
+        key = key.replace('prices.', '');
+        store = cpstore;
+      }
+      const v = await store.getItem(key);
+      if (!v) return '';
+      if (!pako) return v;
+      return zip ? pako.ungzip(v, {to: 'string'}) : v;
     };
     
     const setItemAsync = async (key, value, zip=false) => {
+      let store = localforage;
+      if ( key.startsWith('tse.prices.') ) {
+        key = key.replace('tse.prices.', '');
+        store = cpstore;
+      }
       if (!pako) {
-        await localforage.setItem(key, value);
+        await store.setItem(key, value);
         return;
       }
       const rdy = zip ? pako.gzip(value) : value;
-      await localforage.setItem(key, rdy);
+      await store.setItem(key, rdy);
+    };
+    
+    const getItems = async function	(selins=new Set(), result={}) {
+      await cpstore.iterate((val, key) => {
+        let k = key.replace('tse.', '');
+        if (selins.has(k)) result[k] = val;
+      });
+    };
+    
+    
+    const itdstore = localforage.createInstance({name: 'tse.intraday'});
+    
+    const itdGetItems = async function	(selins=new Set()) {
+      const result = {};
+      await itdstore.iterate((val, key) => {
+        if (selins.has(key)) result[key] = val;
+      });
+      return result;
+    };
+    const itdSetItem = async (key, value, zip=false) => {
+      if (!pako) {
+        await itdstore.setItem(key, value);
+        return;
+      }
+      const rdy = zip ? pako.gzip(value) : value;
+      await itdstore.setItem(key, rdy);
     };
     
     instance = {
-      getItem: (key)        => localStorage.getItem(key),
+      getItem: (key)        => localStorage.getItem(key) || '',
       setItem: (key, value) => localStorage.setItem(key, value),
       getItemAsync,
-      setItemAsync
+      setItemAsync,
+      getItems,
+      itd: {
+        getItems: itdGetItems,
+        setItem: itdSetItem
+      }
     };
   }
   
@@ -776,52 +857,6 @@ if (isNode) {
   unzip = buf => ungzip(buf, {to: 'string'});
 }
 
-const itdstore = (function () {
-  let setItem;
-  let getItems;
-  
-  if (isNode) {
-    const { readdirSync, statSync, readFileSync, writeFileSync, existsSync, mkdirSync } = require('fs');
-    const { join } = require('path');
-    
-    getItems = async function (selins=new Set()) {
-      const d = storage.CACHE_DIR;
-      const dirs = readdirSync(d).filter( i => statSync(join(d,i)).isDirectory() && selins.has(i) );
-      const result = dirs.map(i => {
-        const files = readdirSync(join(d,i)).map(j => [ j.slice(0,-3), readFileSync(join(d,i,j)) ])
-        return [ i, Object.fromEntries(files) ];
-      }).filter(i=>i);
-      return Object.fromEntries(result);
-    };
-    
-    setItem = async function (key, obj) {
-      key = key.replace('tse.', '');
-      const d = storage.CACHE_DIR;
-      const dir = join(d, key);
-      if ( !existsSync(dir) ) mkdirSync(dir);
-      Object.keys(obj).forEach(k => {
-        writeFileSync(join(dir, k+'.gz'), obj[k]);
-      });
-    };
-    
-  } else if (isBrowser) {
-    
-    getItems = async function	(selins=new Set()) {
-      const result = {};
-      await localforage.iterate((val, key) => {
-        let k = key.replace('tse.', '');
-        if (selins.has(k)) result[k] = val;
-      });
-      return result;
-    };
-    
-    setItem = storage.setItemAsync;
-    
-  }
-  
-  return { getItems, setItem };
-})();
-
 function objify(map, r={}) {
   for (let [k,v] of map) {
     if (Map.prototype.toString.call(v) === '[object Map]' || Array.isArray(v)) {
@@ -887,7 +922,7 @@ async function extractAndStore(inscode='', deven_text=[]) {
     storedInstrument[deven] = zip(file);
   }
   
-  return itdstore.setItem('tse.'+inscode, storedInstrument);
+  return storage.itd.setItem(inscode, storedInstrument);
 }
 const itdUpdateManager = (function () {
   let src = {};
@@ -1102,7 +1137,7 @@ async function getIntraday(symbols=[], _settings={}) {
     return [inscode, askedDevens];
   });
   
-  stored = await itdstore.getItems(selins);
+  stored = await storage.itd.getItems(selins);
   
   let toUpdate = askedInscodeDevens.map(([inscode, devens]) => {
     if (!inscode || !devens.length) return;
