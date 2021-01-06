@@ -471,7 +471,6 @@ const defaultSettings = {
   daysWithoutTrade: false,
   startDate: '20010321'
 };
-const { warn } = console;
 
 let storedPrices;
 
@@ -559,9 +558,9 @@ async function updateInstruments() {
   let instruments = splitted[0];
   let shares      = splitted[1];
   
-  // if (instruments === '*') warn('Cannot update during trading session hours.');
-  // if (instruments === '')  warn('Already updated: ', 'Instruments');
-  // if (shares === '')       warn('Already updated: ', 'Shares');
+  // if (instruments === '*') console.warn('Cannot update during trading session hours.');
+  // if (instruments === '')  console.warn('Already updated: ', 'Instruments');
+  // if (shares === '')       console.warn('Already updated: ', 'Shares');
   
   if (instruments !== '' && instruments !== '*') {
     if (currentInstruments && Object.keys(currentInstruments).length) {
