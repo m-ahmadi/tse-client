@@ -300,7 +300,7 @@ class Share {
 //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 // utils
 function parseInstruments(struct=false, arr=false, structKey='InsCode') {
-  const rows = storage.getItem('tse.instruments').split(';');
+  const rows = storage.getItem('tse.instruments').split('\n');
   const instruments = arr ? [] : {};
   for (const row of rows) {
     const item = struct ? new Instrument(row) : row;
@@ -314,7 +314,7 @@ function parseInstruments(struct=false, arr=false, structKey='InsCode') {
   return instruments;
 }
 function parseShares(struct=false, arr=false, structKey='InsCode') {
-  const rows = storage.getItem('tse.shares').split(';');
+  const rows = storage.getItem('tse.shares').split('\n');
   const shares = arr ? [] : {};
   for (const row of rows) {
     const item = struct ? new Share(row) : row;
@@ -566,7 +566,9 @@ async function updateInstruments() {
   if (instruments !== '' && instruments !== '*') {
     if (currentInstruments && Object.keys(currentInstruments).length) {
       instruments.split(';').forEach(i => currentInstruments[ i.split(',',1)[0] ] = i);
-      instruments = Object.keys(currentInstruments).map(k => currentInstruments[k]).join(';');
+      instruments = Object.keys(currentInstruments).map(k => currentInstruments[k]).join('\n');
+    } else {
+      instruments = instruments.replace(/;/g, '\n');
     }
     storage.setItem('tse.instruments', instruments);
   }
@@ -574,7 +576,9 @@ async function updateInstruments() {
   if (shares !== '') {
     if (currentShares && Object.keys(currentShares).length) {
       shares.split(';').forEach(i => currentShares[ i.split(',',1)[0] ] = i);
-      shares = Object.keys(currentShares).map(k => currentShares[k]).join(';');
+      shares = Object.keys(currentShares).map(k => currentShares[k]).join('\n');
+    } else {
+      shares = shares.replace(/;/g, '\n');
     }
     storage.setItem('tse.shares', shares);
   }
@@ -619,7 +623,7 @@ const updatePricesManager = (function () {
     const inscodes = chunk.map(([insCode]) => insCode);
     
     if ( typeof response === 'string' && /^[\d.,;@-]+$/.test(response) ) {
-      const succ = response.split('@').map((v,i)=> [chunk[i][0], v]);
+      const succ = response.replace(/;/g, '\n').split('@').map((v,i)=> [chunk[i][0], v]);
       succs.push(...succ);
       fails = fails.filter(i => inscodes.indexOf(i) === -1);
     } else {
@@ -689,7 +693,7 @@ async function updatePrices(instruments=[]) {
       const firstPossibleDeven = defaultSettings.startDate;
       updateNeeded.push( [insCode, firstPossibleDeven, market] );
     } else { // has data
-      const rows = insData.split(';');
+      const rows = insData.split('\n');
       const lastDeven  =  new ClosingPrice( rows[rows.length-1] ).DEven;
       
       if ( shouldUpdate(lastDeven, lastPossibleDeven) ) { // but outdated
@@ -707,7 +711,7 @@ async function updatePrices(instruments=[]) {
     
     let content = oldContent || '';
     if (newContent) {
-      content = oldContent ? oldContent+';'+newContent : newContent;
+      content = oldContent ? oldContent+'\n'+newContent : newContent;
     }
     
     storedPrices[insCode] = content;
@@ -770,7 +774,7 @@ async function getPrices(symbols=[], _settings={}) {
     const insCode = i.InsCode;
     const strPrices = storedPrices[insCode];
     if (!strPrices) continue; // throw new Error('Unkown Error');
-    prices[insCode] = strPrices.split(';').map(i => new ClosingPrice(i));
+    prices[insCode] = strPrices.split('\n').map(i => new ClosingPrice(i));
   }
   
   const settings = {...defaultSettings, ..._settings};
@@ -1112,7 +1116,7 @@ async function getIntraday(symbols=[], _settings={}) {
     storedInscodeDevens = Object.keys(storedPrices).map(inscode => {
       const prices = storedPrices[inscode];
       if (!prices) return;
-      const devens = prices.split(';').map(i => +i.split(',',2)[1]);
+      const devens = prices.split('\n').map(i => +i.split(',',2)[1]);
       return [inscode, devens];
     }).filter(i=>i);
     
