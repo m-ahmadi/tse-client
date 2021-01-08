@@ -385,7 +385,9 @@ const defaultSettings = {
   startDate: '20010321',
   csv: false,
   csvHeaders: true,
-  csvDelimiter: ','
+  csvDelimiter: ',',
+  onprogress: undefined,
+  progressTotal: 100
 };
 
 let lastdevens   = {};
@@ -580,6 +582,7 @@ const pricesUpdateManager = (function () {
   let qeudRetry;
   let resolve;
   let writing = [];
+  let pf, pn, ptot, pSR, pR;
   
   function poll() {
     if (timeouts.size > 0 || qeudRetry) {
@@ -594,7 +597,7 @@ const pricesUpdateManager = (function () {
       fails = [];
       Promise.all(writing).then(() => {
         writing = [];
-        resolve({succs: _succs, fails: _fails});
+        resolve({succs: _succs, fails: _fails, pn});
       });
       return;
     }
@@ -630,6 +633,11 @@ const pricesUpdateManager = (function () {
       }
       
       fails = fails.filter(i => inscodes.indexOf(i) === -1);
+      
+      if (pf) {
+        const filled = pSR.div(PRICES_UPDATE_RETRY_COUNT + 2).mul(retries + 1);
+        pf(pn= +Big(pn).plus( pSR.sub(filled) ) );
+      }
     } else {
       fails.push(...inscodes);
       retrychunks.push(chunk);
@@ -644,6 +652,8 @@ const pricesUpdateManager = (function () {
     rq.ClosingPrices(insCodes)
       .then( r => onresult(r, chunk, id) )
       .catch( () => onresult(undefined, chunk, id) );
+    
+    if (pf) pf(pn= +Big(pn).plus(pR) );
   }
   
   function batch(chunks=[]) {
@@ -656,8 +666,11 @@ const pricesUpdateManager = (function () {
     }
   }
   
-  function start(updateNeeded=[]) {
+  function start(updateNeeded=[], po={}) {
+    ({ pf, pn, ptot } = po);
     total = updateNeeded.length;
+    pSR = Big(ptot).div( Math.ceil(Big(total).div(PRICES_UPDATE_CHUNK)) ); // each successful request:   ( ptot / Math.ceil(total / PRICES_UPDATE_CHUNK) )
+    pR = pSR.div(PRICES_UPDATE_RETRY_COUNT + 2);                           // each request:               pSR / (PRICES_UPDATE_RETRY_COUNT + 2)
     succs = [];
     fails = [];
     retries = 0;
@@ -676,7 +689,7 @@ const pricesUpdateManager = (function () {
   
   return start;
 })();
-async function updatePrices(selection=[]) {
+async function updatePrices(selection=[], {pf, pn, ptot}={}) {
   lastdevens = storage.getItem('tse.inscode_lastdeven');
   let inscodes = new Set();
   if (lastdevens) {
@@ -687,11 +700,13 @@ async function updatePrices(selection=[]) {
     lastdevens = {};
   }
   
-  let result = { succs: [], fails: [], error: undefined };
+  let result = { succs: [], fails: [], error: undefined, pn };
+  const pfin = +Big(pn).plus(ptot);
   
   const lastPossibleDeven = await getLastPossibleDeven();
   if (typeof lastPossibleDeven === 'object') {
     result.error = lastPossibleDeven;
+    if (pf) pf(pn= pfin);
     return result;
   }
   
@@ -711,15 +726,19 @@ async function updatePrices(selection=[]) {
       }
     }
   }).filter(i=>i);
+  if (pf) pf(pn= +Big(pn).plus( Big(ptot).mul(0.01) ) );
   
   const selins = new Set(selection.map(i => i.InsCode));
   const storedins = new Set(Object.keys(storedPrices));
   if ( !storedins.size || [...selins].find(i => !storedins.has(i)) ) {
     await storage.getItems(selins, storedPrices);
   }
+  if (pf) pf(pn= +Big(pn).plus( Big(ptot).mul(0.01) ) );
   
   if (toUpdate.length) {
-    const { succs, fails } = await pricesUpdateManager(toUpdate);
+    const managerResult = await pricesUpdateManager(toUpdate, { pf, pn, ptot: +Big(ptot).sub(Big(ptot).mul(0.02)) });
+    const { succs, fails } = managerResult;
+    ({ pn } = managerResult);
     
     if (succs.length) {
       str = Object.keys(lastdevens).map(k => [k, lastdevens[k]].join(',')).join('\n');
@@ -729,32 +748,50 @@ async function updatePrices(selection=[]) {
     result = { succs, fails };
   }
   
+  if (pf && pn !== pfin) pf(pn=pfin);
+  
+  result.pn = pn;
+  
   return result;
 }
 
 async function getPrices(symbols=[], _settings={}) {
   if (!symbols.length) return;
+  const settings = {...defaultSettings, ..._settings};
   const result = { data: [], error: undefined };
   
+  let { onprogress: pf, progressTotal: ptot } = settings;
+  if (typeof pf !== 'function') pf = undefined;
+  if (typeof ptot !== 'number') ptot = defaultSettings.progressTotal;
+  let pn = 0;
+  
   const err = await updateInstruments();
+  if (pf) pf(pn= +Big(pn).plus( Big(ptot).mul(0.01) ) );
   if (err) {
     const { title, detail } = err;
     result.error = { code: 1, title, detail };
+    if (pf) pf(ptot);
     return result;
   }
   
   const instruments = parseInstruments(true, undefined, 'Symbol');
   const selection = symbols.map(i => instruments[i]);
   const notFounds = symbols.filter((v,i) => !selection[i]);
+  if (pf) pf(pn= +Big(pn).plus( Big(ptot).mul(0.01) ) );
   if (notFounds.length) {
     result.error = { code: 2, title: 'Incorrect Symbol', symbols: notFounds };
+    if (pf) pf(ptot);
     return result;
   }
   
-  const { succs, fails, error } = await updatePrices(selection);
+  const updateResult = await updatePrices(selection, {pf, pn, ptot: +Big(ptot).mul(0.78)});
+  const { succs, fails, error } = updateResult;
+  ({ pn } = updateResult);
+  
   if (error) {
     const { title, detail } = error;
     result.error = { code: 1, title, detail };
+    if (pf) pf(ptot);
     return result;
   }
   
@@ -767,8 +804,6 @@ async function getPrices(symbols=[], _settings={}) {
     selection.forEach((v,i,a) => fails.includes(v.InsCode) ? a[i] = undefined : 0);
   }
   
-  const settings = {...defaultSettings, ..._settings};
-  
   const columns = settings.columns.map(i => {
     const row = !Array.isArray(i) ? [i] : i;
     const column = new Column(row);
@@ -778,6 +813,7 @@ async function getPrices(symbols=[], _settings={}) {
   
   const { adjustPrices, daysWithoutTrade, startDate, csv } = settings;
   const shares = parseShares(true, true);
+  const pi = Big(ptot).mul(0.20).div(selection.length);
   
   if (csv) {
     const { csvHeaders, csvDelimiter } = settings;
@@ -797,6 +833,8 @@ async function getPrices(symbols=[], _settings={}) {
       if (!daysWithoutTrade) {
         prices = prices.filter(i => +i.ZTotTran > 0);
       }
+      
+      if (pf) pf(pn= +Big(pn).plus(pi) );
       
       return headers + prices
         .filter(i => +i.DEven > +startDate)
@@ -835,10 +873,13 @@ async function getPrices(symbols=[], _settings={}) {
         }
       }
       
+      if (pf) pf(pn= +Big(pn).plus(pi) );
       return res;
     });
     
   }
+  
+  if (pf && pn !== ptot) pf(pn=ptot);
   
   return result;
 }
