@@ -776,7 +776,7 @@ async function getPrices(symbols=[], _settings={}) {
     return { ...column, header: finalHeader };
   });
   
-  const { adjustPrices, startDate, daysWithoutTrade, csv } = settings;
+  const { adjustPrices, daysWithoutTrade, startDate, csv } = settings;
   const shares = parseShares(true, true);
   
   if (csv) {
