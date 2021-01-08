@@ -1156,8 +1156,8 @@ async function getIntraday(symbols=[], _settings={}) {
   
   const selins = new Set(selection.map(i => i && i.InsCode));
   
-  let storedInscodeDevens = await storage.getItemAsync('tse.inscode_devens', true);
-  storedInscodeDevens = storedInscodeDevens ? storedInscodeDevens.split('@').map(i=>i.split(';')).map(([i,d]) => [i,d.split(',').map(i=>+i)]): [];
+  let storedInscodeDevens = await storage.getItemAsync('tse.inscode_devens');
+  storedInscodeDevens = storedInscodeDevens ? storedInscodeDevens.split('\n').map(i=>i.split(';')).map(([i,d]) => [i,d.split(',').map(i=>+i)]): [];
   const storedInscodes = new Set(storedInscodeDevens.map(i => i[0]));
   
   if ( !storedInscodeDevens || [...selins].find(i => !storedInscodes.has(i)) ) {
@@ -1185,8 +1185,8 @@ async function getIntraday(symbols=[], _settings={}) {
       return [inscode, devens];
     }).filter(i=>i);
     
-    const str = storedInscodeDevens.map(([i,d]) => [i, d.join(',')]).map(i => i.join(';')).join('@');
-    await storage.setItemAsync('tse.inscode_devens', str, true);
+    const str = storedInscodeDevens.map(([i,d]) => [i, d.join(',')].join(';') ).join('\n');
+    await storage.setItemAsync('tse.inscode_devens', str);
   }
   storedInscodeDevens = Object.fromEntries(storedInscodeDevens);
   if (pf) pf(++pn);
