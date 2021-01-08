@@ -1223,7 +1223,7 @@ async function getIntraday(symbols=[], _settings={}) {
     let { succs, fails } = await itdUpdateManager(toUpdate, pf);
     
     if (fails.length) {
-      let k = selection.reduce((a, {InsCode,Symbol}) => (a[InsCode] = Symbol, a), {});
+      let k = Object.fromEntries( selection.map(i => [i.InsCode, i.Symbol]) );
       let reducer = (o,[i,d]) => (!o[k[i]] && (o[k[i]]=[]), o[k[i]].push(d), o);
       result.error = { code: 4, title: 'Incomplete Intraday Update',
         fails: fails.reduce(reducer, {}),
