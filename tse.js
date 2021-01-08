@@ -382,10 +382,14 @@ const defaultSettings = {
   ],
   adjustPrices: 0,
   daysWithoutTrade: false,
-  startDate: '20010321'
+  startDate: '20010321',
+  csv: false,
+  csvHeaders: true,
+  csvDelimiter: ','
 };
 
-let storedPrices;
+let lastdevens   = {};
+let storedPrices = {};
 
 Big.DP = 40;
 Big.RM = 2; // http://mikemcl.github.io/big.js/#rm
@@ -468,21 +472,6 @@ function getCell(columnName, instrument, closingPrice) {
     c === 'PriceYesterday' ? closingPrice.PriceYesterday : '';
   
   return str;
-}
-
-async function parseStoredPrices() {
-  if (storedPrices) return storedPrices;
-  storedPrices = {};
-  
-  const storedStr = await storage.getItemAsync('tse.prices', true);
-  if (!storedStr) return storedPrices;
-  
-  const strs = storedStr.split('@');
-  for (let i=0, n=strs.length; i<n; i++) {
-    const str = strs[i];
-    if (!str) continue;
-    storedPrices[ str.split(',',1)[0] ] = str;
-  }
 }
 
 function shouldUpdate(deven='', lastPossibleDeven) {
@@ -581,7 +570,7 @@ async function updateInstruments() {
   }
 }
 
-const updatePricesManager = (function () {
+const pricesUpdateManager = (function () {
   let total = 0;
   let succs = [];
   let fails = [];
@@ -590,6 +579,7 @@ const updatePricesManager = (function () {
   let timeouts = new Map();
   let qeudRetry;
   let resolve;
+  let writing = [];
   
   function poll() {
     if (timeouts.size > 0 || qeudRetry) {
@@ -598,7 +588,14 @@ const updatePricesManager = (function () {
     }
     
     if (succs.length === total || retries >= PRICES_UPDATE_RETRY_COUNT) {
-      resolve( {succs, fails} );
+      const _succs = [...succs];
+      const _fails = [...fails];
+      succs = [];
+      fails = [];
+      Promise.all(writing).then(() => {
+        writing = [];
+        resolve({succs: _succs, fails: _fails});
+      });
       return;
     }
     
@@ -616,8 +613,22 @@ const updatePricesManager = (function () {
     const inscodes = chunk.map(([insCode]) => insCode);
     
     if ( typeof response === 'string' && /^[\d.,;@-]+$/.test(response) ) {
-      const succ = response.replace(/;/g, '\n').split('@').map((v,i)=> [chunk[i][0], v]);
-      succs.push(...succ);
+      const res = response.replace(/;/g, '\n').split('@').map((v,i)=> [chunk[i][0], v]);
+      
+      for (const [inscode, newdata] of res) {
+        succs.push(inscode);
+        
+        if (newdata) {
+          const olddata = storedPrices[inscode];
+          const data = olddata ? olddata+'\n'+newdata : newdata;
+          
+          storedPrices[inscode] = data;
+          lastdevens[inscode] = newdata.split('\n').slice(-1)[0].split(',',2)[1];
+          
+          writing.push( storage.setItemAsync('tse.prices.'+inscode, data) );
+        }
+      }
+      
       fails = fails.filter(i => inscodes.indexOf(i) === -1);
     } else {
       fails.push(...inscodes);
@@ -665,9 +676,18 @@ const updatePricesManager = (function () {
   
   return start;
 })();
-async function updatePrices(instruments=[]) {
-  if (!instruments.length) return;
-  const result = { succs: {}, fails: {}, error: undefined };
+async function updatePrices(selection=[]) {
+  lastdevens = storage.getItem('tse.inscode_lastdeven');
+  let inscodes = new Set();
+  if (lastdevens) {
+    const ents = lastdevens.split('\n').map(i=>i.split(','));
+    lastdevens = Object.fromEntries(ents);
+    inscodes = new Set( Object.keys(lastdevens) );
+  } else {
+    lastdevens = {};
+  }
+  
+  let result = { succs: [], fails: [], error: undefined };
   
   const lastPossibleDeven = await getLastPossibleDeven();
   if (typeof lastPossibleDeven === 'object') {
@@ -675,53 +695,41 @@ async function updatePrices(instruments=[]) {
     return result;
   }
   
-  const updateNeeded = [];
-  const oldContents = {};
-  for (const instrument of instruments) {
-    const insCode = instrument.InsCode;
+  const { startDate: firstPossibleDeven } = defaultSettings;
+  
+  const toUpdate = selection.map(instrument => {
+    const inscode = instrument.InsCode;
     const market = instrument.YMarNSC === 'NO' ? 0 : 1;
-    const insData = storedPrices[insCode];
     
-    if (!insData) { // doesn't have data
-      const firstPossibleDeven = defaultSettings.startDate;
-      updateNeeded.push( [insCode, firstPossibleDeven, market] );
+    if ( !inscodes.has(inscode) ) { // doesn't have data
+      return [inscode, firstPossibleDeven, market];
     } else { // has data
-      const rows = insData.split('\n');
-      const lastDeven  =  new ClosingPrice( rows[rows.length-1] ).DEven;
-      
-      if ( shouldUpdate(lastDeven, lastPossibleDeven) ) { // but outdated
-        updateNeeded.push( [insCode, lastDeven, market] );
-        oldContents[insCode] = insData;
+      const lastdeven = lastdevens[inscode];
+      if (!lastdeven) return; // expired symbol
+      if ( shouldUpdate(lastdeven, lastPossibleDeven) ) { // but outdated
+        return [inscode, lastdeven, market];
       }
     }
+  }).filter(i=>i);
+  
+  const selins = new Set(selection.map(i => i.InsCode));
+  const storedins = new Set(Object.keys(storedPrices));
+  if ( !storedins.size || [...selins].find(i => !storedins.has(i)) ) {
+    await storage.getItems(selins, storedPrices);
   }
-  if (!Object.keys(updateNeeded).length) return result;
   
-  const { succs, fails } = await updatePricesManager(updateNeeded);
-  
-  for (const [insCode, newContent] of succs) {
-    const oldContent = oldContents[insCode];
+  if (toUpdate.length) {
+    const { succs, fails } = await pricesUpdateManager(toUpdate);
     
-    let content = oldContent || '';
-    if (newContent) {
-      content = oldContent ? oldContent+'\n'+newContent : newContent;
+    if (succs.length) {
+      str = Object.keys(lastdevens).map(k => [k, lastdevens[k]].join(',')).join('\n');
+      storage.setItem('tse.inscode_lastdeven', str);
     }
     
-    storedPrices[insCode] = content;
+    result = { succs, fails };
   }
   
-  let str = '';
-  const keys = Object.keys(storedPrices);
-  for (let i=0, n=keys.length; i<n; i++) str += storedPrices[ keys[i] ] + '@';
-  str = str.slice(0, -1);
-  
-  await storage.setItemAsync('tse.prices', str, true);
-  
-  return {
-    ...result,
-    succs: succs.map(([insCode]) => insCode),
-    fails
-  };
+  return result;
 }
 
 async function getPrices(symbols=[], _settings={}) {
@@ -743,8 +751,6 @@ async function getPrices(symbols=[], _settings={}) {
     return result;
   }
   
-  await parseStoredPrices();
-  
   const { succs, fails, error } = await updatePrices(selection);
   if (error) {
     const { title, detail } = error;
@@ -761,15 +767,6 @@ async function getPrices(symbols=[], _settings={}) {
     selection.forEach((v,i,a) => fails.includes(v.InsCode) ? a[i] = undefined : 0);
   }
   
-  const prices = {};
-  for (const i of selection) {
-    if (!i) continue;
-    const insCode = i.InsCode;
-    const strPrices = storedPrices[insCode];
-    if (!strPrices) continue; // throw new Error('Unkown Error');
-    prices[insCode] = strPrices.split('\n').map(i => new ClosingPrice(i));
-  }
-  
   const settings = {...defaultSettings, ..._settings};
   
   const columns = settings.columns.map(i => {
@@ -779,33 +776,69 @@ async function getPrices(symbols=[], _settings={}) {
     return { ...column, header: finalHeader };
   });
   
-  const { adjustPrices, startDate, daysWithoutTrade } = settings;
+  const { adjustPrices, startDate, daysWithoutTrade, csv } = settings;
   const shares = parseShares(true, true);
   
-  result.data = selection.map(instrument => {
-    if (!instrument) return;
-    const res = {};
-    columns.forEach(col => res[col.header] = []);
+  if (csv) {
+    const { csvHeaders, csvDelimiter } = settings;
+    const headers = csvHeaders ? columns.map(i => i.header).join() + '\n' : '';
     
-    const insCode = instrument.InsCode;
-    if (!prices[insCode]) return res;
-    const cond = adjustPrices;
-    const closingPrices = cond === 1 || cond === 2
-      ? adjust(cond, prices[insCode], shares, insCode)
-      : prices[insCode];
-    
-    for (const closingPrice of closingPrices) {
-      if ( Big(closingPrice.DEven).lte(startDate) ) continue;
-      if ( Big(closingPrice.ZTotTran).eq(0) && !daysWithoutTrade ) continue;
+    result.data = selection.map(instrument => {
+      if (!instrument) return;
+      const inscode = instrument.InsCode;
       
-      for (const {header, name} of columns) {
-        const cell = getCell(name, instrument, closingPrice);
-        res[header].push(/^\d+(\.?\d+)?$/.test(cell) ? parseFloat(cell) : cell);
+      let prices = storedPrices[inscode];
+      if (!prices) return headers;
+      prices = prices.split('\n').map(i => new ClosingPrice(i));
+      if (adjustPrices === 1 || adjustPrices === 2) {
+        prices = adjust(adjustPrices, prices, shares, inscode);
       }
-    }
+      
+      if (!daysWithoutTrade) {
+        prices = prices.filter(i => +i.ZTotTran > 0);
+      }
+      
+      return headers + prices
+        .filter(i => +i.DEven > +startDate)
+        .map(price => 
+          columns.map(i => getCell(i.name, instrument, price)).join(csvDelimiter)
+        )
+        .join('\n');
+    });
     
-    return res;
-  });
+  } else {
+    const textcols = new Set(['CompanyCode', 'LatinName', 'Symbol', 'Name']);
+    
+    result.data = selection.map(instrument => {
+      if (!instrument) return;
+      const res = Object.fromEntries( columns.map(i => [i.header, []]) );
+      
+      const inscode = instrument.InsCode;
+      
+      let prices = storedPrices[inscode];
+      if (!prices) return res;
+      prices = prices.split('\n').map(i => new ClosingPrice(i));
+      if (adjustPrices === 1 || adjustPrices === 2) {
+        prices = adjust(adjustPrices, prices, shares, inscode);
+      }
+      
+      if (!daysWithoutTrade) {
+        prices = prices.filter(i => +i.ZTotTran > 0);
+      }
+      
+      prices = prices.filter(i => +i.DEven > +startDate);
+      
+      for (const price of prices) {
+        for (const {header, name} of columns) {
+          const cell = getCell(name, instrument, price);
+          res[header].push(textcols.has(name) ? cell : parseFloat(cell));
+        }
+      }
+      
+      return res;
+    });
+    
+  }
   
   return result;
 }
@@ -1087,8 +1120,6 @@ async function getIntraday(symbols=[], _settings={}) {
   const storedInscodes = new Set(storedInscodeDevens.map(i => i[0]));
   
   if ( !storedInscodeDevens || [...selins].find(i => !storedInscodes.has(i)) ) {
-    await parseStoredPrices();
-    
     const { succs, fails, error } = await updatePrices(selection);
     if (error) {
       const { title, detail } = error;
