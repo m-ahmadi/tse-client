@@ -52,9 +52,9 @@ async function b() {
 	log(r.data);
 }
 
-
+let store = localforage.createInstance({name: 'tse.intraday'});
 async function clear(syms) {
-	let keys = (await tse.getInstruments()).filter(i => syms.includes(i.Symbol)).map(i => 'tse.'+i.InsCode);
-	for (let key of keys) await localforage.removeItem(key);
+	let keys = (await tse.getInstruments()).filter(i => syms.includes(i.Symbol)).map(i => i.InsCode);
+	await Promise.all( keys.map(i => store.removeItem(i)) );
 }
 </script>

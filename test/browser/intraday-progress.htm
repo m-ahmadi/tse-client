@@ -18,14 +18,15 @@ ins<input id="count" type="number" value="10" style="width:50" />
 <script>
 let r;
 let ins;
+let store = localforage.createInstance({name: 'tse.intraday'});
 
 async function a(c) {
 	if (!ins) ins = await tse.getInstruments();
 	let syms = ins.filter(i=>i.YVal==='300').slice( -(+count.value) ).map(i=>i.Symbol); //['ذوب', 'فولاد', 'خساپا', 'شپنا'];
 	
 	if (c) {
-		let keys = (await tse.getInstruments()).filter(i => syms.includes(i.Symbol)).map(i => 'tse.'+i.InsCode);
-		for (let key of keys) await localforage.removeItem(key);
+		let keys = (await tse.getInstruments()).filter(i => syms.includes(i.Symbol)).map(i => i.InsCode);
+		await Promise.all( keys.map(i => store.removeItem(i)) );
 		return;
 	}
 	
