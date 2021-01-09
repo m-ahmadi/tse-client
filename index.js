@@ -5,6 +5,7 @@ if (require.main !== module) {
   return;
 }
 const cmd = require('commander');
+const Progress = require('progress');
 const { readFileSync, writeFileSync, existsSync, statSync, mkdirSync } = require('fs');
 const { join, resolve } = require('path');
 const { toGregorian } = require('jalaali-js');
@@ -83,6 +84,8 @@ settings = resolveSettings(symbols, defaultSettings, savedSettings, cmd.opts());
 log('Total symbols:'.grey, (symbols.length+'').yellow );
 
 if (symbols.length) {
+  const progress = new Progress(':bar :percent (Elapsed: :elapsed s)', {total: 100, width: 18, complete: '█', incomplete: '░', clear: true});
+  
   const { priceColumns, priceStartDate, priceDaysWithoutTrade, fileDelimiter, fileHeaders } = settings;
   let { priceAdjust } = settings;
   priceAdjust = +priceAdjust;
@@ -126,7 +129,9 @@ if (symbols.length) {
     startDate:        priceStartDateParsed,
     csv:              true,
     csvHeaders:       fileHeaders,
-    csvDelimiter:     fileDelimiter
+    csvDelimiter:     fileDelimiter,
+    onprogress:       (n) => progress.tick(n - progress.curr),
+    progressTotal:    86
   };
   const { error, data } = await tse.getPrices(symbols, _settings);
   
@@ -171,12 +176,18 @@ if (symbols.length) {
     fileEncoding = undefined;
   }
   
+  const datalen = data.length;
+  
   data.forEach((file, i) => {
     const sym = symbols[i];
     const instrument = symins[sym];
     const name = getFilename(fileName, instrument, priceAdjust);
     writeFileSync(join(fileOutdir, name+'.'+fileExtension), bom+file, fileEncoding);
+    progress.tick(14/datalen);
   });
+  
+  if (!progress.complete) progress.tick(progress.total - progress.curr);
+  log(' √'.green);
 } else {
   log('\nNo symbols to process.'.redBold);
 }
