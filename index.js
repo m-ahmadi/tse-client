@@ -83,7 +83,7 @@ settings = resolveSettings(symbols, defaultSettings, savedSettings, cmd.opts());
 log('Total symbols:'.grey, (symbols.length+'').yellow );
 
 if (symbols.length) {
-  const { priceColumns, priceStartDate, priceDaysWithoutTrade } = settings;
+  const { priceColumns, priceStartDate, priceDaysWithoutTrade, fileDelimiter, fileHeaders } = settings;
   let { priceAdjust } = settings;
   priceAdjust = +priceAdjust;
 
@@ -116,13 +116,17 @@ if (symbols.length) {
     if (!priceColumnsParsed) abort('Invalid option:', '--price-columns');
   }
   
-  if ( !/^[0-2]$/.test(''+priceAdjust) ) { abort('Invalid option:', '--price-adjust', '\n\tPattern not matched:'.red, '^[0-2]$'); return; }
+  if ( !/^[0-2]$/.test(''+priceAdjust) ) { abort('Invalid option:', '--price-adjust',   '\n\tPattern not matched:'.red, '^[0-2]$'); return; }
+  if ( !/^.$/.test(fileDelimiter) )      { abort('Invalid option:', '--file-delimiter', '\n\tPattern not matched:'.red, '^.$');     return; }
   
   const _settings = {
     columns:          priceColumnsParsed,
     adjustPrices:     priceAdjust,
     daysWithoutTrade: priceDaysWithoutTrade,
-    startDate:        priceStartDateParsed
+    startDate:        priceStartDateParsed,
+    csv:              true,
+    csvHeaders:       fileHeaders,
+    csvDelimiter:     fileDelimiter
   };
   const { error, data } = await tse.getPrices(symbols, _settings);
   
@@ -149,27 +153,6 @@ if (symbols.length) {
     return;
   }
   
-  const { fileDelimiter, fileHeaders } = settings;
-  
-  if ( !/^.$/.test(fileDelimiter) ) { abort('Invalid option:', '--file-delimiter', '\n\tPattern not matched:'.red, '^.$'); return; }
-  
-  const files = [];
-  const headers = priceColumnsParsed.map(i=>i[1]);
-  const headerRow = headers.join(fileDelimiter) + '\n';
-  for (let i=0, n=data.length; i<n; i++) {
-    const sym = data[i];
-    const fcol = sym[ headers[0] ];
-    let file = fileHeaders ? headerRow : '';
-    for (let j=0, m=fcol.length; j<m; j++) {
-      for (const k of headers) {
-        file += sym[k][j] + fileDelimiter;
-      }
-      file = file.slice(0,-1);
-      file += '\n';
-    }
-    files.push(file);
-  }
-  
   const { fileOutdir, fileExtension } = settings;
   let { fileName, fileEncoding } = settings;
   fileName = +fileName;
@@ -188,7 +171,7 @@ if (symbols.length) {
     fileEncoding = undefined;
   }
   
-  files.forEach((file, i) => {
+  data.forEach((file, i) => {
     const sym = symbols[i];
     const instrument = symins[sym];
     const name = getFilename(fileName, instrument, priceAdjust);
