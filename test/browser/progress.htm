@@ -10,8 +10,7 @@
 
 ins<input id="count" type="number" value="100" style="width:60" />
 <label>all<input id="all" type="checkbox" onchange="count.disabled = !count.disabled;" /></label>
-&emsp;start<input id="s1"type="number"value="20020101"/>
-
+&emsp;start<input id="sd"type="number"value="20010321"/>
 
 <br><br>
 
@@ -43,11 +42,11 @@ async function go(c) {
 	console.time();
 	
 	r = await tse.getPrices(syms, {
-		startDate: s1.value,
+		startDate:        sd.value,
 		daysWithoutTrade: dwt.checked,
-		csv: csv.checked,
-		onprogress: (n) => prog.value = n,
-		progressTotal: 100
+		csv:              csv.checked,
+		onprogress:       (n) => prog.value = n,
+		progressTotal:    100
 	});
 	
 	console.timeEnd();
