@@ -366,10 +366,10 @@ function splitArr(arr, size){
 }
 //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 let UPDATE_INTERVAL           = 1;
-let PRICES_UPDATE_CHUNK       = isBrowser ? 10  : 50;
-let PRICES_UPDATE_CHUNK_DELAY = isBrowser ? 500 : 3000;
+let PRICES_UPDATE_CHUNK       = 50;
+let PRICES_UPDATE_CHUNK_DELAY = 300;
 let PRICES_UPDATE_RETRY_COUNT = 3;
-let PRICES_UPDATE_RETRY_DELAY = 5000;
+let PRICES_UPDATE_RETRY_DELAY = 1000;
 const defaultSettings = {
   columns: [
     [4, 'date'],
