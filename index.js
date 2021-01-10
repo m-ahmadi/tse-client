@@ -78,7 +78,7 @@ let settings;
 (async function () {
 let inserr;
 const instruments = await tse.getInstruments().catch(err => inserr = err);
-if (inserr) { log('Fatal Error #1:  '.red + inserr.title.red +'\n\n'+ inserr.detail.message.red); process.exitCode = 1; return; }
+if (inserr) { log('\nFatal Error #1:  '.red + inserr.title.red +'\n\n'+ inserr.detail.message.red); process.exitCode = 1; return; }
 const allSymbols = instruments.map(i => i.Symbol);
 const symbols = resolveSymbols(allSymbols, savedSettings.symbols, instruments, cmd);
 settings = resolveSettings(symbols, defaultSettings, savedSettings, cmd.opts());
@@ -139,7 +139,7 @@ if (symbols.length) {
   
   if (error) {
     const { code, title } = error;
-    const fatal = ('Fatal Error #'+code+':').red +'  '+ title.red +'\n\n';
+    const fatal = ('\nFatal Error #'+code+':').red +'  '+ title.red +'\n\n';
     
     if (code === 1) {
       const { detail } = error;
@@ -326,6 +326,7 @@ function getFilterPredicate(filters) {
   return predicate;
 }
 function abort(m1, m2, ...rest) {
+  console.log('\n');
   console.log(m1.redBold, m2.whiteBold, ...rest);
   process.exitCode = 1;
   console.log('\naborted'.red);
