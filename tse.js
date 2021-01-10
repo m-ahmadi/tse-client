@@ -101,7 +101,7 @@ const storage = (function () {
     
     instance = {
       getItem, setItem, getItemAsync, setItemAsync, getItems,
-      get CACHE_DIR() { return datadir.replace(/\\/g,'/'); },
+      get CACHE_DIR() { return datadir; },
       set CACHE_DIR(newdir) {
         if (typeof newdir === 'string') {
           if ( !existsSync(newdir) ) mkdirSync(newdir);
