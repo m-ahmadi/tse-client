@@ -4,7 +4,7 @@
 # TSE Client
 A client for fetching stock data from the Tehran Stock Exchange (TSETMC).  
 Works in Browser, Node, and as CLI.  
-The `0.x` and `1.x` versions were a direct port of the [official Windows app](http://cdn.tsetmc.com/Site.aspx?ParTree=111A11).  
+The `0.x` and `1.x` versions were a direct port of the [official Windows app](http://cdn.tsetmc.com/Site.aspx?ParTree=111A11). 
 
 - [CLI](#CLI)
 	+ [Install](#install)
@@ -320,8 +320,8 @@ Update (if needed) and return prices of instruments.
 		`0`: None &emsp; &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;(*`بدون تعدیل`*)  
 		`1`: Capital Increase + Dividends &emsp; (*`افزایش سرمایه + سود نقدی`*)  
 		`2`: Capital Increase &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;(*`افزایش سرمایه`*)
-	+ **`startDate`:** Only return prices after this date. Min: `'20010321'`. Default `'20010321'`
-	+ **`daysWithoutTrade`:** Whether to include days that have `0` trades.
+	+ **`startDate`:** Only return prices after this date. Min: `'20010321'`. Default: `'20010321'`
+	+ **`daysWithoutTrade`:** Whether to include days that have `0` trades. Default: `false`
 	+ **`csv`:** Geberate results as CSV strings. Default: `false`
 	+ **`csvHeaders`:** Include header row when generating CSV results. Default: `true`
 	+ **`csvDelimiter`:** A cell delimiter character to use when generating CSV results. Default: `','`
