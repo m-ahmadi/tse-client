@@ -88,9 +88,10 @@ log('Total symbols:'.grey, (symbols.length+'').yellow );
 if (symbols.length) {
   const progress = new Progress(':bar :percent (Elapsed: :elapsed s)', {total: 100, width: 18, complete: '█', incomplete: '░', clear: true});
   
-  const { priceColumns, priceStartDate, priceDaysWithoutTrade, fileDelimiter, fileHeaders } = settings;
-  let { priceAdjust } = settings;
+  const { priceColumns, priceStartDate, priceDaysWithoutTrade, fileDelimiter, fileHeaders, fileOutdir, fileExtension } = settings;
+  let { priceAdjust, fileName, fileEncoding } = settings;
   priceAdjust = +priceAdjust;
+  fileName    = +fileName;
 
   let priceStartDateParsed;
   if (priceStartDate) {
@@ -121,8 +122,14 @@ if (symbols.length) {
     if (!priceColumnsParsed) { abort('Invalid option:', '--price-columns'); return; }
   }
   
-  if ( !/^[0-2]$/.test(''+priceAdjust) ) { abort('Invalid option:', '--price-adjust',   '\n\tPattern not matched:'.red, '^[0-2]$'); return; }
-  if ( !/^.$/.test(fileDelimiter) )      { abort('Invalid option:', '--file-delimiter', '\n\tPattern not matched:'.red, '^.$');     return; }
+  if ( !/^[0-2]$/.test(''+priceAdjust) )            { abort('Invalid option:', '--price-adjust',   '\n\tPattern not matched:'.red, '^[0-2]$');                     return; }
+  if ( !/^.$/.test(fileDelimiter) )                 { abort('Invalid option:', '--file-delimiter', '\n\tPattern not matched:'.red, '^.$');                         return; }
+//if (!existsSync(fileOutdir))                      { abort('Invalid option:', '--file-outdir',    '\n\tDirectory doesn\'t exist:'.red, resolve(fileOutdir).grey); return; }
+  if ( !existsSync(fileOutdir) ) mkdirSync(fileOutdir);
+  if ( !statSync(fileOutdir).isDirectory() )        { abort('Invalid option:', '--file-outdir',    '\n\tPath is not a directory:'.red,  resolve(fileOutdir).grey); return; }
+  if ( !/^[0-4]$/.test(''+fileName) )               { abort('Invalid option:', '--file-name',      '\n\tPattern not matched:'.red, '^[0-4]$');                     return; }
+  if ( !/^.{1,11}$/.test(fileExtension) )           { abort('Invalid option:', '--file-name',      '\n\tPattern not matched:'.red, '^.{1,11}$');                   return; }
+  if ( !/^(utf8(bom)?|ascii)$/.test(fileEncoding) ) { abort('Invalid option:', '--file-encoding',  '\n\tPattern not matched:'.red, '^(utf8(bom)?|ascii)$');        return; }
   
   const _settings = {
     columns:          priceColumnsParsed,
@@ -159,17 +166,6 @@ if (symbols.length) {
     process.exitCode = 1;
     return;
   }
-  
-  const { fileOutdir, fileExtension } = settings;
-  let { fileName, fileEncoding } = settings;
-  fileName = +fileName;
-  
-//if (!existsSync(fileOutdir))                      { abort('Invalid option:', '--file-outdir',    '\n\tDirectory doesn\'t exist:'.red, resolve(fileOutdir).grey); return; }
-  if ( !existsSync(fileOutdir) ) mkdirSync(fileOutdir);
-  if ( !statSync(fileOutdir).isDirectory() )        { abort('Invalid option:', '--file-outdir',    '\n\tPath is not a directory:'.red,  resolve(fileOutdir).grey); return; }
-  if ( !/^[0-4]$/.test(''+fileName) )               { abort('Invalid option:', '--file-name',      '\n\tPattern not matched:'.red, '^[0-4]$');                     return; }
-  if ( !/^.{1,11}$/.test(''+fileExtension) )        { abort('Invalid option:', '--file-name',      '\n\tPattern not matched:'.red, '^.{1,11}$');                   return; }
-  if ( !/^(utf8(bom)?|ascii)$/.test(fileEncoding) ) { abort('Invalid option:', '--file-encoding',  '\n\tPattern not matched:'.red, '^(utf8(bom)?|ascii)$');        return; }
   
   const symins = await tse.getInstruments(true, false, 'Symbol');
   let bom = '';
