@@ -890,7 +890,7 @@ async function getInstruments(struct=true, arr=true, structKey='InsCode') {
   
   const lastUpdate = storage.getItem('tse.lastInstrumentUpdate');
   const err = await updateInstruments();
-  if (err && !lastUpdate) return;
+  if (err && !lastUpdate) throw err;
   
   return parseInstruments(struct, arr, structKey);
 }
