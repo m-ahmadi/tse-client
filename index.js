@@ -118,7 +118,7 @@ if (symbols.length) {
   let priceColumnsParsed;
   if (priceColumns) {
     priceColumnsParsed = parseColstr(priceColumns);
-    if (!priceColumnsParsed) abort('Invalid option:', '--price-columns');
+    if (!priceColumnsParsed) { abort('Invalid option:', '--price-columns'); return; }
   }
   
   if ( !/^[0-2]$/.test(''+priceAdjust) ) { abort('Invalid option:', '--price-adjust',   '\n\tPattern not matched:'.red, '^[0-2]$'); return; }
