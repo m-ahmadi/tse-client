@@ -76,7 +76,9 @@ if (cmd.cacheDir) { handleCacheDir(cmd.cacheDir); return; }
 let settings;
 
 (async function () {
-const instruments = await tse.getInstruments();
+let inserr;
+const instruments = await tse.getInstruments().catch(err => inserr = err);
+if (inserr) { log('Fatal Error #1:  '.red + inserr.title.red +'\n\n'+ inserr.detail.message.red); process.exitCode = 1; return; }
 const allSymbols = instruments.map(i => i.Symbol);
 const symbols = resolveSymbols(allSymbols, savedSettings.symbols, instruments, cmd);
 settings = resolveSettings(symbols, defaultSettings, savedSettings, cmd.opts());
