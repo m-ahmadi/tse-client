@@ -253,10 +253,10 @@ Amount of instruments per request.
 Only integers.  
 Min: `1`  
 Max: `60`  
-Default: `10` in *Browser*. `50` in *Node*.
+Default: `50`
 #### `tse.PRICES_UPDATE_CHUNK_DELAY`
 Amount of delay (in ms) to wait before requesting another chunk of instruments.  
-Default: `500` in *Browser*. `3000` in *Node*.
+Default: `300`
 #### `tse.PRICES_UPDATE_RETRY_COUNT`
 Amount of retry attempts before giving up.  
 Only integers.  
@@ -264,7 +264,7 @@ Default: `3`
 #### `tse.PRICES_UPDATE_RETRY_DELAY`
 Amount of delay (in ms) to wait before making another retry.  
 Only integers.  
-Default: `5000`
+Default: `1000`
 #### `tse.CACHE_DIR`
 Only in `Node`.  
 Location of the cache directory.  
@@ -322,6 +322,11 @@ Update (if needed) and return prices of instruments.
 		`2`: Capital Increase &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;(*`افزایش سرمایه`*)
 	+ **`startDate`:** Only return prices after this date. Min: `'20010321'`. Default `'20010321'`
 	+ **`daysWithoutTrade`:** Whether to include days that have `0` trades.
+	+ **`csv`:** Geberate results as CSV strings. Default: `false`
+	+ **`csvHeaders`:** Include header row when generating CSV results. Default: `true`
+	+ **`csvDelimiter`:** A cell delimiter character to use when generating CSV results. Default: `','`
+	+ **`onprogress`:** A callback function which gets called with a number indicating the progress. Default: `undefined`
+	+ **`progressTotal`:** A number to use as the completion point of progress. Default: `100`
 
 **return:** `Result`
 ```typescript
@@ -391,7 +396,12 @@ const defaultSettings = {
   ],
   adjustPrices: 0,
   daysWithoutTrade: false,
-  startDate: '20010321'
+  startDate: '20010321',
+  csv: false,
+  csvHeaders: true,
+  csvDelimiter: ',',
+  onprogress: undefined,
+  progressTotal: 100
 };
 
 const result = await tse.getPrices(symbols=['sym1', 'sym2', ...], defaultSettings);
