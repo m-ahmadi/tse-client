@@ -1,10 +1,12 @@
-[![NPM](https://nodei.co/npm/tse-client.png?downloads=true&downloadRank=true&stars=true)](https://nodei.co/npm/tse-client/)  
-[![GitHub tag](https://img.shields.io/github/tag/m-ahmadi/tse-client.svg)](https://GitHub.com/m-ahmadi/tse-client/tags/)
-[![GitHub issues](https://img.shields.io/github/issues/m-ahmadi/tse-client.svg)](https://GitHub.com/m-ahmadi/tse-client/issues/)
-# TSE Client
+# [TSE Client](https://www.npmjs.com/package/tse-client) [![GitHub tag](https://img.shields.io/github/tag/m-ahmadi/tse-client.svg)](https://GitHub.com/m-ahmadi/tse-client/tags/) [![GitHub issues](https://img.shields.io/github/issues/m-ahmadi/tse-client.svg)](https://GitHub.com/m-ahmadi/tse-client/issues/) 
 A client for fetching stock data from the Tehran Stock Exchange (TSETMC).  
 Works in Browser, Node, and as CLI.  
 The `0.x` and `1.x` versions were a direct port of the [official Windows app](http://cdn.tsetmc.com/Site.aspx?ParTree=111A11). 
+
+<p float="left">
+	<img src="samples/comparison-a.gif" width="533" />
+	<img src="samples/comparison-b.gif" width="300" />
+</p>
 
 - [CLI](#CLI)
 	+ [Install](#install)
