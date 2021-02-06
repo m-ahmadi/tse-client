@@ -133,7 +133,7 @@ npm install tse-client
 ```
 #### Usage:
 ```javascript
-const tse = require('tse');
+const tse = require('tse-client');
 
 (async () => {
   
