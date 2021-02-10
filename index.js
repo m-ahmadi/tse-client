@@ -192,7 +192,7 @@ if (symbols.length) {
 
 const { save, saveReset } = cmd;
 if (save) saveSettings(settings);
-if (saveReset) savedSettings(defaultSettings);
+if (saveReset) saveSettings(defaultSettings);
 
 })();
 function resolveSymbols(allSymbols, savedSymbols=[], instruments, { args, symbol, symbolFile, symbolFilter, symbolDelete, symbolAll }) {
