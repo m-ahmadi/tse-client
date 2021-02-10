@@ -324,7 +324,7 @@ Update (if needed) and return prices of instruments.
 		`2`: Capital Increase &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;(*`افزایش سرمایه`*)
 	+ **`startDate`:** Only return prices after this date. Min: `'20010321'`. Default: `'20010321'`
 	+ **`daysWithoutTrade`:** Whether to include days that have `0` trades. Default: `false`
-	+ **`csv`:** Geberate results as CSV strings. Default: `false`
+	+ **`csv`:** Generate results as CSV strings. Default: `false`
 	+ **`csvHeaders`:** Include header row when generating CSV results. Default: `true`
 	+ **`csvDelimiter`:** A cell delimiter character to use when generating CSV results. Default: `','`
 	+ **`onprogress`:** A callback function which gets called with a number indicating the progress. Default: `undefined`
