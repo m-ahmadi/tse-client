@@ -911,9 +911,9 @@ const itdDefaultSettings = {
   progressTotal: 100
 };
 const itdGroupCols = [
-  [ 'prices',  ['time','last','close','open','high','low','count','volume','value','discarded'] ],
-  [ 'orders',  ['time','row','askcount','askvol','askprice','bidprice','bidvol','bidcount'] ],
-  [ 'trades',  ['time','count','volume','price','discarded'] ],
+  [ 'price',  ['time','last','close','open','high','low','count','volume','value','discarded'] ],
+  [ 'order',  ['time','row','askcount','askvol','askprice','bidprice','bidvol','bidcount'] ],
+  [ 'trade',  ['time','count','volume','price','discarded'] ],
   [ 'client', [
       'pbvol','pbcount','pbval','pbprice','pbvolpot',
       'psvol','pscount','psval','psprice','psvolpot',
