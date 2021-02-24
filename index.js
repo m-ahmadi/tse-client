@@ -34,6 +34,7 @@ cmd
   .name('tse')
   .usage('[symbols] [options]\n  tse faSymbol1 faSymbol2 -o /tsedata -j 1 -x txt -e utf8 -H')
   .description('A client for receiving stock data from the Tehran Stock Exchange (TSE).')
+  .arguments('[symbols...]').action(() => 0)
   .option('-s, --symbol <string>',           'A space-separated string of symbols.')
   .option('-i, --symbol-file <string>',      'Path to a file that contains newline-separated symbols.')
   .option('-f, --symbol-filter <string>',    'Select symbols based on a filter string. (AND-based)'+t+'market type:     m=id,id,... (help: tse ls -M)'+t+'symbol type:     t=id,id,... (help: tse ls -T)'+t+'industry sector: i=id,id,... (help: tse ls -I)'+t+'example:  tse -m "t=300,303 i=27"'+t+'only see: tse ls -F "t=300,303 i=27"')
@@ -71,7 +72,7 @@ cmd.parse(process.argv);
 
 const subs = new Set( cmd.commands.map(i=>[i.name(),i.alias()]).reduce((a,c)=>a=a.concat(c),[]) );
 if (cmd.rawArgs.find(i=> subs.has(i))) return;
-if (cmd.cacheDir) { handleCacheDir(cmd.cacheDir); return; }
+if (cmd.opts().cacheDir) { handleCacheDir(cmd.cacheDir); return; }
 
 let settings;
 
@@ -79,9 +80,10 @@ let settings;
 let inserr;
 const instruments = await tse.getInstruments().catch(err => inserr = err);
 if (inserr) { log('\nFatal Error #1:  '.red + inserr.title.red +'\n\n'+ inserr.detail.message.red); process.exitCode = 1; return; }
+const rawOpts = cmd.opts();
 const allSymbols = instruments.map(i => i.Symbol);
-const symbols = resolveSymbols(allSymbols, savedSettings.symbols, instruments, cmd);
-settings = resolveSettings(symbols, defaultSettings, savedSettings, cmd.opts());
+const symbols = resolveSymbols(allSymbols, savedSettings.symbols, instruments, {args: cmd.args, ...rawOpts});
+settings = resolveSettings(symbols, defaultSettings, savedSettings, rawOpts);
 
 log('Total symbols:'.grey, (symbols.length+'').yellow );
 
@@ -190,7 +192,7 @@ if (symbols.length) {
   log('\nNo symbols to process.'.redBold);
 }
 
-const { save, saveReset } = cmd;
+const { save, saveReset } = rawOpts;
 if (save) saveSettings(settings);
 if (saveReset) saveSettings(defaultSettings);
 

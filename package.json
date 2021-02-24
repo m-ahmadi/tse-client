@@ -29,7 +29,7 @@
   "homepage": "https://github.com/m-ahmadi/tse-client#readme",
   "dependencies": {
     "big.js": "^5.2.2",
-    "commander": "^3.0.1",
+    "commander": "^7.1.0",
     "jalaali-js": "^1.1.0",
     "localforage": "^1.9.0",
     "node-fetch": "^2.6.1",
