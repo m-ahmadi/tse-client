@@ -179,7 +179,7 @@ if (symbols.length) {
   data.forEach((file, i) => {
     const sym = symbols[i];
     const instrument = symins[sym];
-    const name = getFilename(fileName, instrument, priceAdjust);
+    const name = safeWinFilename( getFilename(fileName, instrument, priceAdjust) );
     writeFileSync(join(fileOutdir, name+'.'+fileExtension), bom+file, fileEncoding);
     progress.tick(14/datalen);
   });
@@ -352,6 +352,19 @@ function getFilename(filename, instrument, adjust) {
     instrument.Symbol + suffix(y, a, true); // instrument.CIsin + suffix(y, a)
   
   return str;
+}
+function safeWinFilename(str) {
+  return str
+    .replace('\\', ' ')
+    .replace('/', ' ')
+    .replace('*', ' ')
+    .replace(':', ' ')
+    .replace('>', ' ')
+    .replace('<', ' ')
+    .replace('?', ' ')
+    .replace('|', ' ')
+    .replace('^', ' ')
+    .replace('"', ' ');
 }
 function saveSettings(obj) {
   writeFileSync(join(__dirname,'settings.json'), JSON.stringify(obj, null, 2));
