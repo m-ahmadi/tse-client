@@ -82,6 +82,7 @@ const storage = (function () {
     
     const itdGetItems = async function (selins=new Set()) {
       const d = join(datadir, 'intraday');
+      if (!existsSync(d)) mkdirSync(d);
       const dirs = readdirSync(d).filter( i => statSync(join(d,i)).isDirectory() && selins.has(i) );
       const result = dirs.map(i => {
         const files = readdirSync(join(d,i)).map(j => [ j.slice(0,-3), readFileSync(join(d,i,j)) ])
