@@ -384,6 +384,7 @@ const defaultSettings = {
   adjustPrices: 0,
   daysWithoutTrade: false,
   startDate: '20010321',
+  cache: true,
   csv: false,
   csvHeaders: true,
   csvDelimiter: ',',
@@ -584,6 +585,7 @@ const pricesUpdateManager = (function () {
   let resolve;
   let writing = [];
   let pf, pn, ptot, pSR, pR;
+  let shouldCache;
   
   function poll() {
     if (timeouts.size > 0 || qeudRetry) {
@@ -629,7 +631,7 @@ const pricesUpdateManager = (function () {
           storedPrices[inscode] = data;
           lastdevens[inscode] = newdata.split('\n').slice(-1)[0].split(',',2)[1];
           
-          writing.push( storage.setItemAsync('tse.prices.'+inscode, data) );
+          writing.push( shouldCache && storage.setItemAsync('tse.prices.'+inscode, data) );
         }
       }
       
@@ -667,7 +669,8 @@ const pricesUpdateManager = (function () {
     }
   }
   
-  function start(updateNeeded=[], po={}) {
+  function start(updateNeeded=[], _shouldCache, po={}) {
+    shouldCache = _shouldCache;
     ({ pf, pn, ptot } = po);
     total = updateNeeded.length;
     pSR = Big(ptot).div( Math.ceil(Big(total).div(PRICES_UPDATE_CHUNK)) ); // each successful request:   ( ptot / Math.ceil(total / PRICES_UPDATE_CHUNK) )
@@ -690,7 +693,7 @@ const pricesUpdateManager = (function () {
   
   return start;
 })();
-async function updatePrices(selection=[], {pf, pn, ptot}={}) {
+async function updatePrices(selection=[], shouldCache, {pf, pn, ptot}={}) {
   lastdevens = storage.getItem('tse.inscode_lastdeven');
   let inscodes = new Set();
   if (lastdevens) {
@@ -737,11 +740,11 @@ async function updatePrices(selection=[], {pf, pn, ptot}={}) {
   if (pf) pf(pn= +Big(pn).plus( Big(ptot).mul(0.01) ) );
   
   if (toUpdate.length) {
-    const managerResult = await pricesUpdateManager(toUpdate, { pf, pn, ptot: +Big(ptot).sub(Big(ptot).mul(0.02)) });
+    const managerResult = await pricesUpdateManager(toUpdate, shouldCache, { pf, pn, ptot: +Big(ptot).sub(Big(ptot).mul(0.02)) });
     const { succs, fails } = managerResult;
     ({ pn } = managerResult);
     
-    if (succs.length) {
+    if (succs.length && shouldCache) {
       str = Object.keys(lastdevens).map(k => [k, lastdevens[k]].join(',')).join('\n');
       storage.setItem('tse.inscode_lastdeven', str);
     }
@@ -785,7 +788,7 @@ async function getPrices(symbols=[], _settings={}) {
     return result;
   }
   
-  const updateResult = await updatePrices(selection, {pf, pn, ptot: +Big(ptot).mul(0.78)});
+  const updateResult = await updatePrices(selection, settings.cache, {pf, pn, ptot: +Big(ptot).mul(0.78)});
   const { succs, fails, error } = updateResult;
   ({ pn } = updateResult);
   
@@ -1170,7 +1173,7 @@ async function getIntraday(symbols=[], _settings={}) {
   const storedInscodes = new Set(storedInscodeDevens.map(i => i[0]));
   
   if ( !storedInscodeDevens || [...selins].find(i => !storedInscodes.has(i)) ) {
-    const upres = await updatePrices(selection, {pf, pn, ptot: 10});
+    const upres = await updatePrices(selection, true, {pf, pn, ptot: 10});
     const { succs, fails, error } = upres;
     ({ pn } = upres);
     
