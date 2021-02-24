@@ -905,6 +905,7 @@ let INTRADAY_UPDATE_RETRY_DELAY = 1000;
 const itdDefaultSettings = {
   startDate: '20010321',
   endDate: '',
+  cache: true,
   gzip: true,
   onprogress: undefined,
   progressTotal: 100
@@ -953,7 +954,7 @@ function parseRaw(separator, text) {
   return arr;
 }
 
-async function extractAndStore(inscode='', deven_text=[]) {
+async function extractAndStore(inscode='', deven_text=[], shouldCache) {
   if (!stored[inscode]) stored[inscode] = {};
   let storedInstrument = stored[inscode];
   
@@ -1001,7 +1002,7 @@ async function extractAndStore(inscode='', deven_text=[]) {
     storedInstrument[deven] = zip(file);
   }
   
-  return storage.itd.setItem(inscode, storedInstrument);
+  if (shouldCache) return storage.itd.setItem(inscode, storedInstrument);
 }
 const itdUpdateManager = (function () {
   let src = {};
@@ -1016,6 +1017,7 @@ const itdUpdateManager = (function () {
   let nextsrv = n => n<7 ? ++n : 0;
   let writing = [];
   let pf, pn, ptot, pSR, pR;
+  let shouldCache;
   
   function poll() {
     if (timeouts.size > 0 || qeudRetry) {
@@ -1060,7 +1062,7 @@ const itdUpdateManager = (function () {
       let alldone = !Object.keys(devens).find(k => !devens[k]);
       if (alldone) {
         let deven_text = Object.keys(devens).map(k => [k, devens[k]]);
-        writing.push( extractAndStore(inscode, deven_text) );
+        writing.push( extractAndStore(inscode, deven_text, shouldCache) );
       }
       
       fails = fails.filter(i => i.join() !== chunk.join());
@@ -1112,7 +1114,8 @@ const itdUpdateManager = (function () {
     }
   }
   
-  async function start(inscode_devens, po) {
+  async function start(inscode_devens, _shouldCache, po) {
+    shouldCache = _shouldCache;
     ({ pf, pn, ptot } = po);
     src = objify( inscode_devens.map(([a,b]) => [ a, b.map(i=>[i,undefined]) ]) );
     let chunks = [...inscode_devens].reduce((r,[inscode,devens]) => r=[...r, ...(devens ? devens.map(i=>[0,inscode,''+i]) : []) ], []);
@@ -1172,8 +1175,10 @@ async function getIntraday(symbols=[], _settings={}) {
   storedInscodeDevens = storedInscodeDevens ? storedInscodeDevens.split('\n').map(i=>i.split(';')).map(([i,d]) => [i,d.split(',').map(i=>+i)]): [];
   const storedInscodes = new Set(storedInscodeDevens.map(i => i[0]));
   
+  const { cache } = settings;
+  
   if ( !storedInscodeDevens || [...selins].find(i => !storedInscodes.has(i)) ) {
-    const upres = await updatePrices(selection, true, {pf, pn, ptot: 10});
+    const upres = await updatePrices(selection, cache, {pf, pn, ptot: 10});
     const { succs, fails, error } = upres;
     ({ pn } = upres);
     
@@ -1200,8 +1205,10 @@ async function getIntraday(symbols=[], _settings={}) {
       return [inscode, devens];
     }).filter(i=>i);
     
-    const str = storedInscodeDevens.map(([i,d]) => [i, d.join(',')].join(';') ).join('\n');
-    await storage.setItemAsync('tse.inscode_devens', str);
+    if (cache) {
+      const str = storedInscodeDevens.map(([i,d]) => [i, d.join(',')].join(';') ).join('\n');
+      await storage.setItemAsync('tse.inscode_devens', str);
+    }
   }
   storedInscodeDevens = Object.fromEntries(storedInscodeDevens);
   if (pf) pf(pn= +Big(pn).plus( Big(ptot).mul(0.01) ) );
@@ -1233,7 +1240,7 @@ async function getIntraday(symbols=[], _settings={}) {
   if (pf) pf(pn= +Big(pn).plus( Big(ptot).mul(0.01) ) );
   
   if (toUpdate.length > 0) {
-    let { succs, fails } = await itdUpdateManager(toUpdate, {pf, pn, ptot: 85});
+    let { succs, fails } = await itdUpdateManager(toUpdate, cache, {pf, pn, ptot: 85});
     
     if (fails.length) {
       let k = Object.fromEntries( selection.map(i => [i.InsCode, i.Symbol]) );
