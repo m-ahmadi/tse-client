@@ -970,10 +970,10 @@ async function extractAndStore(inscode='', deven_text=[]) {
     let coli;
     
     coli = [12,2,3,4,6,7,8,9,10,11];
-    let price = ClosingPrice.map(row => coli.map(i=> row[i]).join(',') ).join(';');
+    let price = ClosingPrice.map(row => coli.map(i=> row[i]).join(',') ).join('\n');
     
     coli = [0,1,2,3,4,5,6,7];
-    let order = BestLimit.map(row => coli.map(i=> row[i]).join(',') ).join(';');
+    let order = BestLimit.map(row => coli.map(i=> row[i]).join(',') ).join('\n');
     
     coli = [1,0,2,3,4];
     let trade = IntraTrade.map(row => {
@@ -981,7 +981,7 @@ async function extractAndStore(inscode='', deven_text=[]) {
       let timeint = (+h*10000) + (+m*100) + (+s) + '';
       row[1] = timeint;
       return coli.map(i => row[i]).join(',');
-    }).join(';');
+    }).join('\n');
     
     coli = [4,0,12,16,8,6,2,14,18,10,5,1,13,17,9,7,3,15,19,11,20];
     let client = coli.map(i=> ClientType[i]).join(',');
@@ -993,7 +993,7 @@ async function extractAndStore(inscode='', deven_text=[]) {
     let misc = [state, daymin, daymax].join(',');
     
     
-    let file = [price, order, trade, client, misc].join('@');
+    let file = [price, order, trade, client, misc].join('\n\n');
     storedInstrument[deven] = zip(file);
   }
   
