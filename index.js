@@ -32,7 +32,7 @@ const t = '\n\t\t\t\t\t';
 cmd
   .helpOption('-h, --help', 'Show help.')
   .name('tse')
-  .usage('[symbols] [options]\n  tse faSymbol1 faSymbol2 -o /tsedata -j 1 -x txt -e utf8 -H')
+  .usage('[symbols...] [options]\n  tse faSymbol1 faSymbol2 -o /mydata -j 1 -x txt -e utf8 -H')
   .description('A client for receiving stock data from the Tehran Stock Exchange (TSE).')
   .arguments('[symbols...]').action(() => 0)
   .option('-s, --symbol <string>',           'A space-separated string of symbols.')
