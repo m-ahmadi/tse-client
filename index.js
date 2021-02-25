@@ -85,7 +85,14 @@ let settings;
   const rawOpts = cmd.opts();
   const allSymbols = instruments.map(i => i.Symbol);
   const symbols = resolveSymbols(allSymbols, savedSettings.symbols, instruments, {args: cmd.args, ...rawOpts});
-  settings = resolveSettings(symbols, defaultSettings, savedSettings, rawOpts);
+  
+  const fileHeaders = !rawOpts.fileNoHeaders;
+  delete rawOpts.fileNoHeaders;
+  const opts = { symbols, fileHeaders, ...rawOpts };
+  ['save','saveReset'].forEach(k => delete opts[k]);
+  Object.keys(opts).forEach(key => opts[key] === undefined && delete opts[key]);
+  
+  settings = { ...defaultSettings, ...savedSettings, ...opts };
 
   log('Total symbols:'.grey, (symbols.length+'').yellow );
 
@@ -246,31 +253,6 @@ function resolveSymbols(allSymbols, savedSymbols=[], instruments, { args, symbol
   });
   
   return finalSymbols;
-}
-function resolveSettings(symbols, defaults, saved, _cli) {
-  const {
-    priceColumns, priceAdjust, priceStartDate, priceDaysWithoutTrade,
-    fileOutdir, fileName, fileExtension, fileDelimiter, fileEncoding, fileNoHeaders: fileHeaders, cache
-  } = _cli;
-  
-  const cli = {
-    symbols,
-    priceColumns,
-    priceAdjust,
-    priceStartDate,
-    priceDaysWithoutTrade,
-    fileOutdir,
-    fileName,
-    fileExtension,
-    fileDelimiter,
-    fileEncoding,
-    fileHeaders,
-    cache,
-  };
-  
-  Object.keys(cli).forEach(key => cli[key] === undefined && delete cli[key]);
-  
-  return { ...defaults, ...saved, ...cli };
 }
 function handleCacheDir(newdir) {
   if (typeof newdir === 'string') {
