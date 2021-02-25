@@ -79,126 +79,126 @@ if (cmd.opts().cacheDir) { handleCacheDir(cmd.cacheDir); return; }
 let settings;
 
 (async function () {
-let inserr;
-const instruments = await tse.getInstruments().catch(err => inserr = err);
-if (inserr) { log('\nFatal Error #1:  '.red + inserr.title.red +'\n\n'+ inserr.detail.message.red); process.exitCode = 1; return; }
-const rawOpts = cmd.opts();
-const allSymbols = instruments.map(i => i.Symbol);
-const symbols = resolveSymbols(allSymbols, savedSettings.symbols, instruments, {args: cmd.args, ...rawOpts});
-settings = resolveSettings(symbols, defaultSettings, savedSettings, rawOpts);
+  let inserr;
+  const instruments = await tse.getInstruments().catch(err => inserr = err);
+  if (inserr) { log('\nFatal Error #1:  '.red + inserr.title.red +'\n\n'+ inserr.detail.message.red); process.exitCode = 1; return; }
+  const rawOpts = cmd.opts();
+  const allSymbols = instruments.map(i => i.Symbol);
+  const symbols = resolveSymbols(allSymbols, savedSettings.symbols, instruments, {args: cmd.args, ...rawOpts});
+  settings = resolveSettings(symbols, defaultSettings, savedSettings, rawOpts);
 
-log('Total symbols:'.grey, (symbols.length+'').yellow );
+  log('Total symbols:'.grey, (symbols.length+'').yellow );
 
-if (symbols.length) {
-  const progress = new Progress(':bar :percent (Elapsed: :elapsed s)', {total: 100, width: 18, complete: '█', incomplete: '░', clear: true});
-  
-  const { priceColumns, priceStartDate, priceDaysWithoutTrade, fileDelimiter, fileHeaders, fileOutdir, fileExtension, cache } = settings;
-  let { priceAdjust, fileName, fileEncoding } = settings;
-  priceAdjust = +priceAdjust;
-  fileName    = +fileName;
+  if (symbols.length) {
+    const progress = new Progress(':bar :percent (Elapsed: :elapsed s)', {total: 100, width: 18, complete: '█', incomplete: '░', clear: true});
+    
+    const { priceColumns, priceStartDate, priceDaysWithoutTrade, fileDelimiter, fileHeaders, fileOutdir, fileExtension, cache } = settings;
+    let { priceAdjust, fileName, fileEncoding } = settings;
+    priceAdjust = +priceAdjust;
+    fileName    = +fileName;
 
-  let priceStartDateParsed;
-  if (priceStartDate) {
-    const s = priceStartDate;
-    const mindate = 20010321;
-    const relative = s.match(/^(\d{1,3})(y|m|d)$/);
-    if (relative) {
-      const n = parseInt(relative[1], 10);
-      const m = ({y:'FullYear',m:'Month',d:'Date'})[ relative[2] ];
-      const d = new Date();
-      d['set'+m](d['get'+m]() - n);
-      d.setDate(d.getDate() - 1);
-      const res = (d.getFullYear()*10000) + ((d.getMonth()+1)*100) + d.getDate();
-      priceStartDateParsed = res < mindate ? ''+mindate : ''+res;
-    } else if (/^\d{8}$/.test(s)) {
-      const {gy,gm,gd} = toGregorian(+s.slice(0,4), +s.slice(4,6), +s.slice(6,8));
-      const res = (gy*10000) + (gm*100) + gd;
-      priceStartDateParsed = res < mindate ? ''+mindate : ''+res;
-    } else {
-      abort('Invalid option:', '--price-start-date', '\n\tPattern not matched:'.red, '^\\d{1,3}(y|m|d)$');
+    let priceStartDateParsed;
+    if (priceStartDate) {
+      const s = priceStartDate;
+      const mindate = 20010321;
+      const relative = s.match(/^(\d{1,3})(y|m|d)$/);
+      if (relative) {
+        const n = parseInt(relative[1], 10);
+        const m = ({y:'FullYear',m:'Month',d:'Date'})[ relative[2] ];
+        const d = new Date();
+        d['set'+m](d['get'+m]() - n);
+        d.setDate(d.getDate() - 1);
+        const res = (d.getFullYear()*10000) + ((d.getMonth()+1)*100) + d.getDate();
+        priceStartDateParsed = res < mindate ? ''+mindate : ''+res;
+      } else if (/^\d{8}$/.test(s)) {
+        const {gy,gm,gd} = toGregorian(+s.slice(0,4), +s.slice(4,6), +s.slice(6,8));
+        const res = (gy*10000) + (gm*100) + gd;
+        priceStartDateParsed = res < mindate ? ''+mindate : ''+res;
+      } else {
+        abort('Invalid option:', '--price-start-date', '\n\tPattern not matched:'.red, '^\\d{1,3}(y|m|d)$');
+        return;
+      }
+    }
+    
+    let priceColumnsParsed;
+    if (priceColumns) {
+      priceColumnsParsed = parseColstr(priceColumns);
+      if (!priceColumnsParsed) { abort('Invalid option:', '--price-columns'); return; }
+    }
+    
+    if ( !/^[0-2]$/.test(''+priceAdjust) )            { abort('Invalid option:', '--price-adjust',   '\n\tPattern not matched:'.red, '^[0-2]$');                     return; }
+    if ( !/^.$/.test(fileDelimiter) )                 { abort('Invalid option:', '--file-delimiter', '\n\tPattern not matched:'.red, '^.$');                         return; }
+  //if (!existsSync(fileOutdir))                      { abort('Invalid option:', '--file-outdir',    '\n\tDirectory doesn\'t exist:'.red, resolve(fileOutdir).grey); return; }
+    if ( !existsSync(fileOutdir) ) mkdirSync(fileOutdir);
+    if ( !statSync(fileOutdir).isDirectory() )        { abort('Invalid option:', '--file-outdir',    '\n\tPath is not a directory:'.red,  resolve(fileOutdir).grey); return; }
+    if ( !/^[0-4]$/.test(''+fileName) )               { abort('Invalid option:', '--file-name',      '\n\tPattern not matched:'.red, '^[0-4]$');                     return; }
+    if ( !/^.{1,11}$/.test(fileExtension) )           { abort('Invalid option:', '--file-name',      '\n\tPattern not matched:'.red, '^.{1,11}$');                   return; }
+    if ( !/^(utf8(bom)?|ascii)$/.test(fileEncoding) ) { abort('Invalid option:', '--file-encoding',  '\n\tPattern not matched:'.red, '^(utf8(bom)?|ascii)$');        return; }
+    
+    const _settings = {
+      columns:          priceColumnsParsed,
+      adjustPrices:     priceAdjust,
+      daysWithoutTrade: priceDaysWithoutTrade,
+      startDate:        priceStartDateParsed,
+      csv:              true,
+      csvHeaders:       fileHeaders,
+      csvDelimiter:     fileDelimiter,
+      onprogress:       (n) => progress.tick(n - progress.curr),
+      progressTotal:    86,
+      cache
+    };
+    const { error, data } = await tse.getPrices(symbols, _settings);
+    
+    if (error) {
+      const { code, title } = error;
+      const fatal = ('\nFatal Error #'+code+':').red +'  '+ title.red +'\n\n';
+      
+      if (code === 1) {
+        const { detail } = error;
+        const msg = typeof detail === 'object' ? detail.message : detail;
+        log(fatal + msg.red);
+      } else if (code === 2) {
+        const { symbols } = error;
+        log(fatal + symbols.join('\n').red);
+      } else if (code === 3) {
+        const { fails, succs } = error;
+        const msg = ''
+          + ('\n'+title+':').redBold + '\n\t'
+          + ('X fail: '+fails.length).red + '\n\t'
+          + ('√ done: '+succs.length).green;
+        log(msg);
+      }
+      process.exitCode = 1;
       return;
     }
-  }
-  
-  let priceColumnsParsed;
-  if (priceColumns) {
-    priceColumnsParsed = parseColstr(priceColumns);
-    if (!priceColumnsParsed) { abort('Invalid option:', '--price-columns'); return; }
-  }
-  
-  if ( !/^[0-2]$/.test(''+priceAdjust) )            { abort('Invalid option:', '--price-adjust',   '\n\tPattern not matched:'.red, '^[0-2]$');                     return; }
-  if ( !/^.$/.test(fileDelimiter) )                 { abort('Invalid option:', '--file-delimiter', '\n\tPattern not matched:'.red, '^.$');                         return; }
-//if (!existsSync(fileOutdir))                      { abort('Invalid option:', '--file-outdir',    '\n\tDirectory doesn\'t exist:'.red, resolve(fileOutdir).grey); return; }
-  if ( !existsSync(fileOutdir) ) mkdirSync(fileOutdir);
-  if ( !statSync(fileOutdir).isDirectory() )        { abort('Invalid option:', '--file-outdir',    '\n\tPath is not a directory:'.red,  resolve(fileOutdir).grey); return; }
-  if ( !/^[0-4]$/.test(''+fileName) )               { abort('Invalid option:', '--file-name',      '\n\tPattern not matched:'.red, '^[0-4]$');                     return; }
-  if ( !/^.{1,11}$/.test(fileExtension) )           { abort('Invalid option:', '--file-name',      '\n\tPattern not matched:'.red, '^.{1,11}$');                   return; }
-  if ( !/^(utf8(bom)?|ascii)$/.test(fileEncoding) ) { abort('Invalid option:', '--file-encoding',  '\n\tPattern not matched:'.red, '^(utf8(bom)?|ascii)$');        return; }
-  
-  const _settings = {
-    columns:          priceColumnsParsed,
-    adjustPrices:     priceAdjust,
-    daysWithoutTrade: priceDaysWithoutTrade,
-    startDate:        priceStartDateParsed,
-    csv:              true,
-    csvHeaders:       fileHeaders,
-    csvDelimiter:     fileDelimiter,
-    onprogress:       (n) => progress.tick(n - progress.curr),
-    progressTotal:    86,
-    cache
-  };
-  const { error, data } = await tse.getPrices(symbols, _settings);
-  
-  if (error) {
-    const { code, title } = error;
-    const fatal = ('\nFatal Error #'+code+':').red +'  '+ title.red +'\n\n';
     
-    if (code === 1) {
-      const { detail } = error;
-      const msg = typeof detail === 'object' ? detail.message : detail;
-      log(fatal + msg.red);
-    } else if (code === 2) {
-      const { symbols } = error;
-      log(fatal + symbols.join('\n').red);
-    } else if (code === 3) {
-      const { fails, succs } = error;
-      const msg = ''
-        + ('\n'+title+':').redBold + '\n\t'
-        + ('X fail: '+fails.length).red + '\n\t'
-        + ('√ done: '+succs.length).green;
-      log(msg);
+    const symins = await tse.getInstruments(true, false, 'Symbol');
+    let bom = '';
+    if (fileEncoding === 'utf8bom') {
+      bom = '\ufeff';
+      fileEncoding = undefined;
     }
-    process.exitCode = 1;
-    return;
+    
+    const datalen = data.length;
+    
+    data.forEach((file, i) => {
+      const sym = symbols[i];
+      const instrument = symins[sym];
+      const name = safeWinFilename( getFilename(fileName, instrument, priceAdjust) );
+      writeFileSync(join(fileOutdir, name+'.'+fileExtension), bom+file, fileEncoding);
+      progress.tick(14/datalen);
+    });
+    
+    if (!progress.complete) progress.tick(progress.total - progress.curr);
+    log(' √'.green);
+  } else {
+    log('\nNo symbols to process.'.redBold);
   }
-  
-  const symins = await tse.getInstruments(true, false, 'Symbol');
-  let bom = '';
-  if (fileEncoding === 'utf8bom') {
-    bom = '\ufeff';
-    fileEncoding = undefined;
-  }
-  
-  const datalen = data.length;
-  
-  data.forEach((file, i) => {
-    const sym = symbols[i];
-    const instrument = symins[sym];
-    const name = safeWinFilename( getFilename(fileName, instrument, priceAdjust) );
-    writeFileSync(join(fileOutdir, name+'.'+fileExtension), bom+file, fileEncoding);
-    progress.tick(14/datalen);
-  });
-  
-  if (!progress.complete) progress.tick(progress.total - progress.curr);
-  log(' √'.green);
-} else {
-  log('\nNo symbols to process.'.redBold);
-}
 
-const { save, saveReset } = rawOpts;
-if (save) saveSettings(settings);
-if (saveReset) saveSettings(defaultSettings);
-
+  const { save, saveReset } = rawOpts;
+  if (save) saveSettings(settings);
+  if (saveReset) saveSettings(defaultSettings);
+  
 })();
 function resolveSymbols(allSymbols, savedSymbols=[], instruments, { args, symbol, symbolFile, symbolFilter, symbolDelete, symbolAll }) {
   if (symbolAll) return symbolDelete ? [] : allSymbols;
