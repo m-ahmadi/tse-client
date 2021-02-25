@@ -99,33 +99,13 @@ let settings;
   if (symbols.length) {
     const progress = new Progress(':bar :percent (Elapsed: :elapsed s)', {total: 100, width: 18, complete: '█', incomplete: '░', clear: true});
     
-    const { priceColumns, priceStartDate, priceDaysWithoutTrade, fileDelimiter, fileHeaders, fileOutdir, fileExtension, cache } = settings;
-    let { priceAdjust, fileName, fileEncoding } = settings;
-    priceAdjust = +priceAdjust;
-    fileName    = +fileName;
-
-    let priceStartDateParsed;
-    if (priceStartDate) {
-      const s = priceStartDate;
-      const mindate = 20010321;
-      const relative = s.match(/^(\d{1,3})(y|m|d)$/);
-      if (relative) {
-        const n = parseInt(relative[1], 10);
-        const m = ({y:'FullYear',m:'Month',d:'Date'})[ relative[2] ];
-        const d = new Date();
-        d['set'+m](d['get'+m]() - n);
-        d.setDate(d.getDate() - 1);
-        const res = (d.getFullYear()*10000) + ((d.getMonth()+1)*100) + d.getDate();
-        priceStartDateParsed = res < mindate ? ''+mindate : ''+res;
-      } else if (/^\d{8}$/.test(s)) {
-        const {gy,gm,gd} = toGregorian(+s.slice(0,4), +s.slice(4,6), +s.slice(6,8));
-        const res = (gy*10000) + (gm*100) + gd;
-        priceStartDateParsed = res < mindate ? ''+mindate : ''+res;
-      } else {
-        abort('Invalid option:', '--price-start-date', '\n\tPattern not matched:'.red, '^\\d{1,3}(y|m|d)$');
-        return;
-      }
-    }
+    const { priceColumns, priceDaysWithoutTrade, fileDelimiter, fileHeaders, fileOutdir, fileExtension, cache } = settings;
+    let { priceStartDate, priceAdjust, fileName, fileEncoding } = settings;
+    priceStartDate = parseDateOption(priceStartDate);
+    priceAdjust    = +priceAdjust;
+    fileName       = +fileName;
+    
+    if (!priceStartDate) { abort('Invalid option:', '--price-start-date', '\n\tPattern not matched:'.red, '^\\d{1,3}(y|m|d)$'); return }
     
     let priceColumnsParsed;
     if (priceColumns) {
@@ -146,7 +126,7 @@ let settings;
       columns:          priceColumnsParsed,
       adjustPrices:     priceAdjust,
       daysWithoutTrade: priceDaysWithoutTrade,
-      startDate:        priceStartDateParsed,
+      startDate:        priceStartDate,
       csv:              true,
       csvHeaders:       fileHeaders,
       csvDelimiter:     fileDelimiter,
@@ -294,6 +274,28 @@ function parseColstr(str='') {
     return row;
   });
   return res.filter(i=>!i).length ? undefined : res;
+}
+function parseDateOption(s) {
+  let result;
+  
+  const mindate = 20010321;
+  const relative = s.match(/^(\d{1,3})(y|m|d)$/);
+  
+  if (relative) {
+    const n = parseInt(relative[1], 10);
+    const m = ({y:'FullYear',m:'Month',d:'Date'})[ relative[2] ];
+    const d = new Date();
+    d['set'+m](d['get'+m]() - n);
+    d.setDate(d.getDate() - 1);
+    const res = (d.getFullYear()*10000) + ((d.getMonth()+1)*100) + d.getDate();
+    result = res < mindate ? ''+mindate : ''+res;
+  } else if (/^\d{8}$/.test(s)) {
+    const {gy,gm,gd} = toGregorian(+s.slice(0,4), +s.slice(4,6), +s.slice(6,8));
+    const res = (gy*10000) + (gm*100) + gd;
+    result = res < mindate ? ''+mindate : ''+res;
+  }
+  
+  return result;
 }
 function getFilterPredicate(filters) {
   const { flow, yval, csecval } = {flow:[], yval:[], csecval:[], ...filters};
