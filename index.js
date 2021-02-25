@@ -76,7 +76,6 @@ const subs = new Set( cmd.commands.map(i=>[i.name(),i.alias()]).reduce((a,c)=>a=
 if (cmd.rawArgs.find(i=> subs.has(i))) return;
 if (cmd.opts().cacheDir) { handleCacheDir(cmd.cacheDir); return; }
 
-let settings;
 
 (async function () {
   let inserr;
@@ -92,7 +91,7 @@ let settings;
   ['save','saveReset'].forEach(k => delete opts[k]);
   Object.keys(opts).forEach(key => opts[key] === undefined && delete opts[key]);
   
-  settings = { ...defaultSettings, ...savedSettings, ...opts };
+  const settings = { ...defaultSettings, ...savedSettings, ...opts };
 
   log('Total symbols:'.grey, (symbols.length+'').yellow );
 
