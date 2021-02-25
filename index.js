@@ -22,7 +22,8 @@ const defaultSettings = {
   fileExtension:         'csv',
   fileDelimiter:         ',',
   fileEncoding:          'utf8bom',
-  fileHeaders:           true
+  fileHeaders:           true,
+  cache:                 true
 };
 if ( !existsSync(join(__dirname,'settings.json')) ) saveSettings(defaultSettings);
 const savedSettings = require('./settings.json');
@@ -50,6 +51,7 @@ cmd
   .option('-l, --file-delimiter <string>',   'A single character to use as delimiter in generated files. default: ,')
   .option('-e, --file-encoding <string>',    'Encoding of the generated files. options: utf8|utf8bom|ascii. default: utf8bom')
   .option('-H, --file-no-headers',           'Boolean. Generate files without the header row. default: false')
+  .option('-k, --no-cache',                  'Boolean. Do not cache the data. default: false')
   .option('--save',                          'Boolean. Save options for later use. default: false')
   .option('--save-reset',                    'Boolean. Reset saved options back to defaults. default: false')
   .option('--cache-dir [path]',              'Show or change the location of cache directory.'+t+'if [path] is provided, new location is set but'+t+'existing content is not moved to the new location.')
@@ -90,7 +92,7 @@ log('Total symbols:'.grey, (symbols.length+'').yellow );
 if (symbols.length) {
   const progress = new Progress(':bar :percent (Elapsed: :elapsed s)', {total: 100, width: 18, complete: '█', incomplete: '░', clear: true});
   
-  const { priceColumns, priceStartDate, priceDaysWithoutTrade, fileDelimiter, fileHeaders, fileOutdir, fileExtension } = settings;
+  const { priceColumns, priceStartDate, priceDaysWithoutTrade, fileDelimiter, fileHeaders, fileOutdir, fileExtension, cache } = settings;
   let { priceAdjust, fileName, fileEncoding } = settings;
   priceAdjust = +priceAdjust;
   fileName    = +fileName;
@@ -142,7 +144,8 @@ if (symbols.length) {
     csvHeaders:       fileHeaders,
     csvDelimiter:     fileDelimiter,
     onprogress:       (n) => progress.tick(n - progress.curr),
-    progressTotal:    86
+    progressTotal:    86,
+    cache
   };
   const { error, data } = await tse.getPrices(symbols, _settings);
   
@@ -247,7 +250,7 @@ function resolveSymbols(allSymbols, savedSymbols=[], instruments, { args, symbol
 function resolveSettings(symbols, defaults, saved, _cli) {
   const {
     priceColumns, priceAdjust, priceStartDate, priceDaysWithoutTrade,
-    fileOutdir, fileName, fileExtension, fileDelimiter, fileEncoding, fileNoHeaders: fileHeaders
+    fileOutdir, fileName, fileExtension, fileDelimiter, fileEncoding, fileNoHeaders: fileHeaders, cache
   } = _cli;
   
   const cli = {
@@ -262,6 +265,7 @@ function resolveSettings(symbols, defaults, saved, _cli) {
     fileDelimiter,
     fileEncoding,
     fileHeaders,
+    cache,
   };
   
   Object.keys(cli).forEach(key => cli[key] === undefined && delete cli[key]);
