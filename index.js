@@ -89,7 +89,7 @@ const itdopts = [
   '-f, --symbol-filter <string>',
   '-d, --symbol-delete',
   '-a, --symbol-all',
-  '-b, --start-date <string>',
+  '-b, --start-date <string>     default: "1d"',
   '-o, --outdir <string>',
   '-n, --file-name <number>',
   '-e, --file-encoding <string>',
