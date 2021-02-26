@@ -30,7 +30,7 @@ const defaultSettings = {
     endDate:      '',
     gzip:         false,
     outdir:       './',
-    fileName:     4,
+    dirName:       4,
     fileEncoding: 'utf8bom',
     fileHeaders:  true,
     cache:        true
@@ -90,8 +90,8 @@ const itdopts = [
   '-d, --symbol-delete',
   '-a, --symbol-all',
   '-b, --start-date <string>     default: "1d"',
-  '-o, --outdir <string>',
-  '-n, --file-name <number>',
+  '-o, --outdir <string>         Same as --file-outdir',
+  '-n, --dir-name <number>       Same as --file-name',
   '-e, --file-encoding <string>',
   '-H, --file-no-headers',
   '-k, --no-cache'
@@ -241,7 +241,7 @@ async function intraday(args, subOpts) {
     fileNoHeaders,
     cache
   } = gOpts;
-  const opts = { symbols, startDate, outdir, fileName, fileEncoding, fileHeaders: !fileNoHeaders, cache, ...subOpts };
+  const opts = { symbols, startDate, outdir, dirName: fileName, fileEncoding, fileHeaders: !fileNoHeaders, cache, ...subOpts };
   Object.keys(opts).forEach(key => opts[key] === undefined && delete opts[key]);
   
   const settings = { ..._defaultSettings, ..._savedSettings, ...opts };
@@ -252,9 +252,9 @@ async function intraday(args, subOpts) {
     const progress = new Progress(':bar :percent (Elapsed: :elapsed s)', {total: 100, width: 18, complete: '█', incomplete: '░', clear: true});
     
     const { gzip, outdir, cache, fileHeaders, altDate } = settings;
-    let { startDate, endDate, fileName, fileEncoding } = settings;
+    let { startDate, endDate, dirName, fileEncoding } = settings;
     startDate = parseDateOption(startDate);
-    fileName  = +fileName;
+    dirName   = +dirName;
     
     if (!startDate)                                   { abort('Invalid option:', '--start-date',    '\n\tPattern not matched:'.red, '^\\d{1,3}(y|m|d)$');       return; }
     if (endDate) {
@@ -264,7 +264,7 @@ async function intraday(args, subOpts) {
     }
     if ( !existsSync(outdir) ) mkdirSync(outdir);
     if ( !statSync(outdir).isDirectory() )            { abort('Invalid option:', '--output-dir',    '\n\tPath is not a directory:'.red,  resolve(outdir).grey); return; }
-    if ( !/^[0-4]$/.test(''+fileName) )               { abort('Invalid option:', '--file-name',     '\n\tPattern not matched:'.red, '^[0-4]$');                 return; }
+    if ( !/^[0-4]$/.test(''+dirName) )                { abort('Invalid option:', '--dir-name',      '\n\tPattern not matched:'.red, '^[0-4]$');                 return; }
     if ( !/^(utf8(bom)?|ascii)$/.test(fileEncoding) ) { abort('Invalid option:', '--file-encoding', '\n\tPattern not matched:'.red, '^(utf8(bom)?|ascii)$');    return; }
     
     const _settings = {
@@ -319,7 +319,7 @@ async function intraday(args, subOpts) {
     data.forEach((item, i) => {
       const sym = symbols[i];
       const instrument = symins[sym];
-      const name = safeWinFilename( getFilename(fileName, instrument) );
+      const name = safeWinFilename( getFilename(dirName, instrument) );
       const dir = join(outdir, name);
       if ( !existsSync(dir) ) mkdirSync(dir);
       
