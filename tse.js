@@ -1272,7 +1272,6 @@ async function getIntraday(symbols=[], _settings={}) {
 const instance = {
   getPrices,
   getInstruments,
-  getIntraday,
   
   get API_URL() { return API_URL; },
   set API_URL(v) {
@@ -1300,6 +1299,18 @@ const instance = {
   get columnList() {
     return [...Array(15)].map((v,i) => ({name: cols[i], fname: colsFa[i]}));
   },
+  
+  getIntraday,
+  
+  get INTRADAY_UPDATE_CHUNK_DELAY() { return INTRADAY_UPDATE_CHUNK_DELAY; },
+  set INTRADAY_UPDATE_CHUNK_DELAY(v) { if (Number.isInteger(v)) INTRADAY_UPDATE_CHUNK_DELAY = v; },
+  
+  get INTRADAY_UPDATE_RETRY_COUNT() { return INTRADAY_UPDATE_RETRY_COUNT; },
+  set INTRADAY_UPDATE_RETRY_COUNT(v) { if (Number.isInteger(v)) INTRADAY_UPDATE_RETRY_COUNT = v; },
+  
+  get INTRADAY_UPDATE_RETRY_DELAY() { return INTRADAY_UPDATE_RETRY_DELAY; },
+  set INTRADAY_UPDATE_RETRY_DELAY(v) { if (Number.isInteger(v)) INTRADAY_UPDATE_RETRY_DELAY = v; },
+  
   itdGroupCols
 };
 if (isNode) {
