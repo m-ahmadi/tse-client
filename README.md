@@ -357,10 +357,12 @@ interface ClosingPrice {
 }
 
 interface PriceSettings {               
-  columns?:          Array<[number, string?]>;
-  adjustPrices?:     AdjustOption;
-  daysWithoutTrade?: boolean;
-  startDate?:        string;
+  columns?:                     Array<[number, string?]>;
+  adjustPrices?:                AdjustOption;
+  daysWithoutTrade?:            boolean;
+  startDate?:                   string;
+  onprogress?(current: number): void;
+  progressTotal?:               number;
 }
 
 interface CustomError {
