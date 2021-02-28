@@ -918,7 +918,7 @@ const itdGroupCols = [
       'pbvol','pbcount','pbval','pbprice','pbvolpot',
       'psvol','pscount','psval','psprice','psvolpot',
       'lbvol','lbcount','lbval','lbprice','lbvolpot',
-      'lsvol','lscount','lsval','lsprice','lsvolpot', 'plchg']
+      'lsvol','lscount','lsval','lsprice','lsvolpot', 'lpchg']
   ],
   [ 'misc',  ['state','daymin','daymax'] ]
 ];
