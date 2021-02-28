@@ -29,6 +29,11 @@ The `0.x` and `1.x` versions were a direct port of the [official Windows app](ht
 	+ [`getInstruments()`](#tsegetinstrumentsstruct-boolean-arr-boolean-structkey-string)
 	+ [`getPrices()`](#tsegetpricessymbols-string-settings-pricesettings)
 	+ [`columnList`](#tsecolumnlist)
+	+ [`INTRADAY_UPDATE_CHUNK_DELAY`](#tseintraday_update_chunk_delay)
+	+ [`INTRADAY_UPDATE_RETRY_COUNT`](#tseintraday_update_retry_count)
+	+ [`INTRADAY_UPDATE_RETRY_DELAY`](#tseintraday_update_retry_delay)
+	+ [`getIntraday()`](#tsegetintradaysymbols-string-settings-intradaysettings)
+	+ [`itdGroupCols`](#tseitdgroupcols)
 - [Some Notes](#some-notes)	
 	
 # CLI
@@ -113,6 +118,10 @@ tse -n 3 --save
 tse -o ./myother --save
 tse
 ```
+#### Disable caching:
+```shell
+tse ذوب -k
+```
 #### View saved settings and more:
 ```shell
 tse ls -S
@@ -123,6 +132,22 @@ tse ls -M -T -I
 tse ls -T -O 1  # order by count (descending)
 tse ls -T -O 1_ # order by count (ascending)
 tse ls -h
+```
+
+#### Intraday crawler (Experimental):
+```shell
+tse itd ذوب                          # basic (crawl last day)
+tse itd ذوب -o ./mydata              # output directory
+tse itd ذوب -b 6d                    # crawl last 6 days
+tse itd ذوب -b 30d -m 20d            # crawl 10 days (from 30 days ago to 20 days ago)
+tse itd ذوب -b 13991201 -m 13991206  # crawl 6 days
+tse itd ذوب -k                       # do not cache the data
+tse itd ذوب -z                       # output gzip files
+tse itd ذوب -y                       # generate results with Shamsi dates
+
+tse itd ذوب -e ascii # file encoding
+tse itd ذوب -n 2     # directory name
+tse itd ذوب -H       # file without headers
 ```
 
 # Node
@@ -159,6 +184,13 @@ const tse = require('tse-client');
     instruments.filter(i => i.YVal === '300' && i.CSecVal === '27') // گروه فلزات بازار بورس
   );
   
+  // intraday crawler
+  let { data, error } = await tse.getIntraday(['ذوب', 'فولاد']), {
+    startDate: '20201122',
+    endDate: '20201122',
+    gzip: false
+  });
+  
 })();
 ```
 
@@ -191,6 +223,13 @@ const tse = require('tse-client');
     console.log(
       instruments.filter(i => i.YVal === '300' && i.CSecVal === '27') // گروه فلزات بازار بورس
     );
+   
+   // intraday crawler
+   let { data, error } = await tse.getIntraday(['ذوب', 'فولاد']), {
+      startDate: '20201122',
+      endDate: '20201122',
+      gzip: false
+   });
     
   })();
 </script>
@@ -237,7 +276,7 @@ dependency | desc
 `big.js`      | `Required`. For price adjustment calculations.
 `localforage` | `Required`. For storing in `indexedDB`. 
 `jalaali-js`  | `Optional`. Only needed for `ShamsiDate` column. *(Recommanded to not exclude this, though you can)*
-`pako`        | `Optional`. For compression of stored data. *(Highly recommanded, total data: 300 MB, compressed: 30 MB)*
+`pako`        | `Semi-Required`. Only used by [`getIntraday()`](#tsegetintradaysymbols-string-settings-intradaysettings).
 
 
 # API
@@ -324,6 +363,7 @@ Update (if needed) and return prices of instruments.
 		`2`: Capital Increase &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;(*`افزایش سرمایه`*)
 	+ **`startDate`:** Only return prices after this date. Min: `'20010321'`. Default: `'20010321'`
 	+ **`daysWithoutTrade`:** Whether to include days that have `0` trades. Default: `false`
+	+ **`cache`:** Whether to cache the downloaded data. Default: `true`
 	+ **`csv`:** Generate results as CSV strings. Default: `false`
 	+ **`csvHeaders`:** Include header row when generating CSV results. Default: `true`
 	+ **`csvDelimiter`:** A cell delimiter character to use when generating CSV results. Default: `','`
@@ -361,6 +401,7 @@ interface PriceSettings {
   adjustPrices?:                AdjustOption;
   daysWithoutTrade?:            boolean;
   startDate?:                   string;
+	cache?:                       boolean;
   onprogress?(current: number): void;
   progressTotal?:               number;
 }
@@ -464,6 +505,119 @@ index | name | fname
 12 | Volume         | حجم
 13 | Count          | تعداد معاملات
 14 | PriceYesterday | قیمت دیروز
+
+#### `tse.INTRADAY_UPDATE_CHUNK_DELAY`
+Amount of delay (in ms) to wait before requesting another chunk of dates.  
+Default: `100`
+#### `tse.INTRADAY_UPDATE_RETRY_COUNT`
+Amount of retry attempts before giving up.  
+Only integers.  
+Default: `7`
+#### `tse.INTRADAY_UPDATE_RETRY_DELAY`
+Amount of delay (in ms) to wait before making another retry.  
+Only integers.  
+Default: `1000`
+
+#### `tse.getIntraday(symbols: string[], settings?: IntradaySettings)`
+Crawl intraday data from the instrument's history page of the [tsetmc.com](http://tsetmc.com) website. **(Experimental)**
+- **`symbols`:** An array of *`Farsi`* instrument symbols.  
+- **`settings`:** A settings object.
+	+ **`startDate`:** Only return data after this date. Min: `'20010321'`. Default: `'20010321'`
+	+ **`endDate`:** Only return data before this date. Default: `''`
+	+ **`cache`:** Whether to cache the downloaded data. Default: `true`
+	+ **`gzip`:** Return data as Gzip `Buffer` in Node or `Uint8Array` in Browser. Default: `true`
+	+ **`onprogress`:** A callback function which gets called with a number indicating the progress. Default: `undefined`
+	+ **`progressTotal`:** A number to use as the completion point of progress. Default: `100`
+
+**return:** `Result`
+```typescript
+interface Result {
+  data:   Array<Buffer | Uint8Array | string>;
+  error?: CustomError;
+}
+
+interface IntradaySettings {               
+  startDate?:                   string;
+  endDate?:                     string;
+  cache?:                       boolean;
+  gzip?:                        boolean;
+  onprogress?(current: number): void;
+  progressTotal?:               number;
+}
+
+interface CustomError {
+  code:     ErrorType;
+  title:    string;
+  detail?:  string | Error;
+  symbols?: string[];
+  fails?:   string[];
+  succs?:   string[];
+}
+
+enum ErrorType {
+  FailedRequest = 1,
+  IncorrectSymbol = 2,
+  IncompletePriceUpdate = 3,
+  IncompleteIntradayUpdate = 4
+}
+```
+
+#### `tse.itdGroupCols`
+A list of all intraday data groups and their column names.
+
+## `price`
+time | last      | close    | open | high | low   | count     | volume    | value       | discarded
+---- |-----------|----------|------|------|-------|-----------|-----------|-------------|-----------
+زمان  | آخرین معامله | قیمت پایانی | اولین  | بیشترین | کمترین | تعداد معاملات | حجم معاملات |  ارزش معاملات | باطل شده
+
+![](/samples/itdcols-price.png)
+
+## `order`
+time | row  | askcount | askvol   | askprice | bidprice  | bidvol  | bidcount
+-----|------|----------|----------|----------|-----------|---------|---------
+زمان  | ردیف | تعداد تقاضا  | حجم تقاضا  | قیمت تقاضا | قیمت عرضه | حجم عرضه | تعداد عرضه
+
+![](/samples/itdcols-order.png)
+
+## `trade`
+time | count | volume | price | discarded
+-----|-------|--------|-------|---------
+زمان  | تعداد   | حجم    | قیمت   | باطل شده 
+
+## [`client`](http://cdn.tsetmc.com/Site.aspx?ParTree=1114111116&LnkIdn=3568)
+![](/samples/itdcols-client.png)
+column | desc | desc Fa
+-----------|----------------------------------------|----------------------------
+`pbvol`    | Person Buy Volume                      | حجم خرید حقیقی
+`pbcount`  | Person Buy Count                       | تعداد خرید حقیقی
+`pbval`    | Person Buy Value                       | ارزش خرید حقیقی
+`pbprice`  | Person Buy Price                       | قیمت خرید حقیقی
+`pbvolpot` | Person Buy Volume Percentage of Total  | درصد حجم خرید حقیقی از کل حجم
+.          |                                        |
+`psvol`    | Person Sell Volume                     | حجم فروش حقیقی
+`pscount`  | Person Sell Count                      | تعداد فروش حقیقی
+`psval`    | Person Sell Value                      | ارزش فروش حقیقی
+`psprice`  | Person Sell Price                      | قیمت فروش حقیقی
+`psvolpot` | Person Sell Volume Percentage of Total | درصد حجم فروش حقیقی از کل حجم
+.          |                                        | 
+`lbvol`    | Legal Buy Volume                       | حجم خرید حقوقی
+`lbcount`  | Legal Buy Count                        | تعداد خرید حقوقی
+`lbval`    | Legal Buy Value                        | ارزش خرید حقوقی
+`lbprice`  | Legal Buy Price                        | قیمت خرید حقوقی
+`lbvolpot` | Legal Buy Volume Percentage of Total   | درصد حجم خرید حقوقی از کل حجم
+.          |                                        | 
+`lsvol`    | Legal Sell Volume                      | حجم فروش حقوقی
+`lscount`  | Legal Sell Count                       | تعداد فروش حقوقی
+`lsval`    | Legal Sell Value                       | ارزش فروش حقوقی
+`lsprice`  | Legal Sell Price                       | قیمت فروش حقوقی
+`lsvolpot` | Legal Sell Volume Percentage of Total  | درصد حجم فروش حقوقی از کل حجم
+.          |                                        | 
+`lpchg` | Legal to Person Ownership Transfer        | تغییر مالکیت حقوقی به حقیقی
+
+## `misc`
+state| daymin| daymax
+-----|-------|-------
+[CEtaVal](http://cdn.tsetmc.com/Site.aspx?ParTree=111411111Y&LnkIdn=833) | [PSGelStaMin](http://cdn.tsetmc.com/Site.aspx?ParTree=1114111115&LnkIdn=777) | [PSGelStaMax](http://cdn.tsetmc.com/Site.aspx?ParTree=1114111115&LnkIdn=777)
 
 # Some Notes
 - `Instrument.Symbol` characters are cleaned from `zero-width` characters, `ك` and  `ي`.  
