@@ -1204,7 +1204,10 @@ async function getIntraday(symbols=[], _settings={}) {
     storedInscodeDevens = Object.keys(storedPrices).map(inscode => {
       const prices = storedPrices[inscode];
       if (!prices) return;
-      const devens = prices.split('\n').map(i => +i.split(',',2)[1]);
+      const devens = prices
+        .split('\n')
+        .filter(i => +i.split(',',5)[4] > 0) // count > 0
+        .map(i => +i.split(',',2)[1]);       // deven
       return [inscode, devens];
     }).filter(i=>i);
     
