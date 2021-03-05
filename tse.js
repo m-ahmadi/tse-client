@@ -1182,7 +1182,7 @@ async function getIntraday(symbols=[], _settings={}) {
   
   const { cache } = settings;
   
-  if ( !storedInscodeDevens || [...selins].find(i => !storedInscodes.has(i)) ) {
+  if ( !storedInscodeDevens.length || [...selins].find(i => !storedInscodes.has(i)) ) {
     const upres = await updatePrices(selection, cache, {pf, pn, ptot: 10});
     const { succs, fails, error } = upres;
     ({ pn } = upres);
