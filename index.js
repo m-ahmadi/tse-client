@@ -335,6 +335,7 @@ async function intraday(args, subOpts) {
       } else {
         
         for (let [deven, content] of item) {
+          if (content === 'N/A') continue;
           if (altDate) deven = shamsi(''+deven);
           const idir = join(dir, ''+deven);
           if ( !existsSync(idir) ) mkdirSync(idir);
