@@ -1098,8 +1098,6 @@ const itdUpdateManager = (function () {
           } else {
             onresult(text, chunk, id);
           }
-        } else if (res.status >= 500) {
-          onresult('N/A', chunk, id);
         } else {
           onresult(undefined, chunk, id);
         }
