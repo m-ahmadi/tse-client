@@ -85,7 +85,10 @@ const storage = (function () {
       if (!existsSync(d)) mkdirSync(d);
       const dirs = readdirSync(d).filter( i => statSync(join(d,i)).isDirectory() && selins.has(i) );
       const result = dirs.map(i => {
-        const files = readdirSync(join(d,i)).map(j => [ j.slice(0,-3), readFileSync(join(d,i,j)) ])
+        const files = readdirSync(join(d,i)).map(j => {
+          const z = j.slice(-3) === '.gz';
+          return [ z ? j.slice(0,-3) : j, readFileSync(join(d,i,j), z ? null : 'utf8') ];
+        });
         return [ i, Object.fromEntries(files) ];
       }).filter(i=>i);
       return Object.fromEntries(result);
@@ -96,7 +99,9 @@ const storage = (function () {
       const dir = join(d, key);
       if ( !existsSync(dir) ) mkdirSync(dir);
       Object.keys(obj).forEach(k => {
-        writeFileSync(join(dir, k+'.gz'), obj[k]);
+        const cont = obj[k];
+        const filename = k + (cont === 'N/A' ? '': '.gz');
+        writeFileSync(join(dir, filename), obj[k]);
       });
     };
     
