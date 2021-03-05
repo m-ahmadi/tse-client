@@ -1181,7 +1181,7 @@ async function getIntraday(symbols=[], _settings={}) {
   const { cache } = settings;
   
   if ( !storedInscodeDevens.length || [...selins].find(i => !storedInscodes.has(i)) ) {
-    const upres = await updatePrices(selection, cache, {pf, pn, ptot: 10});
+    const upres = await updatePrices(selection, cache, {pf, pn, ptot: +Big(ptot).mul(0.10)});
     const { succs, fails, error } = upres;
     ({ pn } = upres);
     
@@ -1246,7 +1246,7 @@ async function getIntraday(symbols=[], _settings={}) {
   if (pf) pf(pn= +Big(pn).plus( Big(ptot).mul(0.01) ) );
   
   if (toUpdate.length > 0) {
-    let { succs, fails } = await itdUpdateManager(toUpdate, cache, {pf, pn, ptot: 85});
+    let { succs, fails } = await itdUpdateManager(toUpdate, cache, {pf, pn, ptot: +Big(ptot).mul(0.85)});
     
     if (fails.length) {
       let k = Object.fromEntries( selection.map(i => [i.InsCode, i.Symbol]) );
