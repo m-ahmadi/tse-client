@@ -317,7 +317,10 @@ async function intraday(args, subOpts) {
     };
     
     data.forEach((item, i) => {
-      if (!item) { progress.tick(14/datalen); return; }
+      if (!item || item.filter(i => i[1] === 'N/A').length === item.length) {
+        progress.tick(14/datalen);
+        return;
+      }
       
       const sym = symbols[i];
       const instrument = symins[sym];
