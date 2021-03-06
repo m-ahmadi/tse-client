@@ -1123,7 +1123,7 @@ const itdUpdateManager = (function () {
     src = objify( inscode_devens.map(([a,b]) => [ a, b.map(i=>[i,undefined]) ]) );
     let chunks = [...inscode_devens].reduce((r,[inscode,devens]) => r=[...r, ...(devens ? devens.map(i=>[0,inscode,''+i]) : []) ], []);
     total = chunks.length;
-    pSR = Big(ptot).div(total);                    // each successful request:   ptot / total
+    pSR = ptot.div(total);                         // each successful request:   ptot / total
     pR = pSR.div(INTRADAY_UPDATE_RETRY_COUNT + 2); // each request:              pSR / (INTRADAY_UPDATE_RETRY_COUNT + 2)
     succs = [];
     fails = [];
@@ -1152,23 +1152,24 @@ async function getIntraday(symbols=[], _settings={}) {
   if (typeof pf !== 'function') pf = undefined;
   if (typeof ptot !== 'number') ptot = itdDefaultSettings.progressTotal;
   let pn = 0;
+  ptot = Big(ptot);
   
   const err = await updateInstruments();
-  if (pf) pf(pn= +Big(pn).plus( Big(ptot).mul(0.01) ) );
+  if (pf) pf(pn= +Big(pn).plus( ptot.mul(0.01) ) );
   if (err) {
     const { title, detail } = err;
     result.error = { code: 1, title, detail };
-    if (pf) pf(ptot);
+    if (pf) pf(+ptot);
     return result;
   }
   
   const instruments = parseInstruments(true, undefined, 'Symbol');
   const selection = symbols.map(i => instruments[i]);
   const notFounds = symbols.filter((v,i) => !selection[i]);
-  if (pf) pf(pn= +Big(pn).plus( Big(ptot).mul(0.01) ) );
+  if (pf) pf(pn= +Big(pn).plus( ptot.mul(0.01) ) );
   if (notFounds.length) {
     result.error = { code: 2, title: 'Incorrect Symbol', symbols: notFounds };
-    if (pf) pf(ptot);
+    if (pf) pf(+ptot);
     return result;
   }
   
@@ -1181,14 +1182,14 @@ async function getIntraday(symbols=[], _settings={}) {
   const { cache } = settings;
   
   if ( !storedInscodeDevens.length || [...selins].find(i => !storedInscodes.has(i)) ) {
-    const upres = await updatePrices(selection, cache, {pf, pn, ptot: +Big(ptot).mul(0.10)});
+    const upres = await updatePrices(selection, cache, {pf, pn, ptot: ptot.mul(0.10)});
     const { succs, fails, error } = upres;
     ({ pn } = upres);
     
     if (error) {
       const { title, detail } = error;
       result.error = { code: 1, title, detail };
-      if (pf) pf(ptot);
+      if (pf) pf(+ptot);
       return result;
     }
     
@@ -1217,7 +1218,7 @@ async function getIntraday(symbols=[], _settings={}) {
     }
   }
   storedInscodeDevens = Object.fromEntries(storedInscodeDevens);
-  if (pf) pf(pn= +Big(pn).plus( Big(ptot).mul(0.01) ) );
+  if (pf) pf(pn= +Big(pn).plus( ptot.mul(0.01) ) );
   
   /** note:  ↓... let == const (mostly) */
   
@@ -1243,10 +1244,10 @@ async function getIntraday(symbols=[], _settings={}) {
     let needupdate = devens.filter(deven => !stored[inscode][deven]);
     if (needupdate.length) return [inscode, needupdate];
   }).filter(i=>i);
-  if (pf) pf(pn= +Big(pn).plus( Big(ptot).mul(0.01) ) );
+  if (pf) pf(pn= +Big(pn).plus( ptot.mul(0.01) ) );
   
   if (toUpdate.length > 0) {
-    let { succs, fails } = await itdUpdateManager(toUpdate, cache, {pf, pn, ptot: +Big(ptot).mul(0.85)});
+    let { succs, fails } = await itdUpdateManager(toUpdate, cache, {pf, pn, ptot: ptot.mul(0.85)});
     
     if (fails.length) {
       let k = Object.fromEntries( selection.map(i => [i.InsCode, i.Symbol]) );
@@ -1257,7 +1258,7 @@ async function getIntraday(symbols=[], _settings={}) {
       };
     }
   }
-  if (pf) pf(pn= +Big(ptot).mul(0.99) );
+  if (pf) pf(pn= +ptot.mul(0.99) );
   
   let { gzip } = settings;
   
@@ -1270,7 +1271,7 @@ async function getIntraday(symbols=[], _settings={}) {
       return devens.map(deven => [ deven, typeof instr[deven] === 'string' ? instr[deven] : unzip(instr[deven]) ]);
     }
   });
-  if (pf) pf(ptot);
+  if (pf) pf(+ptot);
   
   return result;
 }
