@@ -678,8 +678,8 @@ const pricesUpdateManager = (function () {
     shouldCache = _shouldCache;
     ({ pf, pn, ptot } = po);
     total = updateNeeded.length;
-    pSR = Big(ptot).div( Math.ceil(Big(total).div(PRICES_UPDATE_CHUNK)) ); // each successful request:   ( ptot / Math.ceil(total / PRICES_UPDATE_CHUNK) )
-    pR = pSR.div(PRICES_UPDATE_RETRY_COUNT + 2);                           // each request:               pSR / (PRICES_UPDATE_RETRY_COUNT + 2)
+    pSR = ptot.div( Math.ceil(Big(total).div(PRICES_UPDATE_CHUNK)) ); // each successful request:   ( ptot / Math.ceil(total / PRICES_UPDATE_CHUNK) )
+    pR = pSR.div(PRICES_UPDATE_RETRY_COUNT + 2);                      // each request:               pSR / (PRICES_UPDATE_RETRY_COUNT + 2)
     succs = [];
     fails = [];
     retries = 0;
@@ -735,17 +735,17 @@ async function updatePrices(selection=[], shouldCache, {pf, pn, ptot}={}) {
       }
     }
   }).filter(i=>i);
-  if (pf) pf(pn= +Big(pn).plus( Big(ptot).mul(0.01) ) );
+  if (pf) pf(pn= +Big(pn).plus( ptot.mul(0.01) ) );
   
   const selins = new Set(selection.map(i => i.InsCode));
   const storedins = new Set(Object.keys(storedPrices));
   if ( !storedins.size || [...selins].find(i => !storedins.has(i)) ) {
     await storage.getItems(selins, storedPrices);
   }
-  if (pf) pf(pn= +Big(pn).plus( Big(ptot).mul(0.01) ) );
+  if (pf) pf(pn= +Big(pn).plus( ptot.mul(0.01) ) );
   
   if (toUpdate.length) {
-    const managerResult = await pricesUpdateManager(toUpdate, shouldCache, { pf, pn, ptot: +Big(ptot).sub(Big(ptot).mul(0.02)) });
+    const managerResult = await pricesUpdateManager(toUpdate, shouldCache, { pf, pn, ptot: ptot.sub(ptot.mul(0.02)) });
     const { succs, fails } = managerResult;
     ({ pn } = managerResult);
     
@@ -773,34 +773,35 @@ async function getPrices(symbols=[], _settings={}) {
   if (typeof pf !== 'function') pf = undefined;
   if (typeof ptot !== 'number') ptot = defaultSettings.progressTotal;
   let pn = 0;
+  ptot = Big(ptot);
   
   const err = await updateInstruments();
-  if (pf) pf(pn= +Big(pn).plus( Big(ptot).mul(0.01) ) );
+  if (pf) pf(pn= +Big(pn).plus( ptot.mul(0.01) ) );
   if (err) {
     const { title, detail } = err;
     result.error = { code: 1, title, detail };
-    if (pf) pf(ptot);
+    if (pf) pf(+ptot);
     return result;
   }
   
   const instruments = parseInstruments(true, undefined, 'Symbol');
   const selection = symbols.map(i => instruments[i]);
   const notFounds = symbols.filter((v,i) => !selection[i]);
-  if (pf) pf(pn= +Big(pn).plus( Big(ptot).mul(0.01) ) );
+  if (pf) pf(pn= +Big(pn).plus( ptot.mul(0.01) ) );
   if (notFounds.length) {
     result.error = { code: 2, title: 'Incorrect Symbol', symbols: notFounds };
-    if (pf) pf(ptot);
+    if (pf) pf(+ptot);
     return result;
   }
   
-  const updateResult = await updatePrices(selection, settings.cache, {pf, pn, ptot: +Big(ptot).mul(0.78)});
+  const updateResult = await updatePrices(selection, settings.cache, {pf, pn, ptot: ptot.mul(0.78)});
   const { succs, fails, error } = updateResult;
   ({ pn } = updateResult);
   
   if (error) {
     const { title, detail } = error;
     result.error = { code: 1, title, detail };
-    if (pf) pf(ptot);
+    if (pf) pf(+ptot);
     return result;
   }
   
