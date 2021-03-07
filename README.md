@@ -136,14 +136,14 @@ tse ls -h
 
 #### Intraday crawler (Experimental):
 ```shell
-tse itd ذوب                          # basic (crawl last day)
-tse itd ذوب -o ./mydata              # output directory
-tse itd ذوب -b 6d                    # crawl last 6 days
-tse itd ذوب -b 30d -m 20d            # crawl 10 days (from 30 days ago to 20 days ago)
-tse itd ذوب -b 13991201 -m 13991206  # crawl 6 days
-tse itd ذوب -k                       # do not cache the data
-tse itd ذوب -z                       # output gzip files
-tse itd ذوب -y                       # generate results with Shamsi dates
+tse itd ذوب                         # basic (crawl last day)
+tse itd ذوب -o ./mydata             # output directory
+tse itd ذوب -b 6d                   # crawl last 6 days
+tse itd ذوب -b 30d -m 20d           # crawl 10 days (from 30 days ago to 20 days ago)
+tse itd ذوب -b 13991201 -m 13991206 # crawl 6 days
+tse itd ذوب -k                      # do not cache the data
+tse itd ذوب -z                      # output gzip files
+tse itd ذوب -y                      # generate results with Shamsi dates
 
 tse itd ذوب -e ascii # file encoding
 tse itd ذوب -n 2     # directory name
@@ -532,7 +532,7 @@ Crawl intraday data from the instrument's history page of the [tsetmc.com](http:
 **return:** `Result`
 ```typescript
 interface Result {
-  data:   Array<Buffer | Uint8Array | string>;
+  data:   Array< [number[], Array<Buffer | Uint8Array | string>] >;
   error?: CustomError;
 }
 
