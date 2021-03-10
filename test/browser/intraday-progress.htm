@@ -10,7 +10,7 @@
 
 ins<input id="count" type="number" value="10" style="width:50" />
 &emsp;start<input id="s1"type="number"value="20201101"/> end<input id="e1"type="number"value="20201101"/>
-
+total<input id="tot" type="number" value="100" />
 <br><br>
 
 <progress id="prog" value="0" max="100"></progress>
@@ -33,9 +33,8 @@ async function a(c) {
 	r = await tse.getIntraday(syms, {
 		startDate: s1.value,
 		endDate: e1.value,
-		onprogress: function (n) {
-			prog.value = n;
-		}
+		onprogress: n => prog.value = n,
+		progressTotal: +tot.value
 	});
 	
 	console.log(r.data);
