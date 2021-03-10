@@ -1,64 +1,110 @@
-<meta charset="utf8" /><style>input[type=number]{width:82px;}</style>
+<meta charset="utf8" /><style>input[type=number]{width:110px;} textarea{font-size:1.2em;}</style>
 <script src="https://cdn.jsdelivr.net/npm/big.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jalaali-js/dist/jalaali.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/localforage"></script>
 <script src="https://cdn.jsdelivr.net/npm/pako/dist/pako.min.js"></script>
 <script src="../../tse.js"></script>
 
+<label><input type="checkbox" onclick="s.disabled = !this.checked" checked />symbol</label>
+<textarea id="s" class="large">ذوب فولاد خساپا شپنا</textarea>
+<br>
 
-
-basic:
-<button onclick="a1()">4 ins</button><button onclick="a1(1)">x</button>
-<button onclick="a2()">14 ins</button><button onclick="a2(1)">x</button>
-<button onclick="a3()">393 ins</button><button onclick="a3(1)">x</button>
-&emsp;start<input id="s1"type="number"value="20201101"/> end<input id="e1"type="number"value="20201101"/>
-<label>gzip<input id="z"type="checkbox" checked /></label>
-<label>cache<input id="y"type="checkbox" checked /></label>
-
+<label><input type="checkbox" onchange="f.disabled = !this.checked"/>filter</label>
+<input id="f" type="text" class="large" value="t=300" disabled />
+<label><input type="checkbox" onchange="slc.disabled = !this.checked" />slice(0,</label>
+<input id="slc" type="number" value="10" style="width:50;" disabled />)
 <br><br>
 
-<button onclick="b()">partial history</button>
-&emsp;start<input id="s2"type="number"value="20200708"/> end<input id="e2"type="number"value="20200712"/>
+start<input id="d1" type="number" value="20201101" />
+end  <input id="d2" type="number" value="20201101" />
+<br>
 
-
+<label><input id="z" type="checkbox" checked />gzip</label> <br>
+<label><input id="y" type="checkbox" checked />cache</label> <br>
+<br>
+<button onclick="go().then(i => this.disabled = false), this.disabled = true">Go</button>
+<button onclick="clear().then(i => this.disabled = false), this.disabled = true">Clear</button>
 
 <br><br><br><br><hr>
-
-clear:
-<button onclick="console.clear()">console</button>
-<button onclick="localforage.clear()">indexedDB</button>
-<button onclick="localStorage.clear()">localStorage</button>
+<button onclick="console.clear()">console.clear()</button>
+<button onclick="localforage.clear()">localforage.clear()</button>
+<button onclick="store.clear()">store.clear()</button>
+<button onclick="localStorage.clear()">localStorage.clear()</button>
 
 <script>
-let log = console.log;
 let r;
 
-async function a1(c) {
-	let syms = ['ذوب', 'فولاد', 'خساپا', 'شپنا'];
-	if (c) {await clear(syms); return;}
-	r = await tse.getIntraday(syms, {startDate: s1.value, endDate: e1.value, gzip: z.checked, cache: y.checked});
-	log(r.data);
-}
-async function a2(c) {
-	let syms = ['ذوب', 'فولاد', 'خساپا', 'شپنا', 'سشرق', 'فملی', 'کگل', 'خودرو', 'آپ', 'شستا', 'خاور', 'سشمال', 'چافست', 'کشرق'];
-	if (c) {await clear(syms); return;}
-	r = await tse.getIntraday(syms, {startDate: s1.value, endDate: e1.value, gzip: z.checked, cache: y.checked});
-	log(r.data);
-}
-async function a3() {
-	let syms = (await tse.getInstruments()).filter(i=> i.YVal === '300').map(i => i.Symbol);
-	r = await tse.getIntraday(syms, {startDate: s1.value, endDate: e1.value, gzip: z.checked, cache: y.checked});
-	log(r.data);
-}
-
-async function b() {
-	r = await tse.getIntraday(['ولپارس'], {startDate: s2.value, endDate: e2.value, gzip: z.checked, cache: y.checked}); // 20200410-20200412
-	log(r.data);
+async function go() {
+	const syms = await getSyms();
+	
+	r = await tse.getIntraday(syms, {
+		startDate: d1.value,
+		endDate:   d2.value,
+		gzip:      z.checked,
+		cache:     y.checked
+	});
+	
+	if (r) console.log(r.error || r.data);
 }
 
 let store = localforage.createInstance({name: 'tse.intraday'});
-async function clear(syms) {
-	let keys = (await tse.getInstruments()).filter(i => syms.includes(i.Symbol)).map(i => i.InsCode);
+async function clear() {
+	const syms = await getSyms();
+	const keys = (await tse.getInstruments()).filter(i => syms.includes(i.Symbol)).map(i => i.InsCode);
 	await Promise.all( keys.map(i => store.removeItem(i)) );
+}
+
+
+async function getSyms() {
+	let syms = [];
+	
+	if (!s.disabled) syms = s.value.split(' ');
+	
+	if (!f.disabled) {
+		const filters = parseFilterStr(f.value);
+		if (filters) {
+			const ins = await tse.getInstruments(true, true);
+			const predicate = getFilterPredicate(filters);
+			const matched = predicate ? ins.filter(predicate).map(i => i.Symbol) : [];
+			syms = [...syms, ...matched];
+		}
+		
+		if (!slc.disabled) syms = syms.slice(0, +slc.value);
+	}
+	
+	return [...new Set(syms)];
+}
+function parseFilterStr(str='') {
+	const map = {m:'flow', t:'yval', i:'csecval'};
+	
+	const arr = str.split(' ');
+	const result = {};
+	
+	for (const i of arr) {
+		if (i.indexOf('=') === -1) continue;
+		
+		const [key, val] = i.split('=');
+		
+		if ( !map[key] )               continue;
+		if ( !/^[\d\w,]+$/.test(val) ) continue;
+		
+		result[ map[key] ] = val.split(',')
+	}
+	
+	return Object.keys(result).length === arr.length ? result : undefined;
+}
+function getFilterPredicate(filters) {
+	const { flow, yval, csecval } = {flow:[], yval:[], csecval:[], ...filters};
+	const [f,y,c] = [flow, yval, csecval].map(i => i.length);
+	const predicate = 
+		y &&  f &&  c ? i => yval.includes(i.YVal) && flow.includes(i.Flow) && csecval.includes(i.CSecVal) :
+		y &&  f && !c ? i => yval.includes(i.YVal) && flow.includes(i.Flow) :
+		y && !f &&  c ? i => yval.includes(i.YVal) && csecval.includes(i.CSecVal) :
+	 !y &&  f &&  c ? i => flow.includes(i.Flow) && csecval.includes(i.CSecVal) :
+		y && !f && !c ? i => yval.includes(i.YVal) :
+	 !y &&  f && !c ? i => flow.includes(i.Flow) :
+	 !y && !f &&  c ? i => csecval.includes(i.CSecVal) :
+	 undefined;
+	return predicate;
 }
 </script>
