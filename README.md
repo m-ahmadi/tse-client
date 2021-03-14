@@ -401,7 +401,7 @@ interface PriceSettings {
   adjustPrices?:                AdjustOption;
   daysWithoutTrade?:            boolean;
   startDate?:                   string;
-	cache?:                       boolean;
+  cache?:                       boolean;
   onprogress?(current: number): void;
   progressTotal?:               number;
 }
