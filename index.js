@@ -99,9 +99,9 @@ const itdopts = [
 
 cmd.command('intraday [symbols...]').alias('itd').description('Crawl Intraday Data. (help: tse itd -h)')
   .addHelpText('after', '\nCommon Options:\n  '+itdopts)
-  .option('-m, --end-date <string>',      'Upper boundary for --start-date. default: ""'+tt+'Accepts same patterns as --start-date'+tt+'Cannot be less than --start-date'+tt+'If empty, then latest possible date is used')
-  .option('-z, --gzip',                   'Output raw gzip files. default: false')
-  .option('-y, --alt-date',               'Output results with Shamsi dates. default: false')
+  .option('-m, --end-date <string>',         'Upper boundary for --start-date. default: ""'+tt+'Accepts same patterns as --start-date'+tt+'Cannot be less than --start-date'+tt+'If empty, then latest possible date is used')
+  .option('-z, --gzip',                      'Output raw gzip files. default: false')
+  .option('-y, --alt-date',                  'Output results with Shamsi dates. default: false')
   .action(intraday);
 cmd.parse(process.argv);
 
