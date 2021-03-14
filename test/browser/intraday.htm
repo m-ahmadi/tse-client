@@ -1,4 +1,4 @@
-<meta charset="utf8" /><style>input[type=number]{width:110px;} textarea{font-size:1.2em;}</style>
+<meta charset="utf8" /><style>input[id*=d]{width:70px;} textarea{font-size:1.2em;}</style>
 <script src="https://cdn.jsdelivr.net/npm/big.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jalaali-js/dist/jalaali.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/localforage"></script>
@@ -15,8 +15,8 @@
 <input id="slc" type="number" value="10" style="width:50;" disabled />)
 <br><br>
 
-start<input id="d1" type="number" value="20201101" />
-end  <input id="d2" type="number" value="20201101" />
+start<input id="d1" type="text" value="1d" maxlength="8" />
+end  <input id="d2" type="text" value=""   maxlength="8" />
 <br>
 
 <label><input id="z" type="checkbox" checked />gzip</label> <br>
@@ -38,8 +38,8 @@ async function go() {
 	const syms = await getSyms();
 	
 	r = await tse.getIntraday(syms, {
-		startDate: d1.value,
-		endDate:   d2.value,
+		startDate: parseDateOption(d1.value),
+		endDate:   parseDateOption(d2.value),
 		gzip:      z.checked,
 		cache:     y.checked
 	});
@@ -106,5 +106,27 @@ function getFilterPredicate(filters) {
 	 !y && !f &&  c ? i => csecval.includes(i.CSecVal) :
 	 undefined;
 	return predicate;
+}
+function parseDateOption(s) {
+	let result;
+	
+	const mindate = 20010321;
+	const relative = s.match(/^(\d{1,3})(y|m|d)$/);
+	
+	if (relative) {
+		const n = parseInt(relative[1], 10);
+		const m = ({y:'FullYear',m:'Month',d:'Date'})[ relative[2] ];
+		const d = new Date();
+		d['set'+m](d['get'+m]() - n);
+		d.setDate(d.getDate() - 1);
+		const res = (d.getFullYear()*10000) + ((d.getMonth()+1)*100) + d.getDate();
+		result = res < mindate ? ''+mindate : ''+res;
+	} else if (/^\d{8}$/.test(s)) {
+		const {gy,gm,gd} = jalaali.toGregorian(+s.slice(0,4), +s.slice(4,6), +s.slice(6,8));
+		const res = (gy*10000) + (gm*100) + gd;
+		result = res < mindate ? ''+mindate : ''+res;
+	}
+	
+	return result;
 }
 </script>
