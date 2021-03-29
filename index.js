@@ -46,7 +46,7 @@ cmd
   .helpOption('-h, --help', 'Show help.')
   .name('tse')
   .usage('[symbols...] [options]\n  tse faSymbol1 faSymbol2 -o /mydata -j 1 -x txt -e utf8 -H')
-  .description('A client for receiving stock data from the Tehran Stock Exchange (TSE).')
+  .description('A client for fetching stock data from the Tehran Stock Exchange. (TSETMC)')
   .arguments('[symbols...]').action(() => 0)
   .option('-s, --symbol <string>',           'A space-separated string of symbols.')
   .option('-i, --symbol-file <string>',      'Path to a file that contains newline-separated symbols.')
