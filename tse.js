@@ -1036,7 +1036,7 @@ const itdUpdateManager = (function () {
       let _fails = [ ...fails.map(i => i.slice(1)) ];
       succs = [];
       fails = [];
-      src = {};
+      if (isBrowser) src = {};
       
       Promise.all(writing).then(() => {
         writing = [];
@@ -1062,13 +1062,18 @@ const itdUpdateManager = (function () {
       let _chunk = chunk.slice(1);
       succs.push(_chunk);
       let [inscode, deven] = _chunk;
-      let devens = src[inscode];
-      devens[deven] = res;
       
-      let alldone = !Object.keys(devens).find(k => !devens[k]);
-      if (alldone) {
-        let deven_text = Object.keys(devens).map(k => [k, devens[k]]);
-        writing.push( extractAndStore(inscode, deven_text, shouldCache) );
+      if (isBrowser) {
+        let devens = src[inscode];
+        devens[deven] = res;
+        
+        let alldone = !Object.keys(devens).find(k => !devens[k]);
+        if (alldone) {
+          let deven_text = Object.keys(devens).map(k => [k, devens[k]]);
+          writing.push( extractAndStore(inscode, deven_text, shouldCache) );
+        }
+      } else {
+        writing.push( extractAndStore(inscode, [[deven, res]], shouldCache) );
       }
       
       fails = fails.filter(i => i.join() !== chunk.join());
@@ -1126,7 +1131,7 @@ const itdUpdateManager = (function () {
   async function start(inscode_devens, _shouldCache, po) {
     shouldCache = _shouldCache;
     ({ pf, pn, ptot } = po);
-    src = objify( inscode_devens.map(([a,b]) => [ a, b.map(i=>[i,undefined]) ]) );
+    if (isBrowser) src = objify( inscode_devens.map(([a,b]) => [ a, b.map(i=>[i,undefined]) ]) );
     let chunks = [...inscode_devens].reduce((r,[inscode,devens]) => r=[...r, ...(devens ? devens.map(i=>[0,inscode,''+i]) : []) ], []);
     total = chunks.length;
     pSR = ptot.div(total);                         // each successful request:   ptot / total
