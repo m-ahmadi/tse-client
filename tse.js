@@ -1074,7 +1074,7 @@ const itdUpdateManager = (function () {
       fails = fails.filter(i => i.join() !== chunk.join());
       
       if (pf) {
-        const filled = pSR.div(INTRADAY_UPDATE_RETRY_COUNT + 2).mul(retries + 1);
+        let filled = pSR.div(INTRADAY_UPDATE_RETRY_COUNT + 2).mul(retries + 1);
         pf(pn= +Big(pn).plus( pSR.sub(filled) ) );
       }
     } else {
