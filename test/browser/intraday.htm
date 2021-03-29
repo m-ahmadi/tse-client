@@ -23,7 +23,7 @@ end  <input id="d2" type="text" value=""   maxlength="8" />
 <label><input id="y" type="checkbox" checked />cache</label> <br>
 <br>
 <button onclick="go().then(i => this.disabled = false), this.disabled = true">Go</button>
-<button onclick="clear().then(i => this.disabled = false), this.disabled = true">Clear</button>
+<button onclick="clr().then(i => this.disabled = false), this.disabled = true">Clear</button>
 
 <br><br><br><br><hr>
 <button onclick="console.clear()">console.clear()</button>
@@ -48,7 +48,7 @@ async function go() {
 }
 
 let store = localforage.createInstance({name: 'tse.intraday'});
-async function clear() {
+async function clr() {
 	const syms = await getSyms();
 	const keys = (await tse.getInstruments()).filter(i => syms.includes(i.Symbol)).map(i => i.InsCode);
 	await Promise.all( keys.map(i => store.removeItem(i)) );
