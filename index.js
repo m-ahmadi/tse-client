@@ -39,8 +39,9 @@ const defaultSettings = {
 if ( !existsSync(join(__dirname,'settings.json')) ) saveSettings(defaultSettings);
 const savedSettings = require('./settings.json');
 const { log } = console;
-const t = '\n\t\t\t\t\t';
-const tt = '\n\t\t\t\t';
+const t  = '\n\t\t\t\t\t ';
+const t2 = '\n\t\t\t\t ';
+const t3 = '\n\t\t\t     ';
 
 cmd
   .helpOption('-h, --help', 'Show help.')
@@ -79,7 +80,7 @@ cmd.command('list').alias('ls').description('Show information about current sett
   .option('-B, --id-board',                  'Show all possible board IDs. "Instrument.CComVal"')
   .option('-Y, --id-market-code',            'Show all possible market-code IDs. "Instrument.YMarNSC"')
   .option('-G, --id-symbol-gcode',           'Show all possible symbol-group IDs. "Instrument.CGrValCot"')
-  .option('-O, --id-sort [columnIndex]',     'Sort the IDs table by specifying the index of the column. default: 1'+t+'put underline at end for ascending sort: 1_')
+  .option('-O, --id-sort [columnIndex]',     'Sort the IDs table by specifying the index of the column. default: 1'+t2+'put underline at end for ascending sort: 1_')
   .option('--search <query>',                'Search symbols.')
   .action(list);
 
@@ -99,7 +100,7 @@ const itdopts = [
 
 cmd.command('intraday [symbols...]').alias('itd').description('Crawl Intraday Data. (help: tse itd -h)')
   .addHelpText('after', '\nCommon Options:\n  '+itdopts)
-  .option('-m, --end-date <string>',         'Upper boundary for --start-date. default: ""'+tt+'Accepts same patterns as --start-date'+tt+'Cannot be less than --start-date'+tt+'If empty, then latest possible date is used')
+  .option('-m, --end-date <string>',         'Upper boundary for --start-date. default: ""'+t3+'Accepts same patterns as --start-date'+t3+'Cannot be less than --start-date'+t3+'If empty, then latest possible date is used')
   .option('-z, --gzip',                      'Output raw gzip files. default: false')
   .option('-y, --alt-date',                  'Output results with Shamsi dates. default: false')
   .action(intraday);
