@@ -356,6 +356,7 @@ async function intraday(args, subOpts) {
       if (gzip) {
       
         for (let [deven, content] of item) {
+          if (!content) continue;
           if (altDate) deven = shamsi(''+deven);
           writeFileSync(join(dir, ''+deven+'.csv.gz'), content);
         }
@@ -363,7 +364,7 @@ async function intraday(args, subOpts) {
       } else {
         
         for (let [deven, content] of item) {
-          if (content === 'N/A') continue;
+          if (!content || content === 'N/A') continue;
           if (altDate) deven = shamsi(''+deven);
           const idir = join(dir, ''+deven);
           if ( !existsSync(idir) ) mkdirSync(idir);
