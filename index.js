@@ -170,27 +170,36 @@ if (cmd.opts().cacheDir) { handleCacheDir(cmd.cacheDir); return; }
     };
     const { error, data } = await tse.getPrices(symbols, _settings);
     
+    let incompleteError, incompleteCount;
     if (error) {
       const { code, title } = error;
-      const fatal = ('\nFatal Error #'+code+':').red +'  '+ title.red +'\n\n';
       
-      if (code === 1) {
-        const { detail } = error;
-        const msg = typeof detail === 'object' ? detail.message : detail;
-        log(fatal + msg.red);
-      } else if (code === 2) {
-        const { symbols } = error;
-        log(fatal + symbols.join('\n').red);
-      } else if (code === 3) {
-        const { fails, succs } = error;
-        const msg = ''
-          + ('\n'+title+':').redBold + '\n\t'
-          + ('X fail: '+fails.length).red + '\n\t'
-          + ('√ done: '+succs.length).green;
-        log(msg);
-      }
       process.exitCode = 1;
-      return;
+      
+      if (code === 1 || code === 2) {
+        const fatal = ('\nFatal Error #'+code+':').red +'  '+ title.red +'\n\n';
+        
+        if (code === 1) {
+          const { detail } = error;
+          const msg = typeof detail === 'object' ? detail.message : detail;
+          log(fatal + msg.red);
+        } else if (code === 2) {
+          const { symbols } = error;
+          log(fatal + symbols.join('\n').red);
+        }
+        
+        return;
+      
+      } else if (code === 3) {
+        const { fails } = error;
+        
+        incompleteCount = fails.length;
+        incompleteError = ''
+            + ('\n'+title+':').redBold + '\n'
+            + fails.join(' ').red;
+        
+        fails.forEach(i => data[ symbols.indexOf(i) ] = undefined);
+      }
     }
     
     const symins = await tse.getInstruments(true, false, 'Symbol');
@@ -211,7 +220,13 @@ if (cmd.opts().cacheDir) { handleCacheDir(cmd.cacheDir); return; }
     });
     
     if (!progress.complete) progress.tick(progress.total - progress.curr);
-    log(' √'.green);
+    
+    if (incompleteError) {
+      log((' √: '+(datalen - incompleteCount)).green + ('\n X: '+incompleteCount).red);
+      log(incompleteError);
+    } else {
+      log(' √'.green);
+    }
   } else {
     log('\nNo symbols to process.'.redBold);
   }
