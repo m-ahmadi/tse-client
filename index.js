@@ -296,11 +296,12 @@ async function intraday(args, subOpts) {
     let incompleteError, incompleteCount;
     if (error) {
       const { code, title } = error;
-      const fatal = ('\nFatal Error #'+code+':').red +'  '+ title.red +'\n\n';
       
       process.exitCode = 1;
       
       if (code === 1 || code === 2) {
+        const fatal = ('\nFatal Error #'+code+':').red +'  '+ title.red +'\n\n';
+        
         if (code === 1) {
           const { detail } = error;
           const msg = typeof detail === 'object' ? detail.message : detail;
