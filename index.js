@@ -314,14 +314,24 @@ async function intraday(args, subOpts) {
         return;
         
       } else if (code === 3 || code === 4) {
-          const { fails } = error;
-          
+        const { fails } = error;
+        
+        if (code === 3) {
           incompleteCount = fails.length;
           incompleteError = ''
-            + ('\n'+title+':').redBold + '\n'
-            + fails.join('\n').red;
+              + ('\n'+title+':').redBold + '\n'
+              + fails.join('\n').red;
           
           fails.forEach(i => data[ symbols.indexOf(i) ] = undefined);
+          
+        } else if (code === 4) {
+          const syms = Object.keys(fails);
+          
+          incompleteCount = syms.length;
+          incompleteError = ''
+            + ('\n'+title+':').redBold + '\n'
+            + syms.map(sym => sym +': '+ fails[sym].join(' ')).join('\n').red;
+        }
       }
     }
     
