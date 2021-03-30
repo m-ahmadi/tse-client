@@ -196,7 +196,7 @@ if (cmd.opts().cacheDir) { handleCacheDir(cmd.cacheDir); return; }
         incompleteCount = fails.length;
         incompleteError = ''
             + ('\n'+title+':').redBold + '\n'
-            + fails.join(' ').red;
+            + fails.join('\n').red;
         
         fails.forEach(i => data[ symbols.indexOf(i) ] = undefined);
       }
@@ -319,7 +319,7 @@ async function intraday(args, subOpts) {
           incompleteCount = fails.length;
           incompleteError = ''
             + ('\n'+title+':').redBold + '\n'
-            + fails.join(' ').red;
+            + fails.join('\n').red;
           
           fails.forEach(i => data[ symbols.indexOf(i) ] = undefined);
       }
