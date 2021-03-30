@@ -194,8 +194,8 @@ if (cmd.opts().cacheDir) { handleCacheDir(cmd.cacheDir); return; }
         const { fails } = error;
         
         incompleteCount = fails.length;
-        incompleteError = ''
-            + ('\n'+title+':').redBold + '\n'
+        incompleteError = '\n'
+            + (title+':').redBold + '\n'
             + fails.join('\n').red;
         
         fails.forEach(i => data[ symbols.indexOf(i) ] = undefined);
@@ -318,8 +318,8 @@ async function intraday(args, subOpts) {
         
         if (code === 3) {
           incompleteCount = fails.length;
-          incompleteError = ''
-              + ('\n'+title+':').redBold + '\n'
+          incompleteError = '\n'
+              + (title+':').redBold + '\n'
               + fails.join('\n').red;
           
           fails.forEach(i => data[ symbols.indexOf(i) ] = undefined);
@@ -328,8 +328,8 @@ async function intraday(args, subOpts) {
           const syms = Object.keys(fails);
           
           incompleteCount = syms.length;
-          incompleteError = ''
-            + ('\n'+title+':').redBold + '\n'
+          incompleteError = '\n'
+            + (title+':').redBold + '\n'
             + syms.map(sym => sym +': '+ fails[sym].join(' ')).join('\n').red;
         }
       }
