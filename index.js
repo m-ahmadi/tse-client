@@ -112,7 +112,7 @@ if (cmd.opts().cacheDir) { handleCacheDir(cmd.cacheDir); return; }
 
 
 
-(async function () {
+(async () => {
   let inserr;
   const instruments = await tse.getInstruments().catch(err => inserr = err);
   if (inserr) { log('\nFatal Error #1:  '.red + inserr.title.red +'\n\n'+ inserr.detail.message.red); process.exitCode = 1; return; }
