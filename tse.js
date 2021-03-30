@@ -1279,7 +1279,7 @@ async function getIntraday(symbols=[], _settings={}) {
     if (gzip) {
       return devens.map(deven => [ deven, instr[deven] ]);
     } else {
-      return devens.map(deven => [ deven, typeof instr[deven] === 'string' ? instr[deven] : unzip(instr[deven]) ]);
+      return devens.map(deven => [ deven, !instr[deven] || typeof instr[deven] === 'string' ? instr[deven] : unzip(instr[deven]) ]);
     }
   });
   if (pf) pf(+ptot);
