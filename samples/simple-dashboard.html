@@ -14,7 +14,7 @@ last<input id="_b" type="number" min="1" value="1" style="width:40px;">month(s)
 <div id="_charts" style="display: grid; grid-template-columns: auto auto auto; row-gap: .5rem; column-gap: .2rem;"></div>
 
 <script src="../dist/tse.bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.4"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 let data = {};
 let charts = [];
@@ -37,7 +37,6 @@ async function makeChart(_symbol='', title='', w=+_w.value, h=+_h.value, monthsB
 	const pointRadius = [...[6,6,5,5,4,3,2,1,1,1,0,0], ...Array(100).fill(0)][radiusIdx];
 	
 	const chart = new Chart(div.children[0], {
-		type: 'bar',
 		data: {
 			labels: symbol.date.map(n => {
 				const s = ''+n;
@@ -57,6 +56,7 @@ async function makeChart(_symbol='', title='', w=+_w.value, h=+_h.value, monthsB
 				},
 				{
 					data: chg,
+					type: 'bar',
 					label: 'تغییر',
 					backgroundColor: chg.map(n => n > 0 ? 'green' : 'crimson'),
 					yAxisID: 'y2',
@@ -65,72 +65,61 @@ async function makeChart(_symbol='', title='', w=+_w.value, h=+_h.value, monthsB
 		},
 		options: {
 			responsive: true,
-			title: {
-				display: true,
-				text: title + ' - ' + monthsBack + ' ماه قبل',
-				fontFamily: 'Calibri',
-				fontSize: 36,
-			},
-			legend: {
-				position: 'bottom',
-				labels: {
-					fontFamily: 'Calibri',
-					fontSize: 14,
-					fontStyle: 'bold'
-				},
-			},
 			scales: {
-				xAxes: [{
-					gridLines: {display: false},
-					scaleLabel: {
+				x: {
+					grid: {display: false},
+					title: {
 						display: true,
-						labelString: 'زمان',
-						fontFamily: 'Calibri',
-						fontSize: 30
+						text: 'زمان',
+						font: {family: 'Calibri', size: 30}
 					},
-					ticks: { maxRotation: 40 }
-				}],
-				yAxes: [
-					{
-						position: 'left',
-						id: 'y2',
-						scaleLabel: {
-							display: true,
-							labelString: 'مقدار تغییر',
-							fontFamily: 'Calibri',
-							fontSize: 24
-						},
-						ticks: {
-							callback: formatNum
-						}
+					ticks: {maxRotation: 40},
+				},
+				y1: {
+					position: 'right',
+					grid: {display: false},
+					title: {
+						display: true,
+						text: 'مقدار شاخص',
+						font: {family: 'Calibri', size: 24}
 					},
-					{
-						position: 'right',
-						id: 'y1',
-						gridLines: {display: false},
-						scaleLabel: {
-							display: true,
-							labelString: 'مقدار شاخص',
-							fontFamily: 'Calibri',
-							fontSize: 24
-						},
-						ticks: {
-							callback: formatNum
-						}
-					}
-				]
+					ticks: {callback: formatNum},
+				},
+				y2: {
+					position: 'left',
+					title: {
+						display: true,
+						text: 'مقدار تغییر',
+						font: {family: 'Calibri', size: 24}
+					},
+					ticks: {callback: formatNum},
+				}
 			},
-			tooltips: {
-				mode: 'index',
-				callbacks: {
-					title: (tooltips, obj) => {
-						let s = symbol.date[ tooltips[0].index ] + '';
-						let d = jalaali.toJalaali(+s.slice(0,4), +s.slice(4,6), +s.slice(6,8));
-						return (''+d.jy).slice(2) +'-'+ d.jm +'-'+ d.jd;
+			plugins: {
+				title: {
+					display: true,
+					text: title + ' - ' + monthsBack + ' ماه قبل',
+					font: {family: 'Calibri', size: 36}
+				},
+				legend: {
+					position: 'bottom',
+					labels: {
+						font: {family: 'Calibri', size: 14, style: 'bold'}
 					},
-					label: (tooltip, obj) => (+tooltip.value).toLocaleString(),
+				},
+				tooltip: {
+					mode: 'index',
+					callbacks: {
+						title: (tooltips, obj) => {
+							let s = symbol.date[ tooltips[0].dataIndex ] + '';
+							let d = jalaali.toJalaali(+s.slice(0,4), +s.slice(4,6), +s.slice(6,8));
+							return (''+d.jy).slice(2) +'-'+ d.jm +'-'+ d.jd;
+						},
+						label: (tooltip, obj) => tooltip.formattedValue,
+					}
 				}
 			}
+			
 		}
 	});
 	
