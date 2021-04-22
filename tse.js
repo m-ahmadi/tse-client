@@ -905,6 +905,7 @@ async function getInstruments(struct=true, arr=true, structKey='InsCode') {
   return parseInstruments(struct, arr, structKey);
 }
 //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+let INTRADAY_URL = (server='',inscode='',deven='') => `http://cdn${server}.tsetmc.com/Loader.aspx?ParTree=15131P&i=${inscode}&d=${deven}`;
 let INTRADAY_UPDATE_CHUNK_DELAY = 100;
 let INTRADAY_UPDATE_RETRY_COUNT = 7;
 let INTRADAY_UPDATE_RETRY_DELAY = 1000;
@@ -1093,7 +1094,7 @@ const itdUpdateManager = (function () {
   async function request(chunk=[], id) {
     let [server, inscode, deven] = chunk;
     
-    fetch('http://cdn'+(server?server:'')+'.tsetmc.com/Loader.aspx?ParTree=15131P&i='+inscode+'&d='+deven)
+    fetch(INTRADAY_URL((server?server:''), inscode, deven))
       .then(async res => {
         let { status } = res;
         
@@ -1319,6 +1320,14 @@ const instance = {
   },
   
   getIntraday,
+  
+  get INTRADAY_URL() { return INTRADAY_URL; },
+  set INTRADAY_URL(v) {
+    if (typeof v !== 'function') return;
+    let bad;
+    try { new URL(v()); } catch (e) { bad = true; throw e; }
+    if (!bad) INTRADAY_URL = v;
+  },
   
   get INTRADAY_UPDATE_CHUNK_DELAY() { return INTRADAY_UPDATE_CHUNK_DELAY; },
   set INTRADAY_UPDATE_CHUNK_DELAY(v) { if (Number.isInteger(v)) INTRADAY_UPDATE_CHUNK_DELAY = v; },
