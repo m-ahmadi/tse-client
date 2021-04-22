@@ -29,6 +29,7 @@ The `0.x` and `1.x` versions were a direct port of the [official Windows app](ht
 	+ [`getInstruments()`](#tsegetinstrumentsstruct-boolean-arr-boolean-structkey-string)
 	+ [`getPrices()`](#tsegetpricessymbols-string-settings-pricesettings)
 	+ [`columnList`](#tsecolumnlist)
+	+ [`INTRADAY_URL`](#tseintraday_url)
 	+ [`INTRADAY_UPDATE_CHUNK_DELAY`](#tseintraday_update_chunk_delay)
 	+ [`INTRADAY_UPDATE_RETRY_COUNT`](#tseintraday_update_retry_count)
 	+ [`INTRADAY_UPDATE_RETRY_DELAY`](#tseintraday_update_retry_delay)
@@ -506,6 +507,13 @@ index | name | fname
 13 | Count          | تعداد معاملات
 14 | PriceYesterday | قیمت دیروز
 
+#### `tse.INTRADAY_URL`
+The URL from which the data is crawled.  
+Must be a function that returns a valid URL string.  
+Default:
+```javascript
+(server='', inscode='', deven='') => `http://cdn${server}.tsetmc.com/Loader.aspx?ParTree=15131P&i=${inscode}&d=${deven}`;
+```
 #### `tse.INTRADAY_UPDATE_CHUNK_DELAY`
 Amount of delay (in ms) to wait before requesting another chunk of dates.  
 Default: `100`
