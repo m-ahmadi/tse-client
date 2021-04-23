@@ -927,7 +927,8 @@ const itdGroupCols = [
       'lbvol','lbcount','lbval','lbprice','lbvolpot',
       'lsvol','lscount','lsval','lsprice','lsvolpot', 'lpchg']
   ],
-  [ 'misc',  ['state','daymin','daymax'] ]
+  [ 'misc',  ['state','daymin','daymax'] ],
+  [ 'shareholder', ['shares','sharespot','change','companycode','companyname'] ]
 ];
 
 let stored = {};
@@ -976,8 +977,7 @@ async function extractAndStore(inscode='', deven_text=[], shouldCache) {
     let ClientType      = parseRaw('var ClientTypeData=[', text);
     let InstrumentState = parseRaw('var InstrumentStateData=[', text);
     let StaticTreshhold = parseRaw('var StaticTreshholdData=[', text);
-    // let ShareHolder     = parseRaw('var ShareHolderData=[', text);
-    // let ShareHolderYesterday = parseRaw('var ShareHolderDataYesterday=[', text);
+    let ShareHolder     = parseRaw('var ShareHolderData=[', text);
     
     let coli;
     
@@ -1004,8 +1004,15 @@ async function extractAndStore(inscode='', deven_text=[], shouldCache) {
     if (b.length && b[1].length) { daymin = b[1][2]; daymax = b[1][1]; }
     let misc = [state, daymin, daymax].join(',');
     
+    coli = [2,3,4,0,5];
+    let shareholder = ShareHolder.filter(i=>i[4]).map(row => {
+      row[4] = ({ArrowUp:'+', ArrowDown:'-'})[row[4]];
+      row[5] = cleanFa(row[5]);
+      return coli.map(i => row[i]).join(',');
+    }).join('\n');
     
-    let file = [price, order, trade, client, misc].join('\n\n');
+    
+    let file = [price, order, trade, client, misc, shareholder].filter(i=>i).join('\n\n');
     storedInstrument[deven] = zip(file);
   }
   
