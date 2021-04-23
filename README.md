@@ -627,6 +627,11 @@ state| daymin| daymax
 -----|-------|-------
 [CEtaVal](http://cdn.tsetmc.com/Site.aspx?ParTree=111411111Y&LnkIdn=833) | [PSGelStaMin](http://cdn.tsetmc.com/Site.aspx?ParTree=1114111115&LnkIdn=777) | [PSGelStaMax](http://cdn.tsetmc.com/Site.aspx?ParTree=1114111115&LnkIdn=777)
 
+## `shareholder`
+shares | sharespot     | change | companycode | companyname
+-------|---------------|--------|-------------|-------------
+تعداد سهم | درصد از کل سهام | نوع تغییر | کد شرکت     | نام شرکت
+
 # Some Notes
 - `Instrument.Symbol` characters are cleaned from `zero-width` characters, `ك` and  `ي`.  
 - The price adjustment algorithm is still a direct port of the [official Windows app](http://cdn.tsetmc.com/Site.aspx?ParTree=111A11).
