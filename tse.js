@@ -992,8 +992,8 @@ async function extractAndStore(inscode='', deven_text=[], shouldCache) {
       let [h,m,s] = row[1].split(':');
       let timeint = (+h*10000) + (+m*100) + (+s) + '';
       row[1] = timeint;
-      return coli.map(i => row[i]).join(',');
-    }).join('\n');
+      return coli.map(i => row[i]);
+    }).sort((a,b)=>+a[0]-b[0]).map(i=>i.join(',')).join('\n');
     
     coli = [4,0,12,16,8,6,2,14,18,10,5,1,13,17,9,7,3,15,19,11,20];
     let client = coli.map(i=> ClientType[i]).join(',');
