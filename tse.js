@@ -292,6 +292,23 @@ class Instrument {
     this.YVal         = row[17];        // string نوع نماد
   }
 }
+class InstrumentITD {
+  constructor(_row='') {
+    const row = _row.split(',');
+    if (row.length !== 11) throw new Error('Invalid InstrumentITD data!');
+    this.InsCode      = row[0];
+    this.LVal30       = cleanFa(row[1]); // نام 30 رقمي فارسي نماد
+    this.LVal18AFC    = cleanFa(row[2]); // کد 18 رقمي فارسي نماد
+    this.FlowNameBare = cleanFa(row[3]);
+    this.FlowName     = cleanFa(row[4]);
+    this.Flow         = row[5];
+    this.CGrValCot    = row[6];
+    this.CIsin        = row[7];
+    this.InstrumentID = row[8];
+    this.ZTitad       = row[9];          // تعداد سھام
+    this.BaseVol      = row[10];         // حجم مبنا
+  }
+}
 class Share {
   constructor(_row='') {
     const row = _row.split(',');
@@ -305,11 +322,12 @@ class Share {
 }
 //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 // utils
-function parseInstruments(struct=false, arr=false, structKey='InsCode') {
-  const rows = storage.getItem('tse.instruments').split('\n');
+function parseInstruments(struct=false, arr=false, structKey='InsCode', itd=false) {
+  const rows = storage.getItem('tse.instruments'+(itd?'.intraday':'')).split('\n');
   const instruments = arr ? [] : {};
+  const Struct = itd ? InstrumentITD : Instrument;
   for (const row of rows) {
-    const item = struct ? new Instrument(row) : row;
+    const item = struct ? new Struct(row) : row;
     if (arr) {
       instruments.push(item);
     } else {
@@ -1311,6 +1329,12 @@ async function getIntraday(symbols=[], _settings={}) {
   
   return result;
 }
+
+async function getIntradayInstruments(struct=true, arr=true, structKey='InsCode') {
+  const valids = Object.keys(new InstrumentITD([...Array(11).keys()].join(',')));
+  if (valids.indexOf(structKey) === -1) structKey = 'InsCode';
+  return parseInstruments(struct, arr, structKey, true);
+}
 //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 const instance = {
   getPrices,
@@ -1344,6 +1368,7 @@ const instance = {
   },
   
   getIntraday,
+  getIntradayInstruments,
   
   get INTRADAY_URL() { return INTRADAY_URL; },
   set INTRADAY_URL(v) {
