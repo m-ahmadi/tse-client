@@ -1032,6 +1032,8 @@ const itdUpdateManager = (function () {
   let writing = [];
   let pf, pn, ptot, pSR, pR;
   let shouldCache;
+  let inslastdeven = {};
+  let extractedIns = {};
   
   function poll() {
     if (timeouts.size > 0 || qeudRetry) {
@@ -1045,6 +1047,14 @@ const itdUpdateManager = (function () {
       succs = [];
       fails = [];
       if (isBrowser) src = {};
+      
+      let storedIns = storage.getItem('tse.instruments.intraday');
+      storedIns = objify( (storedIns ? storedIns.split('\n') : []).map(i=> [i.split(',',1)[0], i]) );
+      storedIns = { ...storedIns, ...extractedIns };
+      storedIns = Object.keys(storedIns).map(k => storedIns[k]).join('\n');
+      storage.setItem('tse.instruments.intraday', storedIns);
+      inslastdeven = {};
+      extractedIns = {};
       
       Promise.all(writing).then(() => {
         writing = [];
@@ -1070,6 +1080,11 @@ const itdUpdateManager = (function () {
       let _chunk = chunk.slice(1);
       succs.push(_chunk);
       let [inscode, deven] = _chunk;
+      
+      if (deven === inslastdeven[inscode] && text !== 'N/A') {
+        let row = JSON.parse( text.split('var InstSimpleData=')[1].split(';var ')[0].replace(/'/g,'"') );
+        extractedIns[inscode] = [inscode, ...row].join(',');
+      }
       
       if (isBrowser) {
         let devens = src[inscode];
@@ -1151,6 +1166,8 @@ const itdUpdateManager = (function () {
     timeouts = new Map();
     qeudRetry = undefined;
     writing = [];
+    inslastdeven = objify( inscode_devens.map(([a,b])=> [a, ''+b[b.length-1]]) );
+    extractedIns = {};
     
     batch(chunks);
     
