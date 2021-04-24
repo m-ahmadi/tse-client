@@ -1066,8 +1066,7 @@ const itdUpdateManager = (function () {
       fails = [];
       if (isBrowser) src = {};
       
-      let storedIns = storage.getItem('tse.instruments.intraday');
-      storedIns = objify( (storedIns ? storedIns.split('\n') : []).map(i=> [i.split(',',1)[0], i]) );
+      let storedIns = parseInstruments(false, false, undefined, true);
       storedIns = { ...storedIns, ...extractedIns };
       storedIns = Object.keys(storedIns).map(k => storedIns[k]).join('\n');
       storage.setItem('tse.instruments.intraday', storedIns);
