@@ -34,6 +34,7 @@ The `0.x` and `1.x` versions were a direct port of the [official Windows app](ht
 	+ [`INTRADAY_UPDATE_RETRY_COUNT`](#tseintraday_update_retry_count)
 	+ [`INTRADAY_UPDATE_RETRY_DELAY`](#tseintraday_update_retry_delay)
 	+ [`getIntraday()`](#tsegetintradaysymbols-string-settings-intradaysettings)
+	+ [`getIntradayInstruments()`](#tsegetintradayinstrumentsstruct-boolean-arr-boolean-structkey-string)
 	+ [`itdGroupCols`](#tseitdgroupcols)
 - [Some Notes](#some-notes)	
 	
@@ -525,7 +526,37 @@ Default: `7`
 Amount of delay (in ms) to wait before making another retry.  
 Only integers.  
 Default: `1000`
+#### `tse.getIntradayInstruments(struct: boolean, arr: boolean, structKey: string)`
+Returns the list of instruments crawled by [`getIntraday()`](#tsegetintradaysymbols-string-settings-intradaysettings).  
+- **`struct`:** Determine the return type for each instrument. Default `true`
+	+ `true`: return an `InstrumentITD` object for each instrument.
+	+ `false`: return a CSV string for each instrument.
+- **`arr`:** Determine the return type. Default: `true`
+	+ `true`: return an array.
+	+ `false` return an `InstrumentsITD` object.
+- **`structKey`:** Which key of `InstrumentITD` to use when `struct` is set to `true`. Default `InsCode`
 
+**return:** `Array<InstrumentITD | string> | InstrumentsITD`  
+
+```typescript
+interface InstrumentITD {
+  InsCode:      string;
+  LVal30:       string;
+  LVal18AFC:    string;
+  FlowNameBare: string;
+  FlowName:     string;
+  Flow:         string;
+  CGrValCot:    string;
+  CIsin:        string;
+  InstrumentID: string;
+  ZTitad:       string;
+  BaseVol:      string;
+}
+
+interface InstrumentsITD {
+  [InstrumentITD.InsCode]: InstrumentITD | string;
+}
+```
 #### `tse.getIntraday(symbols: string[], settings?: IntradaySettings)`
 Crawl intraday data from the instrument's history page of the [tsetmc.com](http://tsetmc.com) website. **(Experimental)**
 - **`symbols`:** An array of *`Farsi`* instrument symbols.  
