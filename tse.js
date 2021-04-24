@@ -280,16 +280,16 @@ class Instrument {
     this.Symbol       = cleanFa(row[5]);
     this.Name         = row[6];
     this.CIsin        = row[7];
-    this.DEven        = row[8];         // int32 (int)
-    this.Flow         = row[9];         // 0,1,2,3,4,5,6,7 بازار byte
-    this.LSoc30       = row[10];        // نام 30 رقمي فارسي شرکت
-    this.CGdSVal      = row[11];        // A,I,O نوع نماد
-    this.CGrValCot    = row[12];        // 00,11,1A,...25 کد گروه نماد
-    this.YMarNSC      = row[13];        // NO,OL,BK,BY,ID,UI کد بازار
-    this.CComVal      = row[14];        // 1,3,4,5,6,7,8,9 کد تابلو
-    this.CSecVal      = row[15].trim(); // []62 کد گروه صنعت
-    this.CSoSecVal    = row[16].trim(); // []177 کد زير گروه صنعت
-    this.YVal         = row[17];        // string نوع نماد
+    this.DEven        = row[8];          // int32 (int)
+    this.Flow         = row[9];          // 0,1,2,3,4,5,6,7 بازار byte
+    this.LSoc30       = row[10];         // نام 30 رقمي فارسي شرکت
+    this.CGdSVal      = row[11];         // A,I,O نوع نماد
+    this.CGrValCot    = row[12];         // 00,11,1A,...25 کد گروه نماد
+    this.YMarNSC      = row[13];         // NO,OL,BK,BY,ID,UI کد بازار
+    this.CComVal      = row[14];         // 1,3,4,5,6,7,8,9 کد تابلو
+    this.CSecVal      = row[15].trim();  // []62 کد گروه صنعت
+    this.CSoSecVal    = row[16].trim();  // []177 کد زير گروه صنعت
+    this.YVal         = row[17];         // string نوع نماد
   }
 }
 class InstrumentITD {
