@@ -654,9 +654,9 @@ column | desc | desc Fa
 `lpchg` | Legal to Person Ownership Transfer        | تغییر مالکیت حقوقی به حقیقی
 
 ## `misc`
-state| daymin| daymax
------|-------|-------
-[CEtaVal](http://cdn.tsetmc.com/Site.aspx?ParTree=111411111Y&LnkIdn=833) | [PSGelStaMin](http://cdn.tsetmc.com/Site.aspx?ParTree=1114111115&LnkIdn=777) | [PSGelStaMax](http://cdn.tsetmc.com/Site.aspx?ParTree=1114111115&LnkIdn=777)
+basevol | flow | daymin      | daymax       | state
+--------|------|-------------|--------------|--------
+حجم مبنا  | بازار  | کمینه قیمت مجاز | بیشینه قیمت مجاز | [وضعیت نماد](http://cdn.tsetmc.com/Site.aspx?ParTree=111411111Y&LnkIdn=833) 
 
 ## `shareholder`
 shares | sharespot     | change | companycode | companyname
