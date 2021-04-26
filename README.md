@@ -528,6 +528,7 @@ Only integers.
 Default: `1000`
 #### `tse.getIntradayInstruments(struct: boolean, arr: boolean, structKey: string)`
 Returns the list of instruments crawled by [`getIntraday()`](#tsegetintradaysymbols-string-settings-intradaysettings).  
+The information of each instrument is from the latest crawled day.  
 - **`struct`:** Determine the return type for each instrument. Default `true`
 	+ `true`: return an `InstrumentITD` object for each instrument.
 	+ `false`: return a CSV string for each instrument.
