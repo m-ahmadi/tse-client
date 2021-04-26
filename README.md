@@ -36,6 +36,12 @@ The `0.x` and `1.x` versions were a direct port of the [official Windows app](ht
 	+ [`getIntraday()`](#tsegetintradaysymbols-string-settings-intradaysettings)
 	+ [`getIntradayInstruments()`](#tsegetintradayinstrumentsstruct-boolean-arr-boolean-structkey-string)
 	+ [`itdGroupCols`](#tseitdgroupcols)
+		- [`price`](#price)
+		- [`order`](#order)
+		- [`trade`](#trade)
+		- [`client`](#client)
+		- [`misc`](#misc)
+		- [`shareholder`](#shareholder)
 - [Some Notes](#some-notes)	
 	
 # CLI
