@@ -321,7 +321,7 @@ Update (if needed) and return list of instruments.
 - **`arr`:** Determine the return type. Default: `true`
 	+ `true`: return an array.
 	+ `false` return an `Instruments` object.
-- **`structKey`:** Which key of `Instrument` to use when `struct` is set to `true`. Default `InsCode`
+- **`structKey`:** Which key of `Instrument` to use when `struct` is set to `true`. Default: `'InsCode'`
 
 **return:** `Array<Instrument | string> | Instruments`  
 
@@ -534,7 +534,7 @@ Returns the list of instruments crawled by [`getIntraday()`](#tsegetintradaysymb
 - **`arr`:** Determine the return type. Default: `true`
 	+ `true`: return an array.
 	+ `false` return an `InstrumentsITD` object.
-- **`structKey`:** Which key of `InstrumentITD` to use when `struct` is set to `true`. Default `InsCode`
+- **`structKey`:** Which key of `InstrumentITD` to use when `struct` is set to `true`. Default: `'InsCode'`
 
 **return:** `Array<InstrumentITD | string> | InstrumentsITD`  
 
