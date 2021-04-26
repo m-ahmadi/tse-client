@@ -945,7 +945,7 @@ const itdGroupCols = [
       'lbvol','lbcount','lbval','lbprice','lbvolpot',
       'lsvol','lscount','lsval','lsprice','lsvolpot', 'lpchg']
   ],
-  [ 'misc',  ['state','daymin','daymax'] ],
+  [ 'misc',  ['basevol','flow','daymin','daymax','state'] ],
   [ 'shareholder', ['shares','sharespot','change','companycode','companyname'] ]
 ];
 
@@ -995,6 +995,7 @@ async function extractAndStore(inscode='', deven_text=[], shouldCache) {
     let ClientType      = parseRaw('var ClientTypeData=[', text);
     let InstrumentState = parseRaw('var InstrumentStateData=[', text);
     let StaticTreshhold = parseRaw('var StaticTreshholdData=[', text);
+    let InstSimple      = parseRaw('var InstSimpleData=[', text);
     let ShareHolder     = parseRaw('var ShareHolderData=[', text);
     
     let coli;
@@ -1020,7 +1021,8 @@ async function extractAndStore(inscode='', deven_text=[], shouldCache) {
     let state = a.length && a[0].length && a[0][2].trim();
     let daymin, daymax;
     if (b.length && b[1].length) { daymin = b[1][2]; daymax = b[1][1]; }
-    let misc = [state, daymin, daymax].join(',');
+    let [flow, basevol] = [4,9].map(i=>InstSimple[i]);
+    let misc = [basevol, flow, daymin, daymax, state].join(',');
     
     coli = [2,3,4,0,5];
     let shareholder = ShareHolder.filter(i=>i[4]).map(row => {
@@ -1093,7 +1095,12 @@ const itdUpdateManager = (function () {
   
   function onresult(text, chunk, id) {
     if (typeof text === 'string') {
-      let res = text === 'N/A' ? text : 'var StaticTreshholdData' + text.split('var StaticTreshholdData')[1];
+      let res = text;
+      if (text !== 'N/A') {
+        let t1 = 'var InstSimpleData'      + text.split('var InstSimpleData')[1].split(';')[0] + ';';
+        let t2 = 'var StaticTreshholdData' + text.split('var StaticTreshholdData')[1];
+        res = t1 + t2;
+      }
       let _chunk = chunk.slice(1);
       succs.push(_chunk);
       let [inscode, deven] = _chunk;
