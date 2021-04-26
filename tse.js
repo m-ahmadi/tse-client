@@ -1151,7 +1151,11 @@ const itdUpdateManager = (function () {
           if (text.includes('Object moved to <a href="/GeneralError.aspx?aspxerrorpath=/Loader.aspx">here</a>')) {
             onresult('N/A', chunk, id);
           } else {
-            let isPageUpToDate = text.split('var IntraTradeData=[')[1].split('];')[0];
+            let _text = text.split(`var StaticTreshholdData`)[1];
+            let isPageUpToDate = [
+              'ClosingPrice', 'IntraDayPrice', 'IntraTrade', 'ClientType', 'BestLimit'
+            ].some(i => _text.split(`var ${i}Data=[`)[1].split('];')[0]);
+            
             if (isPageUpToDate) {
               onresult(text, chunk, id);
             } else {
