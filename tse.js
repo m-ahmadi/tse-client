@@ -1032,8 +1032,10 @@ async function extractAndStore(inscode='', deven_text=[], shouldCache) {
     }).join('\n');
     
     
-    let file = [price, order, trade, client, misc, shareholder].filter(i=>i).join('\n\n');
-    storedInstrument[deven] = zip(file);
+    let file = [price, order, trade, client, misc];
+    if (shareholder) file.push(shareholder);
+    
+    storedInstrument[deven] = zip( file.join('\n\n') );
   }
   
   if (shouldCache) return storage.itd.setItem(inscode, storedInstrument);
