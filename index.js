@@ -519,8 +519,13 @@ function parseDateOption(s) {
     const res = (d.getFullYear()*10000) + ((d.getMonth()+1)*100) + d.getDate();
     result = res < mindate ? ''+mindate : ''+res;
   } else if (/^\d{8}$/.test(s)) {
-    const {gy,gm,gd} = toGregorian(+s.slice(0,4), +s.slice(4,6), +s.slice(6,8));
-    const res = (gy*10000) + (gm*100) + gd;
+    let src = [+s.slice(0,4), +s.slice(4,6), +s.slice(6,8)];
+    if (src[0] < 2000) {
+      const {gy,gm,gd} = toGregorian(...src);
+      src = [gy,gm,gd];
+    }
+    const [y,m,d] = src;
+    const res = (y*10000) + (m*100) + d;
     result = res < mindate ? ''+mindate : ''+res;
   }
   
