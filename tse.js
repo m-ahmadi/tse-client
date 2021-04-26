@@ -1099,7 +1099,7 @@ const itdUpdateManager = (function () {
       let [inscode, deven] = _chunk;
       
       if (deven === inslastdeven[inscode] && text !== 'N/A') {
-        let row = JSON.parse( text.split('var InstSimpleData=')[1].split(';var ')[0].replace(/'/g,'"') );
+        let row = JSON.parse( text.split('var InstSimpleData=')[1].split(';')[0].replace(/'/g,'"') );
         extractedIns[inscode] = [inscode, ...row].join(',');
       }
       
