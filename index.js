@@ -578,17 +578,7 @@ function getFilename(filename, instrument, adjust) {
   return str;
 }
 function safeWinFilename(str) {
-  return str
-    .replace('\\', ' ')
-    .replace('/', ' ')
-    .replace('*', ' ')
-    .replace(':', ' ')
-    .replace('>', ' ')
-    .replace('<', ' ')
-    .replace('?', ' ')
-    .replace('|', ' ')
-    .replace('^', ' ')
-    .replace('"', ' ');
+  return str.replace(/[\\\/:*?"<>|]/g, ' ');
 }
 function saveSettings(obj) {
   writeFileSync(join(__dirname,'settings.json'), JSON.stringify(obj, null, 2));
