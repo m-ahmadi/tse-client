@@ -1101,7 +1101,7 @@ const itdUpdateManager = (function () {
       if (text !== 'N/A') {
         let t1 = 'var InstSimpleData'      + text.split('var InstSimpleData')[1].split(';')[0] + ';';
         let t2 = 'var StaticTreshholdData' + text.split('var StaticTreshholdData')[1];
-        res = t1 + t2;
+        res = t1.replace(/\t/g,'\\t') + t2;
       }
       let _chunk = chunk.slice(1);
       succs.push(_chunk);
