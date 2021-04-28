@@ -9,7 +9,8 @@
 <input id="_w" type="number" min="600" value="1890">
 <input id="_h" type="number" min="400" value="600">
 last<input id="_b" type="number" min="1" value="1" style="width:40px;">month(s)
-<button onclick="charts.forEach(i=>{i.canvas.parentElement.remove(); i.destroy(true)}), charts=[]">clear</button>
+<button onclick="charts.forEach(i=>{i.canvas.parentElement.remove(); i.destroy(true)}), charts=[], saves=[], _save.disabled=false">clear</button>
+<button id="_save" onclick="localStorage.setItem('mytse', saves.join('\n')), this.disabled=true" disabled>save</button>
 
 <div id="_charts" style="display: grid; grid-template-columns: auto auto auto; row-gap: .5rem; column-gap: .2rem;"></div>
 
@@ -18,10 +19,19 @@ last<input id="_b" type="number" min="1" value="1" style="width:40px;">month(s)
 <script>
 let data = {};
 let charts = [];
+let saves = [];
 
-async function makeChart(_symbol='', title='', w=+_w.value, h=+_h.value, monthsBack=+_b.value) {
+(async () => {
+	const confs = (localStorage.getItem('mytse') || '').split('\n').filter(i=>i).map(i=>i.split(','));
+	for (const [s,t,w,h,m] of confs) await makeChart(s, t, +w, +h, +m, 1);
+})();
+
+async function makeChart(_symbol='', title='', w=+_w.value, h=+_h.value, monthsBack=+_b.value, sync) {
+	if (!sync) _save.disabled = false;
+	saves.push([_symbol, title, w, h, monthsBack].join());
+	
 	const { data: [symbol] } = await tse.getPrices([_symbol], {startDate: lastMonths(monthsBack)});
-	_add.disabled = false; _add.innerText = _add.innerText.slice(0,-3);
+	if (!sync) { _add.disabled = false; _add.innerText = _add.innerText.slice(0,-3); }
 	data[_symbol] = {...symbol};
 	
 	const div = document.createElement('div');
