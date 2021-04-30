@@ -64,12 +64,13 @@ tse آپ -j 2 # افزایش سرمایه
 ```
 #### Select columns:
 ```shell
-tse فملی -c "6,7,8,10"
-tse فملی -c "6:OPEN 7:HIGH 8:LOW 10:CLOSE"
-tse فملی -c "4:date 10:close 13:count 12:volume"
+tse فملی -c "2,3,4,6"
+tse فملی -c "2:OPEN 3:HIGH 4:LOW 6:CLOSE"
+tse فملی -c "0 6 8 7"
+tse فملی -c "0:date 6:closing 8:trades 7:volume"
 tse ls -A
 tse ls -D
-# defaults: "4:DATE 6:OPEN 7:HIGH 8:LOW 9:LAST 10:CLOSE 12:VOL"
+# default: "0 2 3 4 5 6 7 8 9"
 ```
 #### History depth:
 ```shell
@@ -181,10 +182,10 @@ const tse = require('tse-client');
   let { data } = await tse.getPrices(['خساپا'], {adjustPrices: 1});
   
   // select columns (default names)
-  let { data } = await tse.getPrices(['شپنا'], {columns: [4,7,8]});
+  let { data } = await tse.getPrices(['شپنا'], {columns: [0,3,4]});
   
   // select columns (custom names)
-  let { data } = await tse.getPrices(['شپنا'], {columns: [[4,'DATE'],[7,'MAX'],[8,'MIN']]});
+  let { data } = await tse.getPrices(['شپنا'], {columns: [[0,'DATE'],[3,'MAX'],[4,'MIN']]});
   
   // view column info
   console.table(tse.columnList);
@@ -221,10 +222,10 @@ const tse = require('tse-client');
     let { data } = await tse.getPrices(['خساپا'], {adjustPrices: 1});
     
     // select columns (default names)
-    let { data } = await tse.getPrices(['شپنا'], {columns: [4,7,8]});
+    let { data } = await tse.getPrices(['شپنا'], {columns: [0,3,4]});
     
     // select columns (custom names)
-    let { data } = await tse.getPrices(['شپنا'], {columns: [[4,'DATE'],[7,'MAX'],[8,'MIN']]});
+    let { data } = await tse.getPrices(['شپنا'], {columns: [[0,'DATE'],[3,'MAX'],[4,'MIN']]});
     
     // view column info
     console.table(tse.columnList);
@@ -338,24 +339,24 @@ Visit the [official documentation](http://cdn.tsetmc.com/Site.aspx?ParTree=11141
 ```typescript
 interface Instrument {
 //                         👇 C# equivalent
-  InsCode:      string; // long (int64)
-  InstrumentID: string;
-  LatinSymbol:  string;
-  LatinName:    string;
-  CompanyCode:  string;
-  Symbol:       string;
-  Name:         string;
-  CIsin:        string;
-  DEven:        string; // int (int32)
-  Flow:         string; // byte
-  LSoc30:       string;
-  CGdSVal:      string;
-  CGrValCot:    string;
-  YMarNSC:      string;
-  CComVal:      string;
-  CSecVal:      string;
-  CSoSecVal:    string;
-  YVal:         string;
+  InsCode:      string;  // long (int64)
+  InstrumentID: string;  // string
+  LatinSymbol:  string;  // string
+  LatinName:    string;  // string
+  CompanyCode:  string;  // string
+  Symbol:       string;  // string
+  Name:         string;  // string
+  CIsin:        string;  // string
+  DEven:        string;  // int (int32)
+  Flow:         string;  // byte
+  LSoc30:       string;  // string
+  CGdSVal:      string;  // string
+  CGrValCot:    string;  // string
+  YMarNSC:      string;  // string
+  CComVal:      string;  // string
+  CSecVal:      string;  // string
+  CSoSecVal:    string;  // string
+  YVal:         string;  // string
 }
 
 interface Instruments {
@@ -367,7 +368,9 @@ Update (if needed) and return prices of instruments.
 - **`symbols`:** An array of *`Farsi`* instrument symbols.  
 - **`settings`:** A settings object.
 	+ **`columns`:** Select which `ClosingPrice` props to return and specify optional string for the prop.  
-		Default: `[ [4,'date'], [6,'open'], [7,'high'], [8,'low'], [9,'last'], [10,'close'], [12,'vol'] ]`
+		For example: `[ [0,'DATE'], [6,'CLOSE'], [7,'VOL'] ]`  
+		Default: `[0,2,3,4,5,6,7,8,9]`  
+		See [`columnList`](#tsecolumnList) for the list of all column indexes and their names.
 	+ **`adjustPrices`:** The type of adjustment applied to returned prices.  
 		`0`: None &emsp; &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;(*`بدون تعدیل`*)  
 		`1`: Capital Increase + Dividends &emsp; (*`افزایش سرمایه + سود نقدی`*)  
@@ -389,7 +392,7 @@ interface Result {
 }
 
 interface ClosingPrice {
-//                              👇 C# equivalent of array item
+//                             👇 C# equivalent of array item
   CompanyCode:    string[];  // string
   LatinName:      string[];  // string
   Symbol:         string[];  // string
@@ -441,23 +444,15 @@ enum ErrorType {
 **Example:**
 ```javascript
 const defaultSettings = {
-  columns: [
-    [4, 'date'],
-    [6, 'open'],
-    [7, 'high'],
-    [8, 'low'],
-    [9, 'last'],
-    [10, 'close'],
-    [12, 'vol']
-  ],
-  adjustPrices: 0,
+  columns:          [0,2,3,4,5,6,7,8,9],
+  adjustPrices:     0,
   daysWithoutTrade: false,
-  startDate: '20010321',
-  csv: false,
-  csvHeaders: true,
-  csvDelimiter: ',',
-  onprogress: undefined,
-  progressTotal: 100
+  startDate:        '20010321',
+  csv:              false,
+  csvHeaders:       true,
+  csvDelimiter:     ',',
+  onprogress:       undefined,
+  progressTotal:    100
 };
 
 const result = await tse.getPrices(symbols=['sym1', 'sym2', ...], defaultSettings);
@@ -469,9 +464,11 @@ result.data /*
       open:  [0, 0, ...],
       high:  [0, 0, ...],
       low:   [0, 0, ...],
-      last:  [0, 0, ...]
+      last:  [0, 0, ...],
       close: [0, 0, ...],
-      vol:   [0, 0, ...]
+      vol:   [0, 0, ...],
+      count: [0, 0, ...],
+      value: [0, 0, ...]
     },
 
     // sym2
@@ -499,23 +496,24 @@ undefined
 
 #### `tse.columnList`
 A list of all possible columns.
-index | name | fname
-------|------|------------------
-0  | CompanyCode    | کد شرکت
-1  | LatinName      | نام لاتین
-2  | Symbol         | نماد
-3  | Name           | نام
-4  | Date           | تاریخ میلادی
-5  | ShamsiDate     | تاریخ شمسی
-6  | PriceFirst     | اولین قیمت
-7  | PriceMax       | بیشترین قیمت
-8  | PriceMin       | کمترین قیمت
-9  | LastPrice      | آخرین قیمت
-10 | ClosingPrice   | قیمت پایانی
-11 | Price          | ارزش
-12 | Volume         | حجم
-13 | Count          | تعداد معاملات
-14 | PriceYesterday | قیمت دیروز
+index | name        | fname
+------|-------------|------------------
+0     | date        | تاریخ میلادی
+1     | dateshamsi  | تاریخ شمسی
+2     | open        | اولین قیمت
+3     | high        | بیشترین قیمت
+4     | low         | کمترین قیمت
+5     | last        | آخرین قیمت
+6     | close       | قیمت پایانی
+7     | vol         | حجم معاملات
+8     | count       | تعداد معاملات
+9     | value       | ارزش معاملات
+10    | yesterday   | قیمت دیروز
+11    | symbol      | نماد
+12    | name        | نام
+13    | namelatin   | نام لاتین
+14    | companycode | کد شرکت
+
 
 #### `tse.INTRADAY_URL`
 The URL from which the data is crawled.  
