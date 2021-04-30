@@ -8,7 +8,7 @@ The `0.x` and `1.x` versions were a direct port of the [official Windows app](ht
 	<img src="samples/comparison-b.gif" width="300" />
 </p>
 
-### Table of Contents
+### [Table of Contents](#table-of-contents)
 - [CLI](#cli)
 	+ [Install](#install)
 	+ [Usage examples](#basic)
