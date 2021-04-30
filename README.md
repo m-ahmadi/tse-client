@@ -370,7 +370,7 @@ Update (if needed) and return prices of instruments.
 	+ **`columns`:** Select which `ClosingPrice` props to return and specify optional string for the prop.  
 		For example: `[ [0,'DATE'], [6,'CLOSE'], [7,'VOL'] ]`  
 		Default: `[0,2,3,4,5,6,7,8,9]`  
-		See [`columnList`](#tsecolumnList) for the list of all column indexes and their names.
+		See [`columnList`](#tsecolumnlist) for the list of all column indexes and their names.
 	+ **`adjustPrices`:** The type of adjustment applied to returned prices.  
 		`0`: None &emsp; &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;(*`بدون تعدیل`*)  
 		`1`: Capital Increase + Dividends &emsp; (*`افزایش سرمایه + سود نقدی`*)  
