@@ -13,7 +13,7 @@ require('./lib/colors.js');
 
 const defaultSettings = {
   symbols:               [],
-  priceColumns:          '4:DATE 6:OPEN 7:HIGH 8:LOW 9:LAST 10:CLOSE 12:VOL',
+  priceColumns:          '0 2 3 4 5 6 7 8 9',
   priceAdjust:           0,
   priceStartDate:        '3m',
   priceDaysWithoutTrade: false,
