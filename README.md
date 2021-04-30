@@ -8,13 +8,13 @@ The `0.x` and `1.x` versions were a direct port of the [official Windows app](ht
 	<img src="samples/comparison-b.gif" width="300" />
 </p>
 
-- [CLI](#CLI)
+- [CLI](#cli)
 	+ [Install](#install)
 	+ [Usage examples](#basic)
-- [Node](#Node)
+- [Node](#node)
 	+ [Install](#install-1)
 	+ [Usage example](#usage)
-- [Browser](#Browser)
+- [Browser](#browser)
 	+ [Usage example 1](#using-standalone-bundle)
 	+ [Usage example 2](#using-the-module-itself)
 	+ [Some Info](#some-info)
