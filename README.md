@@ -509,7 +509,7 @@ index | name        | fname
 7     | vol         | حجم معاملات
 8     | count       | تعداد معاملات
 9     | value       | ارزش معاملات
-10    | yesterday   | قیمت دیروز
+10    | yesterday   | قیمت پایانی دیروز
 11    | symbol      | نماد
 12    | name        | نام
 13    | namelatin   | نام لاتین
