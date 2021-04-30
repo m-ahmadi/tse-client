@@ -256,8 +256,8 @@ class ClosingPrice {
     this.PriceFirst     = row[10]; // open
   }
 }
-const cols  = ['CompanyCode', 'LatinName', 'Symbol', 'Name', 'Date', 'ShamsiDate', 'PriceFirst', 'PriceMax', 'PriceMin', 'LastPrice', 'ClosingPrice', 'Price', 'Volume', 'Count', 'PriceYesterday'];
-const colsFa = ['کد شرکت', 'نام لاتین', 'نماد', 'نام', 'تاریخ میلادی', 'تاریخ شمسی', 'اولین قیمت', 'بیشترین قیمت', 'کمترین قیمت', 'آخرین قیمت', 'قیمت پایانی', 'ارزش', 'حجم', 'تعداد معاملات', 'قیمت دیروز'];
+const cols  = ['date','dateshamsi','open','high','low','last','close','vol','count','value','yesterday','symbol','name','namelatin','companycode'];
+const colsFa = ['تاریخ میلادی','تاریخ شمسی','اولین قیمت','بیشترین قیمت','کمترین قیمت','آخرین قیمت','قیمت پایانی','حجم معاملات','تعداد معاملات','ارزش معاملات','قیمت دیروز','نماد','نام','نام لاتین','کد شرکت',];
 class Column {
   constructor(row=[]) { 
     const len = row.length;
@@ -482,21 +482,21 @@ function adjust(cond, closingPrices, shares, insCode) {
 function getCell(columnName, instrument, closingPrice) {
   const c = columnName;
   const str =
-    c === 'CompanyCode'    ? instrument.CompanyCode :
-    c === 'LatinName'      ? instrument.LatinName :
-    c === 'Symbol'         ? instrument.Symbol :
-    c === 'Name'           ? instrument.Name :
-    c === 'Date'           ? closingPrice.DEven :
-    c === 'ShamsiDate'     ? jalaali && gregToShamsi(closingPrice.DEven) :
-    c === 'PriceFirst'     ? closingPrice.PriceFirst :
-    c === 'PriceMax'       ? closingPrice.PriceMax :
-    c === 'PriceMin'       ? closingPrice.PriceMin :
-    c === 'LastPrice'      ? closingPrice.PDrCotVal :
-    c === 'ClosingPrice'   ? closingPrice.PClosing :
-    c === 'Price'          ? closingPrice.QTotCap:
-    c === 'Volume'         ? closingPrice.QTotTran5J :
-    c === 'Count'          ? closingPrice.ZTotTran :
-    c === 'PriceYesterday' ? closingPrice.PriceYesterday : '';
+    c === 'date'        ? closingPrice.DEven :
+    c === 'dateshamsi'  ? jalaali && gregToShamsi(closingPrice.DEven) :
+    c === 'open'        ? closingPrice.PriceFirst :
+    c === 'high'        ? closingPrice.PriceMax :
+    c === 'low'         ? closingPrice.PriceMin :
+    c === 'last'        ? closingPrice.PDrCotVal :
+    c === 'close'       ? closingPrice.PClosing :
+    c === 'vol'         ? closingPrice.QTotTran5J :
+    c === 'count'       ? closingPrice.ZTotTran :
+    c === 'value'       ? closingPrice.QTotCap:
+    c === 'yesterday'   ? closingPrice.PriceYesterday :
+    c === 'symbol'      ? instrument.Symbol :
+    c === 'name'        ? instrument.Name :
+    c === 'namelatin'   ? instrument.LatinName :
+    c === 'companycode' ? instrument.CompanyCode : '';
   
   return str;
 }
