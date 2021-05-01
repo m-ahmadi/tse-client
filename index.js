@@ -54,7 +54,7 @@ cmd
   .option('-f, --symbol-filter <string>',    'Select symbols based on a filter string. (AND-based)'+t+'market type:     m=id,id,... (help: tse ls -M)'+t+'symbol type:     t=id,id,... (help: tse ls -T)'+t+'industry sector: i=id,id,... (help: tse ls -I)'+t+'example:  tse -m "t=300,303 i=27"'+t+'only see: tse ls -F "t=300,303 i=27"')
   .option('-d, --symbol-delete',             'Boolean. Delete specified symbols from selection. default: false')
   .option('-a, --symbol-all',                'Boolean. Select all symbols. default: false')
-  .option('-c, --price-columns <string>',    'A comma/space separated list of column indexes with optional headers.'+t+'index only:      1,2,3'+t+'index & header:  1:a 2:b 3:c'+t+'default: "0 2 3 4 5 6 7 8 9"')
+  .option('-c, --price-columns <string>',    'A comma/space separated list of column indexes with optional headers.'+t+'index only:      1,2,3'+t+'index & header:  1:a 2:b 3:c'+t+'default: "0 2 3 4 5 6 7 8 9" (help: tse ls -A)')
   .option('-j, --price-adjust <number>',     'Type of adjustment applied to prices. options: 0|1|2 default: 0'+t+'0: none'+t+'1: capital increase + dividends'+t+'2: capital increase')
   .option('-b, --price-start-date <string>', 'Generate prices from this date onwards. default: "3m" Two valid patterns:'+t+'shamsi YYYYMMDD as ^\\d{8}$ with lowest possible value of 13800101'+t+'relative date as ^\\d{1,3}(y|m|d)$ for example:'+t+'  3m: last 3 months'+t+'  2y: last 2 years'+t+'  7d: last 7 days')
   .option('-t, --price-days-without-trade',  'Boolean. Include days without trade in generated files. default: false')
