@@ -83,23 +83,20 @@ cmd.command('list').alias('ls').description('Show information about current sett
   .option('-O, --id-sort [columnIndex]',     'Sort the IDs table by specifying the index of the column. default: 1'+t2+'put underline at end for ascending sort: 1_')
   .option('--search <query>',                'Search symbols.')
   .action(list);
-
-const itdopts = [
-  '-s, --symbol <string>',
-  '-i, --symbol-file <string>',
-  '-f, --symbol-filter <string>',
-  '-d, --symbol-delete',
-  '-a, --symbol-all',
-  '-b, --start-date <string>     default: "1d"',
-  '-o, --outdir <string>         Same as --file-outdir',
-  '-n, --dir-name <number>       Same as --file-name',
-  '-e, --file-encoding <string>',
-  '-H, --file-no-headers',
-  '-k, --no-cache'
-].join('\n  ');
-
 cmd.command('intraday [symbols...]').alias('itd').description('Crawl Intraday Data. (help: tse itd -h)')
-  .addHelpText('after', '\nCommon Options:\n  '+itdopts)
+  .addHelpText('after', '\nCommon Options:\n  '+[
+          '-s, --symbol <string>',
+          '-i, --symbol-file <string>',
+          '-f, --symbol-filter <string>',
+          '-d, --symbol-delete',
+          '-a, --symbol-all',
+          '-b, --start-date <string>     default: "1d"',
+          '-o, --outdir <string>         Same as --file-outdir',
+          '-n, --dir-name <number>       Same as --file-name',
+          '-e, --file-encoding <string>',
+          '-H, --file-no-headers',
+          '-k, --no-cache'
+    ].join('\n  '))
   .option('-m, --end-date <string>',         'Upper boundary for --start-date. default: ""'+t3+'Accepts same patterns as --start-date'+t3+'Cannot be less than --start-date'+t3+'If empty, then latest possible date is used')
   .option('-z, --gzip',                      'Output raw gzip files. default: false')
   .option('-y, --alt-date',                  'Output results with Shamsi dates. default: false')
