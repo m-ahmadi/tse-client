@@ -377,6 +377,7 @@ async function intraday(args, subOpts) {
           if ( !existsSync(idir) ) mkdirSync(idir);
           
           content.split('\n\n').forEach((v,j) => {
+            if (!v) return;
             const headers = fileHeaders ? groupCols[j][1].join() + '\n' : '';
             writeFileSync(join(idir, filenames[j] + '.csv'), bom+headers+v, fileEncoding);
           });
