@@ -324,7 +324,7 @@ Only in `Node`.
 Location of the cache directory.  
 If the location is changed, existing content is not moved to the new location.  
 Default: &ensp; *`User's home directoy:`* &ensp; `require('os').homedir()`  
-#### `tse.getInstruments(struct: boolean, arr: boolean, structKey: string)`
+#### `tse.getInstruments(struct?: boolean, arr?: boolean, structKey?: string)`
 Update (if needed) and return list of instruments.  
 - **`struct`:** Determine the return type for each instrument. Default `true`
 	+ `true`: return an `Instrument` object for each instrument.
@@ -534,7 +534,7 @@ Default: `9`
 Amount of delay (in ms) to wait before making another retry.  
 Only integers.  
 Default: `1000`
-#### `tse.getIntradayInstruments(struct: boolean, arr: boolean, structKey: string)`
+#### `tse.getIntradayInstruments(struct?: boolean, arr?: boolean, structKey?: string)`
 Returns the list of instruments crawled by [`getIntraday()`](#tsegetintradaysymbols-string-settings-intradaysettings).  
 The information of each instrument is from the latest crawled day.  
 - **`struct`:** Determine the return type for each instrument. Default `true`
