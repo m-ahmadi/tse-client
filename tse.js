@@ -277,7 +277,7 @@ class Instrument {
     this.LatinSymbol  = row[2];
     this.LatinName    = row[3];
     this.CompanyCode  = row[4];
-    this.Symbol       = cleanFa(row[5]);
+    this.Symbol       = cleanFa(row[5]).trim();
     this.Name         = row[6];
     this.CIsin        = row[7];
     this.DEven        = row[8];          // int32 (int)
