@@ -44,7 +44,7 @@ The `0.x` and `1.x` versions were a direct port of the [official Windows app](ht
 		- [`misc`](#misc)
 		- [`shareholder`](#shareholder)
 - [Some Notes](#some-notes)	
-	+ [تغییر نمادهای متشابه](#تغییر-نمادهای-متشابه)
+	+ [تغییر نمادهای متشابه](#renamed-symbols)
 	
 # CLI
 
@@ -679,7 +679,7 @@ shares | sharespot     | change | companycode | companyname
 - In Browser, the `InstrumentAndShare` data is stored in `localStorage`.
 - In Browser, the `ClosingPrices` data is stored in `indexedDB`.
 - In Node, data compression is done with the `zlib` module.
-- #### تغییر نمادهای متشابه
+- #### Renamed Symbols
 	:برای منحصر به فرد بودن تمامی نمادها، نمادهای متشابه بر اساس الگوریتم زیر تغییر داده می شوند
 	```
 	در صورت مواجه با نماد های متشابه
