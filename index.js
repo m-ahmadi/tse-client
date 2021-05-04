@@ -81,6 +81,7 @@ cmd.command('list').alias('ls').description('Show information about current sett
   .option('-Y, --id-market-code',            'Show all possible market-code IDs. "Instrument.YMarNSC"')
   .option('-G, --id-symbol-gcode',           'Show all possible symbol-group IDs. "Instrument.CGrValCot"')
   .option('-O, --id-sort [columnIndex]',     'Sort the IDs table by specifying the index of the column. default: 1'+t2+'put underline at end for ascending sort: 1_')
+  .option('-R, --renamed-symbols',           'Show the symbols that were renamed for maintaining symbol uniqueness.')
   .option('--search <query>',                'Search symbols.')
   .action(list);
 cmd.command('intraday [symbols...]').alias('itd').description('Crawl Intraday Data. (help: tse itd -h)')
@@ -630,7 +631,7 @@ function printTable(table=[], cols=[]) {
 }
 
 async function list(opts) {
-  const { savedSymbols, savedSettings: _savedSettings, allColumns, filterMatch, search } = opts;
+  const { savedSymbols, savedSettings: _savedSettings, allColumns, filterMatch, renamedSymbols, search } = opts;
   const { table } = console;
   
   if (savedSymbols) {
@@ -680,6 +681,29 @@ async function list(opts) {
     } else {
       log('Invalid filter string.'.redBold);
     }
+  }
+  
+  if (renamedSymbols) {
+    log('\nThe renamed symbols:'.yellow);
+    const rows = (await tse.getInstruments(false, true)).map(i=> i.split(','));
+    
+    const renamed   = rows.filter(i=> i.length === 19);
+    const renOrig   = renamed.map(i=> i[18]);
+    const unrenamed = rows.filter(i=> renOrig.includes(i[5])).map(i=> i[0]);
+    const all       = [...renamed.map(i=>i[0]), ...unrenamed];
+    const alli      = rows.map((v,i) => all.includes(v[0]) ? i : -1).filter(i=>i!==-1);
+    
+    const flows = [,'بورس','فرابورس',,'پایه'];
+    const list = alli.map(i => {
+      const row = rows[i];
+      const [sym,name,orig] = [5,6,18].map(i=>row[i]);
+      const flow = flows[+row[9]];
+      return row.length === 19
+        ? [sym, orig, name, flow]
+        : ['',  sym,  name, flow];
+    }).sort((a,b)=>a[1].localeCompare(b[1],'fa'));
+    
+    printTable(list, ['renamed','original','Name','Flow']);
   }
   
   if (typeof search === 'string') {
