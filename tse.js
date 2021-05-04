@@ -395,15 +395,7 @@ let PRICES_UPDATE_CHUNK_DELAY = 300;
 let PRICES_UPDATE_RETRY_COUNT = 3;
 let PRICES_UPDATE_RETRY_DELAY = 1000;
 const defaultSettings = {
-  columns: [
-    [4, 'date'],
-    [6, 'open'],
-    [7, 'high'],
-    [8, 'low'],
-    [9, 'last'],
-    [10, 'close'],
-    [12, 'vol']
-  ],
+  columns: [0,2,3,4,5,6,7,8,9],
   adjustPrices: 0,
   daysWithoutTrade: false,
   startDate: '20010321',
