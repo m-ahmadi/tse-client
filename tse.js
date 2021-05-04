@@ -573,7 +573,7 @@ async function updateInstruments() {
     let dups = _rows
       .map(i=> i[5])                         // symbols
       .filter((v,i,a) => a.indexOf(v) !== i) // duplicate symbols
-      .map(i => _rows.filter(j=> j[5]===i));  // duplicate items
+      .map(i => _rows.filter(j=> j[5]===i)); // duplicate items
     
     dups.forEach(dup => {
       let rm = dup.map(i=>i[6].includes('-حذف'));
