@@ -394,22 +394,22 @@ interface Result {
 }
 
 interface ClosingPrice {
-//                             👇 C# equivalent of array item
-  CompanyCode:    string[];  // string
-  LatinName:      string[];  // string
-  Symbol:         string[];  // string
-  Name:           string[];  // string
-  Date:           number[];  // int     (int32)
-  ShamsiDate:     number[];  // int     (int32)
-  PriceFirst:     number[];  // decimal (float128)
-  PriceMax:       number[];  // decimal (float128)
-  PriceMin:       number[];  // decimal (float128)
-  LastPrice:      number[];  // decimal (float128)
-  ClosingPrice:   number[];  // decimal (float128)
-  Price:          number[];  // decimal (float128)
-  Volume:         number[];  // decimal (float128)
-  Count:          number[];  // decimal (float128)
-  PriceYesterday: number[];  // decimal (float128)
+//                          👇 C# equivalent of array item
+  date:        number[];  // int     (int32)
+  dateshamsi:  number[];  // int     (int32)
+  open:        number[];  // decimal (float128)
+  high:        number[];  // decimal (float128)
+  low:         number[];  // decimal (float128)
+  last:        number[];  // decimal (float128)
+  close:       number[];  // decimal (float128)
+  vol:         number[];  // decimal (float128)
+  count:       number[];  // decimal (float128)
+  value:       number[];  // decimal (float128)
+  yesterday:   number[];  // decimal (float128)
+  symbol:      string[];  // string
+  name:        string[];  // string
+  namelatin:   string[];  // string
+  companycode: string[];  // string
 }
 
 interface PriceSettings {               
