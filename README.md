@@ -340,25 +340,26 @@ Update (if needed) and return list of instruments.
 Visit the [official documentation](http://cdn.tsetmc.com/Site.aspx?ParTree=1114111118&LnkIdn=83) for description of each `Instrument` field.  
 ```typescript
 interface Instrument {
-//                         👇 C# equivalent
-  InsCode:      string;  // long (int64)
-  InstrumentID: string;  // string
-  LatinSymbol:  string;  // string
-  LatinName:    string;  // string
-  CompanyCode:  string;  // string
-  Symbol:       string;  // string
-  Name:         string;  // string
-  CIsin:        string;  // string
-  DEven:        string;  // int (int32)
-  Flow:         string;  // byte
-  LSoc30:       string;  // string
-  CGdSVal:      string;  // string
-  CGrValCot:    string;  // string
-  YMarNSC:      string;  // string
-  CComVal:      string;  // string
-  CSecVal:      string;  // string
-  CSoSecVal:    string;  // string
-  YVal:         string;  // string
+//                            👇 C# equivalent
+  InsCode:         string;  // long (int64)
+  InstrumentID:    string;  // string
+  LatinSymbol:     string;  // string
+  LatinName:       string;  // string
+  CompanyCode:     string;  // string
+  Symbol:          string;  // string
+  Name:            string;  // string
+  CIsin:           string;  // string
+  DEven:           string;  // int (int32)
+  Flow:            string;  // byte
+  LSoc30:          string;  // string
+  CGdSVal:         string;  // string
+  CGrValCot:       string;  // string
+  YMarNSC:         string;  // string
+  CComVal:         string;  // string
+  CSecVal:         string;  // string
+  CSoSecVal:       string;  // string
+  YVal:            string;  // string
+  SymbolOriginal?: string;
 }
 
 interface Instruments {
