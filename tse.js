@@ -568,7 +568,22 @@ async function updateInstruments() {
   // if (shares === '')       console.warn('Already updated: ', 'Shares');
   
   if (instruments !== '' && instruments !== '*') {
-    let rows = instruments.split(';').map(i=> i.split(','));
+    let rows;
+    
+    if (currentInstruments) {
+      let orig = Object.fromEntries(Object.keys(currentInstruments).map(i => (
+        i = currentInstruments[i].split(','),
+        i.length === 19 && (i[5] = i[19], i.pop()),
+        [i[0], i.join(',')]
+      )));
+      
+      instruments.split(';').forEach((v,i)=> (i = v.split(',',1)[0], orig[i] = v));
+      
+      rows = Object.keys(orig).map(k => orig[k].split(','));
+    } else {
+      rows = instruments.split(';').map(i=> i.split(','));
+    }
+    
     let _rows = [...rows.map(i=> [...i])];
     let dups = _rows
       .map(i=> i[5])                         // symbols
