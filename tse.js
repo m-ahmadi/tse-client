@@ -326,7 +326,8 @@ class Share {
 //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 // utils
 function parseInstruments(struct=false, arr=false, structKey='InsCode', itd=false) {
-  const rows = storage.getItem('tse.instruments'+(itd?'.intraday':'')).split('\n');
+  let rows = storage.getItem('tse.instruments'+(itd?'.intraday':''));
+  rows = rows ? rows.split('\n') : [];
   const instruments = arr ? [] : {};
   const Struct = itd ? InstrumentITD : Instrument;
   for (const row of rows) {
@@ -341,7 +342,8 @@ function parseInstruments(struct=false, arr=false, structKey='InsCode', itd=fals
   return instruments;
 }
 function parseShares(struct=false, arr=false, structKey='InsCode') {
-  const rows = storage.getItem('tse.shares').split('\n');
+  let rows = storage.getItem('tse.shares');
+  rows = rows ? rows.split('\n') : [];
   const shares = arr ? [] : {};
   for (const row of rows) {
     const item = struct ? new Share(row) : row;
