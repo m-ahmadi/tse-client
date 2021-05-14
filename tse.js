@@ -1356,7 +1356,13 @@ async function getIntraday(symbols=[], _settings={}) {
   let toUpdate = askedInscodeDevens.map(([inscode, devens]) => {
     if (!inscode || !devens.length) return;
     if (!stored[inscode]) return [inscode, devens];
-    let needupdate = devens.filter(deven => !stored[inscode][deven]);
+    let needupdate = devens.filter(deven => {
+      let d = stored[inscode][deven];
+      if (!d) return true;
+      let [,,trade] = unzip(d).split('\n\n');
+      if (!trade) return true;
+      return false;
+    });
     if (needupdate.length) return [inscode, needupdate];
   }).filter(i=>i);
   if (pf) pf(pn= +Big(pn).plus( ptot.mul(0.01) ) );
