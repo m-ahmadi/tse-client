@@ -25,15 +25,15 @@ const defaultSettings = {
   fileHeaders:           true,
   cache:                 true,
   intraday: {
-    symbols:      [],
-    startDate:    '1d',
-    endDate:      '',
-    gzip:         false,
-    outdir:       './',
-    dirName:       4,
-    fileEncoding: 'utf8bom',
-    fileHeaders:  true,
-    cache:        true,
+    symbols:          [],
+    startDate:        '1d',
+    endDate:          '',
+    gzip:             false,
+    outdir:           './',
+    dirName:          4,
+    fileEncoding:     'utf8bom',
+    fileHeaders:      true,
+    cache:            true,
     reUpdateNoTrades: false
   }
 };
