@@ -33,7 +33,8 @@ const defaultSettings = {
     dirName:       4,
     fileEncoding: 'utf8bom',
     fileHeaders:  true,
-    cache:        true
+    cache:        true,
+    reUpdateNoTrades: false
   }
 };
 if ( !existsSync(join(__dirname,'settings.json')) ) saveSettings(defaultSettings);
@@ -101,6 +102,7 @@ cmd.command('intraday [symbols...]').alias('itd').description('Crawl Intraday Da
   .option('-m, --end-date <string>',         'Upper boundary for --start-date. default: ""'+t3+'Accepts same patterns as --start-date'+t3+'Cannot be less than --start-date'+t3+'If empty, then latest possible date is used')
   .option('-z, --gzip',                      'Output raw gzip files. default: false')
   .option('-y, --alt-date',                  'Output results with Shamsi dates. default: false')
+  .option('-r, --re-update-no-trades',       'Update already cached items that have no "trade" data. default: false')
   .action(intraday);
 cmd.parse(process.argv);
 
@@ -265,7 +267,7 @@ async function intraday(args, subOpts) {
   if (symbols.length) {
     const progress = new Progress(':bar :percent (Elapsed: :elapsed s)', {total: 100, width: 18, complete: '█', incomplete: '░', clear: true});
     
-    const { gzip, outdir, cache, fileHeaders, altDate } = settings;
+    const { gzip, outdir, cache, fileHeaders, altDate, reUpdateNoTrades } = settings;
     let { startDate, endDate, dirName, fileEncoding } = settings;
     startDate = parseDateOption(startDate);
     dirName   = +dirName;
@@ -286,6 +288,7 @@ async function intraday(args, subOpts) {
       endDate,
       cache,
       gzip,
+      reUpdateNoTrades,
       onprogress:    (n) => progress.tick(n - progress.curr),
       progressTotal: 86
     };
