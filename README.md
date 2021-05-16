@@ -158,6 +158,7 @@ tse itd ذوب -b 20210219 -m 20210224 # crawl 6 days (Western dates)
 tse itd ذوب -k                      # do not cache the data
 tse itd ذوب -z                      # output gzip files
 tse itd ذوب -y                      # generate results with Shamsi dates
+tse itd ذوب -r                      # re-download already cached days that have no `trade` data
 
 tse itd ذوب -e ascii # file encoding
 tse itd ذوب -n 2     # directory name
@@ -576,6 +577,7 @@ Crawl intraday data from the instrument's history page of the [tsetmc.com](http:
 	+ **`endDate`:** Only return data before this date. Default: `''`
 	+ **`cache`:** Whether to cache the downloaded data. Default: `true`
 	+ **`gzip`:** Return data as Gzip `Buffer` in Node or `Uint8Array` in Browser. Default: `true`
+	+ **`reUpdateNoTrades`:** Re-download any cached item that has no [`trade`](#trade) data. Default: `false`
 	+ **`onprogress`:** A callback function which gets called with a number indicating the progress. Default: `undefined`
 	+ **`progressTotal`:** A number to use as the completion point of progress. Default: `100`
 
