@@ -42,7 +42,7 @@ const savedSettings = require('./settings.json');
 const { log } = console;
 const t  = '\n\t\t\t\t\t ';
 const t2 = '\n\t\t\t\t ';
-const t3 = '\n\t\t\t     ';
+const t3 = '\n\t\t\t       ';
 
 cmd
   .helpOption('-h, --help', 'Show help.')
