@@ -29,7 +29,7 @@ const defaultSettings = {
     startDate:        '1d',
     endDate:          '',
     gzip:             false,
-    outdir:           './',
+    outdir:           '',
     dirName:          4,
     fileEncoding:     'utf8bom',
     fileHeaders:      true,
@@ -93,7 +93,7 @@ cmd.command('intraday [symbols...]').alias('itd').description('Crawl Intraday Da
           '-d, --symbol-delete',
           '-a, --symbol-all',
           '-b, --start-date <string>     default: "1d"',
-          '-o, --outdir <string>         Same as --file-outdir',
+          '-o, --outdir <string>         Output location and whether to generate data. If not set, then nothing is generated. default: ""',
           '-n, --dir-name <number>       Same as --file-name',
           '-e, --file-encoding <string>',
           '-H, --file-no-headers',
@@ -278,8 +278,10 @@ async function intraday(args, subOpts) {
       if (!endDate)                                   { abort('Invalid option:', '--end-date',      '\n\tPattern not matched:'.red, '^\\d{1,3}(y|m|d)$');       return; }
       if (+endDate < +startDate)                      { abort('Invalid option:', '--end-date',      '\n\tCannot be less than'.red, '--start-date');             return; }
     }
-    if ( !existsSync(outdir) ) mkdirSync(outdir);
-    if ( !statSync(outdir).isDirectory() )            { abort('Invalid option:', '--output-dir',    '\n\tPath is not a directory:'.red,  resolve(outdir).grey); return; }
+    if (outdir) {
+      if ( !existsSync(outdir) ) mkdirSync(outdir);
+      if ( !statSync(outdir).isDirectory() )          { abort('Invalid option:', '--output-dir',    '\n\tPath is not a directory:'.red,  resolve(outdir).grey); return; }
+    }
     if ( !/^[0-4]$/.test(''+dirName) )                { abort('Invalid option:', '--dir-name',      '\n\tPattern not matched:'.red, '^[0-4]$');                 return; }
     if ( !/^(utf8(bom)?|ascii)$/.test(fileEncoding) ) { abort('Invalid option:', '--file-encoding', '\n\tPattern not matched:'.red, '^(utf8(bom)?|ascii)$');    return; }
     
@@ -290,7 +292,7 @@ async function intraday(args, subOpts) {
       gzip,
       reUpdateNoTrades,
       onprogress:    (n) => progress.tick(n - progress.curr),
-      progressTotal: 86
+      progressTotal: outdir ? 86 : 100
     };
     const { error, data } = await tse.getIntraday(symbols, _settings);
     
@@ -336,62 +338,64 @@ async function intraday(args, subOpts) {
       }
     }
     
-    const symins = await tse.getInstruments(true, false, 'Symbol');
-    let bom = '';
-    if (fileEncoding === 'utf8bom') {
-      bom = '\ufeff';
-      fileEncoding = undefined;
-    }
-    
     const datalen = data.length;
-    const groupCols = tse.itdGroupCols;
-    const filenames = groupCols.map(i => i[0]);
     
-    const shamsi = s => {
-      const { jy, jm, jd } = toJalaali(+s.slice(0,4), +s.slice(4,6), +s.slice(6,8));
-      return (jy*10000) + (jm*100) + jd + '';
-    };
-    
-    data.forEach((item, i) => {
-      if (!item || item.filter(i => i[1] === 'N/A').length === item.length) {
-        progress.tick(14/datalen);
-        return;
+    if (outdir) {
+      const symins = await tse.getInstruments(true, false, 'Symbol');
+      let bom = '';
+      if (fileEncoding === 'utf8bom') {
+        bom = '\ufeff';
+        fileEncoding = undefined;
       }
       
-      const sym = symbols[i];
-      const instrument = symins[sym];
-      const name = safeWinFilename( getFilename(dirName, instrument) );
-      const dir = join(outdir, name);
-      if ( !existsSync(dir) ) mkdirSync(dir);
+      const groupCols = tse.itdGroupCols;
+      const filenames = groupCols.map(i => i[0]);
       
-      if (gzip) {
+      const shamsi = s => {
+        const { jy, jm, jd } = toJalaali(+s.slice(0,4), +s.slice(4,6), +s.slice(6,8));
+        return (jy*10000) + (jm*100) + jd + '';
+      };
       
-        for (let [deven, content] of item) {
-          if (!content) continue;
-          if (altDate) deven = shamsi(''+deven);
-          writeFileSync(join(dir, ''+deven+'.csv.gz'), content);
+      data.forEach((item, i) => {
+        if (!item || item.filter(i => i[1] === 'N/A').length === item.length) {
+          progress.tick(14/datalen);
+          return;
         }
         
-      } else {
+        const sym = symbols[i];
+        const instrument = symins[sym];
+        const name = safeWinFilename( getFilename(dirName, instrument) );
+        const dir = join(outdir, name);
+        if ( !existsSync(dir) ) mkdirSync(dir);
         
-        for (let [deven, content] of item) {
-          if (!content || content === 'N/A') continue;
-          if (altDate) deven = shamsi(''+deven);
-          const idir = join(dir, ''+deven);
-          if ( !existsSync(idir) ) mkdirSync(idir);
+        if (gzip) {
+        
+          for (let [deven, content] of item) {
+            if (!content) continue;
+            if (altDate) deven = shamsi(''+deven);
+            writeFileSync(join(dir, ''+deven+'.csv.gz'), content);
+          }
           
-          content.split('\n\n').forEach((v,j) => {
-            if (!v) return;
-            const headers = fileHeaders ? groupCols[j][1].join() + '\n' : '';
-            writeFileSync(join(idir, filenames[j] + '.csv'), bom+headers+v, fileEncoding);
-          });
+        } else {
+          
+          for (let [deven, content] of item) {
+            if (!content || content === 'N/A') continue;
+            if (altDate) deven = shamsi(''+deven);
+            const idir = join(dir, ''+deven);
+            if ( !existsSync(idir) ) mkdirSync(idir);
+            
+            content.split('\n\n').forEach((v,j) => {
+              if (!v) return;
+              const headers = fileHeaders ? groupCols[j][1].join() + '\n' : '';
+              writeFileSync(join(idir, filenames[j] + '.csv'), bom+headers+v, fileEncoding);
+            });
+          }
+        
         }
-      
-      }
-      
-      progress.tick(14/datalen);
-    });
-    
+        
+        progress.tick(14/datalen);
+      });
+    }
     
     if (!progress.complete) progress.tick(progress.total - progress.curr);
     
