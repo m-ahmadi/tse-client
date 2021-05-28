@@ -1100,7 +1100,7 @@ const itdUpdateManager = (function () {
   let timeouts = new Map();
   let qeudRetry = -1;
   let resolve;
-  let nextsrv = n => n<7 ? ++n : 0;
+  let nextsrv = n => n<9 ? ++n : 0;
   let writing = [];
   let pf, pn, ptot, pSR, pR;
   let shouldCache;
