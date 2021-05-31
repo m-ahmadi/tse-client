@@ -576,7 +576,7 @@ async function updateInstruments() {
     if (currentInstruments) {
       let orig = Object.fromEntries(Object.keys(currentInstruments).map(i => (
         i = currentInstruments[i].split(','),
-        i.length === 19 && (i[5] = i[19], i.pop()),
+        i.length === 19 && (i[5] = i[18], i.pop()),
         [i[0], i.join(',')]
       )));
       
