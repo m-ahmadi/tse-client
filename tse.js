@@ -1068,7 +1068,7 @@ async function extractAndStore(inscode='', deven_text=[], shouldCache) {
     let client = coli.map(i=> ClientType[i]).join(',');
     
     let [a, b] = [InstrumentState, StaticTreshhold];
-    let state = a.length && a[0].length ? a[0][2].trim() : '';
+    let state = a.length && a[0].length ? a[0][2] : '';
     let daymin, daymax;
     if (b.length && b[1].length) { daymin = b[1][2]; daymax = b[1][1]; }
     let [flow, basevol] = [4,9].map(i=>InstSimple[i]);
