@@ -542,7 +542,7 @@ Default: `1000`
 The CDN server from which to start the update process.  
 Value of `0` will result to `cdn.tsetmc.com` base URLs.  
 Only integers.  
-Default: `0`
+Default: `1`
 #### `tse.getIntradayInstruments(struct?: boolean, arr?: boolean, structKey?: string)`
 Returns the list of instruments crawled by [`getIntraday()`](#tsegetintradaysymbols-string-settings-intradaysettings).  
 The information of each instrument is from the latest crawled day.  

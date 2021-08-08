@@ -977,7 +977,7 @@ let INTRADAY_URL = (server='',inscode='',deven='') => `http://cdn${server}.tsetm
 let INTRADAY_UPDATE_CHUNK_DELAY  = 100;
 let INTRADAY_UPDATE_RETRY_COUNT  = 9;
 let INTRADAY_UPDATE_RETRY_DELAY  = 1000;
-let INTRADAY_UPDATE_FIRST_SERVER = 0;
+let INTRADAY_UPDATE_FIRST_SERVER = 1;
 const itdDefaultSettings = {
   startDate: '20010321',
   endDate: '',
