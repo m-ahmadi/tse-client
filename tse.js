@@ -1431,7 +1431,7 @@ const instance = {
   set UPDATE_INTERVAL(v) { if (Number.isInteger(v)) UPDATE_INTERVAL = v; },
   
   get PRICES_UPDATE_CHUNK() { return PRICES_UPDATE_CHUNK; },
-  set PRICES_UPDATE_CHUNK(v) { if (Number.isInteger(v) && v > 0 && v < 60) PRICES_UPDATE_CHUNK = v; },
+  set PRICES_UPDATE_CHUNK(v) { if (Number.isInteger(v) && v > 0 && v < 61) PRICES_UPDATE_CHUNK = v; },
   
   get PRICES_UPDATE_CHUNK_DELAY() { return PRICES_UPDATE_CHUNK_DELAY; },
   set PRICES_UPDATE_CHUNK_DELAY(v) { if (Number.isInteger(v)) PRICES_UPDATE_CHUNK_DELAY = v; },
