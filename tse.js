@@ -985,7 +985,11 @@ const itdDefaultSettings = {
   gzip: true,
   reUpdateNoTrades: false,
   onprogress: undefined,
-  progressTotal: 100
+  progressTotal: 100,
+  chunkDelay: INTRADAY_UPDATE_CHUNK_DELAY,
+  retryCount: INTRADAY_UPDATE_RETRY_COUNT,
+  retryDelay: INTRADAY_UPDATE_RETRY_DELAY,
+  firstServer: INTRADAY_UPDATE_FIRST_SERVER
 };
 const itdGroupCols = [
   [ 'price',  ['time','last','close','open','high','low','count','volume','value','discarded'] ],
@@ -1102,10 +1106,10 @@ const itdUpdateManager = (function () {
   let timeouts = new Map();
   let qeudRetry = -1;
   let resolve;
-  let nextsrv = n => n<9 ? ++n : INTRADAY_UPDATE_FIRST_SERVER;
+  let nextsrv = n => n<9 ? ++n : firstServer;
   let writing = [];
+  let chunkDelay, retryCount, retryDelay, firstServer, shouldCache;
   let pf, pn, ptot, pSR, pR;
-  let shouldCache;
   let inslastdeven = {};
   let extractedIns = {};
   
@@ -1115,7 +1119,7 @@ const itdUpdateManager = (function () {
       return;
     }
     
-    if (succs.length === total || retries >= INTRADAY_UPDATE_RETRY_COUNT) {
+    if (succs.length === total || retries >= retryCount) {
       let _succs = [ ...succs ];
       let _fails = [ ...fails.map(i => i.slice(1)) ];
       succs = [];
@@ -1141,9 +1145,9 @@ const itdUpdateManager = (function () {
       fails = fails.filter(i => joined.indexOf(i.join('')) === -1);
       retries++;
       retrychunks.forEach(chunk => chunk[0] = nextsrv(chunk[0]));
-      qeudRetry = setTimeout(batch, INTRADAY_UPDATE_RETRY_DELAY, retrychunks, true);
+      qeudRetry = setTimeout(batch, retryDelay, retrychunks, true);
       retrychunks = [];
-      setTimeout(poll, INTRADAY_UPDATE_RETRY_DELAY);
+      setTimeout(poll, retryDelay);
     }
   }
   
@@ -1180,7 +1184,7 @@ const itdUpdateManager = (function () {
       fails = fails.filter(i => i.join() !== chunk.join());
       
       if (pf) {
-        let filled = pSR.div(INTRADAY_UPDATE_RETRY_COUNT + 2).mul(retries + 1);
+        let filled = pSR.div(retryCount + 2).mul(retries + 1);
         pf(pn= +Big(pn).plus( pSR.sub(filled) ) );
       }
     } else {
@@ -1226,21 +1230,21 @@ const itdUpdateManager = (function () {
   function batch(chunks=[]) {
     if (qeudRetry) qeudRetry = undefined;
     let ids = chunks.map((v,i) => 'a'+i);
-    for (let i=0, delay=0, n=chunks.length; i<n; i++, delay+=INTRADAY_UPDATE_CHUNK_DELAY) {
+    for (let i=0, delay=0, n=chunks.length; i<n; i++, delay+=chunkDelay) {
       let id = ids[i];
       let t = setTimeout(request, delay, chunks[i], id);
       timeouts.set(id, t);
     }
   }
   
-  async function start(inscode_devens, _shouldCache, po) {
-    shouldCache = _shouldCache;
+  async function start(inscode_devens, opts, po) {
+    ({ chunkDelay, retryCount, retryDelay, firstServer, shouldCache } = opts);
     ({ pf, pn, ptot } = po);
     if (isBrowser) src = objify( inscode_devens.map(([a,b]) => [ a, b.map(i=>[i,undefined]) ]) );
-    let chunks = [...inscode_devens].reduce((r,[inscode,devens]) => r=[...r, ...(devens ? devens.map(i=>[INTRADAY_UPDATE_FIRST_SERVER,inscode,''+i]) : []) ], []);
+    let chunks = [...inscode_devens].reduce((r,[inscode,devens]) => r=[...r, ...(devens ? devens.map(i=>[firstServer,inscode,''+i]) : []) ], []);
     total = chunks.length;
-    pSR = ptot.div(total);                         // each successful request:   ptot / total
-    pR = pSR.div(INTRADAY_UPDATE_RETRY_COUNT + 2); // each request:              pSR / (INTRADAY_UPDATE_RETRY_COUNT + 2)
+    pSR = ptot.div(total);        // each successful request:   ptot / total
+    pR = pSR.div(retryCount + 2); // each request:              pSR / (retryCount + 2)
     succs = [];
     fails = [];
     retries = 0;
@@ -1373,8 +1377,10 @@ async function getIntraday(symbols=[], _settings={}) {
   }).filter(i=>i);
   if (pf) pf(pn= +Big(pn).plus( ptot.mul(0.01) ) );
   
+  let { chunkDelay, retryCount, retryDelay, firstServer } = settings;
+  
   if (toUpdate.length > 0) {
-    let { succs, fails } = await itdUpdateManager(toUpdate, cache, {pf, pn, ptot: ptot.mul(0.85)});
+    let { succs, fails } = await itdUpdateManager(toUpdate, {shouldCache: cache, chunkDelay, retryCount, retryDelay, firstServer}, {pf, pn, ptot: ptot.mul(0.85)});
     
     if (fails.length) {
       let k = Object.fromEntries( selection.map(i => [i.InsCode, i.Symbol]) );

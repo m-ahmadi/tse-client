@@ -164,6 +164,11 @@ tse itd ذوب -r                      # re-download already cached days that ha
 tse itd ذوب -o . -e ascii # file encoding
 tse itd ذوب -o . -n 2     # directory name
 tse itd ذوب -o . -H       # file without headers
+
+tse itd ذوب --retry 0          # only request once without any retrying
+tse itd ذوب --retry-delay 5000 # wait 5 seconds between each retry
+tse itd ذوب --chunk-delay 2000 # wait 2 seconds before requesting another day
+tse itd ذوب --first-server 4   # start from the "cdn4.tsetmc.com" base url
 ```
 
 # Node
@@ -586,6 +591,10 @@ Crawl intraday data from the instrument's history page of the [tsetmc.com](http:
 	+ **`reUpdateNoTrades`:** Re-download any cached item that has no [`trade`](#trade) data. Default: `false`
 	+ **`onprogress`:** A callback function which gets called with a number indicating the progress. Default: `undefined`
 	+ **`progressTotal`:** A number to use as the completion point of progress. Default: `100`
+	+ **`chunkDelay`:** Per call option of [`INTRADAY_UPDATE_CHUNK_DELAY`](#tseintraday_update_chunk_delay). Default: `value of constant`
+	+ **`retryCount`:** Per call option of [`INTRADAY_UPDATE_RETRY_COUNT`](#tseintraday_update_retry_count). Default: `value of constant`
+	+ **`retryDelay`:** Per call option of [`INTRADAY_UPDATE_RETRY_DELAY`](#tseintraday_update_retry_delay). Default: `value of constant`
+	+ **`firstServer`:** Per call option of [`INTRADAY_UPDATE_FIRST_SERVER`](#tseintraday_update_first_server). Default: `value of constant`
 
 **return:** `Result`
 ```typescript

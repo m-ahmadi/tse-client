@@ -34,7 +34,11 @@ const defaultSettings = {
     fileEncoding:     'utf8bom',
     fileHeaders:      true,
     cache:            true,
-    reUpdateNoTrades: false
+    reUpdateNoTrades: false,
+    retry:            tse.INTRADAY_UPDATE_RETRY_COUNT,
+    retryDelay:       tse.INTRADAY_UPDATE_RETRY_DELAY,
+    chunkDelay:       tse.INTRADAY_UPDATE_CHUNK_DELAY,
+    firstServer:      tse.INTRADAY_UPDATE_FIRST_SERVER
   }
 };
 if ( !existsSync(join(__dirname,'settings.json')) ) saveSettings(defaultSettings);
@@ -103,6 +107,10 @@ cmd.command('intraday [symbols...]').alias('itd').description('Crawl Intraday Da
   .option('-z, --gzip',                      'Output raw gzip files. default: false')
   .option('-y, --alt-date',                  'Output results with Shamsi dates. default: false')
   .option('-r, --re-update-no-trades',       'Update already cached items that have no "trade" data. default: false')
+  .option('--retry <number>',                'Amount of retry attempts before giving up. default: 9')
+  .option('--retry-delay <number>',          'Amount of delay (in ms) to wait before making another retry. default: 1000')
+  .option('--chunk-delay <number>',          'Amount of delay (in ms) to wait before requesting another chunk of dates. default: 100')
+  .option('--first-server <number>',         'The CDN server from which to start the update process. default: 1')
   .action(intraday);
 cmd.parse(process.argv);
 
@@ -268,9 +276,13 @@ async function intraday(args, subOpts) {
     const progress = new Progress(':bar :percent (Elapsed: :elapsed s)', {total: 100, width: 18, complete: '█', incomplete: '░', clear: true});
     
     const { gzip, outdir, cache, fileHeaders, altDate, reUpdateNoTrades } = settings;
-    let { startDate, endDate, dirName, fileEncoding } = settings;
-    startDate = parseDateOption(startDate);
-    dirName   = +dirName;
+    let { startDate, endDate, dirName, fileEncoding, retry, retryDelay, chunkDelay, firstServer } = settings;
+    startDate   = parseDateOption(startDate);
+    dirName     = +dirName;
+    retry       = +retry;
+    retryDelay  = +retryDelay;
+    chunkDelay  = +chunkDelay;
+    firstServer = +firstServer;
     
     if (!startDate)                                   { abort('Invalid option:', '--start-date',    '\n\tPattern not matched:'.red, '^\\d{1,3}(y|m|d)$');       return; }
     if (endDate) {
@@ -292,7 +304,11 @@ async function intraday(args, subOpts) {
       gzip,
       reUpdateNoTrades,
       onprogress:    (n) => progress.tick(n - progress.curr),
-      progressTotal: outdir ? 86 : 100
+      progressTotal: outdir ? 86 : 100,
+      retryCount: retry,
+      retryDelay,
+      chunkDelay,
+      firstServer
     };
     const { error, data } = await tse.getIntraday(symbols, _settings);
     
