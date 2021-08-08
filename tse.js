@@ -503,13 +503,14 @@ function shouldUpdate(deven='', lastPossibleDeven) {
   if (!deven || deven === '0') return true; // first time (never updated before)
   
   const today = new Date();
+  const todayDeven = today.getFullYear()*10000 + today.getMonth()+1 + today.getDate()*100 + '';
   const daysPassed = dayDiff(lastPossibleDeven, deven);
   const inWeekend = [4,5].includes( today.getDay() );
   const lastUpdateWeekday = strToDate(lastPossibleDeven).getDay();
   
   const result = (
     daysPassed >= UPDATE_INTERVAL &&
-    today.getHours() > 16 &&     // w8 until end of trading session
+    (todayDeven === lastPossibleDeven ? today.getHours() > 16 : true) && // w8 until end of trading session
     !(
       // no update needed if: we are in weekend but ONLY if last time we updated was on last day (wednesday) of THIS week
       inWeekend &&
