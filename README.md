@@ -34,6 +34,7 @@ The `0.x` and `1.x` versions were a direct port of the [official Windows app](ht
 	+ [`INTRADAY_UPDATE_CHUNK_DELAY`](#tseintraday_update_chunk_delay)
 	+ [`INTRADAY_UPDATE_RETRY_COUNT`](#tseintraday_update_retry_count)
 	+ [`INTRADAY_UPDATE_RETRY_DELAY`](#tseintraday_update_retry_delay)
+	+ [`INTRADAY_UPDATE_FIRST_SERVER`](#tseintraday_update_first_server)
 	+ [`getIntraday()`](#tsegetintradaysymbols-string-settings-intradaysettings)
 	+ [`getIntradayInstruments()`](#tsegetintradayinstrumentsstruct-boolean-arr-boolean-structkey-string)
 	+ [`itdGroupCols`](#tseitdgroupcols)
@@ -537,6 +538,11 @@ Default: `9`
 Amount of delay (in ms) to wait before making another retry.  
 Only integers.  
 Default: `1000`
+#### `tse.INTRADAY_UPDATE_FIRST_SERVER`
+The CDN server from which to start the update process.  
+Value of `0` will result to `cdn.tsetmc.com` base URLs.  
+Only integers.  
+Default: `0`
 #### `tse.getIntradayInstruments(struct?: boolean, arr?: boolean, structKey?: string)`
 Returns the list of instruments crawled by [`getIntraday()`](#tsegetintradaysymbols-string-settings-intradaysettings).  
 The information of each instrument is from the latest crawled day.  

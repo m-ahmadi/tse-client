@@ -974,9 +974,10 @@ async function getInstruments(struct=true, arr=true, structKey='InsCode') {
 }
 //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 let INTRADAY_URL = (server='',inscode='',deven='') => `http://cdn${server}.tsetmc.com/Loader.aspx?ParTree=15131P&i=${inscode}&d=${deven}`;
-let INTRADAY_UPDATE_CHUNK_DELAY = 100;
-let INTRADAY_UPDATE_RETRY_COUNT = 9;
-let INTRADAY_UPDATE_RETRY_DELAY = 1000;
+let INTRADAY_UPDATE_CHUNK_DELAY  = 100;
+let INTRADAY_UPDATE_RETRY_COUNT  = 9;
+let INTRADAY_UPDATE_RETRY_DELAY  = 1000;
+let INTRADAY_UPDATE_FIRST_SERVER = 0;
 const itdDefaultSettings = {
   startDate: '20010321',
   endDate: '',
@@ -1236,7 +1237,7 @@ const itdUpdateManager = (function () {
     shouldCache = _shouldCache;
     ({ pf, pn, ptot } = po);
     if (isBrowser) src = objify( inscode_devens.map(([a,b]) => [ a, b.map(i=>[i,undefined]) ]) );
-    let chunks = [...inscode_devens].reduce((r,[inscode,devens]) => r=[...r, ...(devens ? devens.map(i=>[0,inscode,''+i]) : []) ], []);
+    let chunks = [...inscode_devens].reduce((r,[inscode,devens]) => r=[...r, ...(devens ? devens.map(i=>[INTRADAY_UPDATE_FIRST_SERVER,inscode,''+i]) : []) ], []);
     total = chunks.length;
     pSR = ptot.div(total);                         // each successful request:   ptot / total
     pR = pSR.div(INTRADAY_UPDATE_RETRY_COUNT + 2); // each request:              pSR / (INTRADAY_UPDATE_RETRY_COUNT + 2)
@@ -1458,6 +1459,9 @@ const instance = {
   
   get INTRADAY_UPDATE_RETRY_DELAY() { return INTRADAY_UPDATE_RETRY_DELAY; },
   set INTRADAY_UPDATE_RETRY_DELAY(v) { if (Number.isInteger(v)) INTRADAY_UPDATE_RETRY_DELAY = v; },
+  
+  get INTRADAY_UPDATE_FIRST_SERVER() { return INTRADAY_UPDATE_FIRST_SERVER; },
+  set INTRADAY_UPDATE_FIRST_SERVER(v) { if (Number.isInteger(v)) INTRADAY_UPDATE_FIRST_SERVER = v; },
   
   itdGroupCols
 };
