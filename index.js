@@ -305,7 +305,7 @@ async function intraday(args, subOpts) {
       startDate,
       endDate,
       cache,
-      gzip,
+      gzip: outdir ? gzip : true,
       reUpdateNoTrades,
       onprogress:    (n) => progress.tick(n - progress.curr),
       progressTotal: outdir ? 86 : 100,
