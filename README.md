@@ -590,6 +590,7 @@ Crawl intraday data from the instrument's history page of the [tsetmc.com](http:
 	+ **`cache`:** Whether to cache the downloaded data. Default: `true`
 	+ **`gzip`:** Return data as Gzip `Buffer` in Node or `Uint8Array` in Browser. Default: `true`
 	+ **`reUpdateNoTrades`:** Re-download any cached item that has no [`trade`](#trade) data. Default: `false`
+	+ **`updateOnly`:** Perform update but don't return any data. Default: `false`
 	+ **`onprogress`:** A callback function which gets called with a number indicating the progress. Default: `undefined`
 	+ **`progressTotal`:** A number to use as the completion point of progress. Default: `100`
 	+ **`chunkDelay`:** Per call option of [`INTRADAY_UPDATE_CHUNK_DELAY`](#tseintraday_update_chunk_delay). Default: `value of constant`

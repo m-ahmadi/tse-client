@@ -80,17 +80,28 @@ const storage = (function () {
       }
     };
     
-    const itdGetItems = async function (selins=new Set()) {
+    const itdGetItems = async function (selins=new Set(), full=false) {
       const d = join(datadir, 'intraday');
       if (!existsSync(d)) mkdirSync(d);
       const dirs = readdirSync(d).filter( i => statSync(join(d,i)).isDirectory() && selins.has(i) );
-      const result = dirs.map(i => {
-        const files = readdirSync(join(d,i)).map(j => {
-          const z = j.slice(-3) === '.gz';
-          return [ z ? j.slice(0,-3) : j, readFileSync(join(d,i,j), z ? null : 'utf8') ];
+      let result;
+      if (full) { 
+        result = dirs.map(i => {
+          const files = readdirSync(join(d,i)).map(j => {
+            const z = j.slice(-3) === '.gz';
+            return [ z ? j.slice(0,-3) : j, readFileSync(join(d,i,j), z ? null : 'utf8') ];
+          });
+          return [ i, Object.fromEntries(files) ];
         });
-        return [ i, Object.fromEntries(files) ];
-      });
+      } else {
+        result = dirs.map(i => {
+          const files = readdirSync(join(d,i)).map(j => {
+            const z = j.slice(-3) === '.gz';
+            return [z ? j.slice(0,-3) : j, true];
+          });
+          return [ i, Object.fromEntries(files) ];
+        });
+      }
       return Object.fromEntries(result);
     };
     const itdSetItem = async function (key, obj) {
@@ -163,11 +174,17 @@ const storage = (function () {
     
     const itdstore = localforage.createInstance({name: 'tse.intraday'});
     
-    const itdGetItems = async function	(selins=new Set()) {
+    const itdGetItems = async function	(selins=new Set(), full=false) {
       const result = {};
-      await itdstore.iterate((val, key) => {
-        if (selins.has(key)) result[key] = val;
-      });
+      if (full) {
+        await itdstore.iterate((val, key) => {
+          if (selins.has(key)) result[key] = val;
+        });
+      } else {
+        await itdstore.iterate((val, key) => {
+          if (selins.has(key)) result[key] = Object.keys(val).reduce((r,k) => (r[k] = true, r), {});
+        });
+      }
       return result;
     };
     const itdSetItem = async (key, value, zip=false) => {
@@ -984,6 +1001,7 @@ const itdDefaultSettings = {
   cache: true,
   gzip: true,
   reUpdateNoTrades: false,
+  updateOnly: false,
   onprogress: undefined,
   progressTotal: 100,
   chunkDelay: INTRADAY_UPDATE_CHUNK_DELAY,
@@ -1094,7 +1112,10 @@ async function extractAndStore(inscode='', deven_text=[], shouldCache) {
     storedInstrument[deven] = zip( file.join('\n\n') );
   }
   
-  if (shouldCache) return storage.itd.setItem(inscode, storedInstrument);
+  let o = storedInstrument;
+  let rdy = Object.keys(o).filter(k => o[k] !== true).reduce((r,k) => (r[k] = o[k], r), {});
+  
+  if (shouldCache) return storage.itd.setItem(inscode, rdy);
 }
 const itdUpdateManager = (function () {
   let src = {};
@@ -1358,8 +1379,8 @@ async function getIntraday(symbols=[], _settings={}) {
     return [inscode, askedDevens];
   });
   
-  stored = await storage.itd.getItems(selins);
-  let { reUpdateNoTrades } = settings;
+  let { reUpdateNoTrades, updateOnly } = settings;
+  stored = await storage.itd.getItems(selins, updateOnly ? reUpdateNoTrades : true);
   
   let toUpdate = askedInscodeDevens.map(([inscode, devens]) => {
     if (!inscode || !devens.length) return;
@@ -1394,17 +1415,19 @@ async function getIntraday(symbols=[], _settings={}) {
   }
   if (pf) pf(pn= +ptot.mul(0.99) );
   
-  let { gzip } = settings;
-  
-  result.data = askedInscodeDevens.map(([inscode, devens]) => {
-    let instr = stored[inscode];
-    if (!instr) return;
-    if (gzip) {
-      return devens.map(deven => [ deven, instr[deven] ]);
-    } else {
-      return devens.map(deven => [ deven, !instr[deven] || typeof instr[deven] === 'string' ? instr[deven] : unzip(instr[deven]) ]);
-    }
-  });
+  if (!updateOnly) {
+    let { gzip } = settings;
+    
+    result.data = askedInscodeDevens.map(([inscode, devens]) => {
+      let instr = stored[inscode];
+      if (!instr) return;
+      if (gzip) {
+        return devens.map(deven => [ deven, instr[deven] ]);
+      } else {
+        return devens.map(deven => [ deven, !instr[deven] || typeof instr[deven] === 'string' ? instr[deven] : unzip(instr[deven]) ]);
+      }
+    });
+  }
   if (pf) pf(+ptot);
   
   return result;
