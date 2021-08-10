@@ -38,7 +38,7 @@ const defaultSettings = {
     retry:            tse.INTRADAY_UPDATE_RETRY_COUNT,
     retryDelay:       tse.INTRADAY_UPDATE_RETRY_DELAY,
     chunkDelay:       tse.INTRADAY_UPDATE_CHUNK_DELAY,
-    firstServer:      tse.INTRADAY_UPDATE_FIRST_SERVER
+    servers:          tse.INTRADAY_UPDATE_SERVERS
   }
 };
 if ( !existsSync(join(__dirname,'settings.json')) ) saveSettings(defaultSettings);
@@ -110,7 +110,7 @@ cmd.command('intraday [symbols...]').alias('itd').description('Crawl Intraday Da
   .option('--retry <number>',                'Amount of retry attempts before giving up. default: 9')
   .option('--retry-delay <number>',          'Amount of delay (in ms) to wait before making another retry. default: 1000')
   .option('--chunk-delay <number>',          'Amount of delay (in ms) to wait before requesting another chunk of dates. default: 100')
-  .option('--first-server <number>',         'The CDN server from which to start the update process. default: 1')
+  .option('--servers <string>',              'A space-separated string of integer numbers to use as CDN servers in the update process. default: "1 2 3 4 5 6 7 8 9"')
   .action(intraday);
 cmd.parse(process.argv);
 
@@ -276,13 +276,12 @@ async function intraday(args, subOpts) {
     const progress = new Progress(':bar :percent (Elapsed: :elapsed s)', {total: 100, width: 18, complete: '█', incomplete: '░', clear: true});
     
     const { gzip, outdir, cache, fileHeaders, altDate, reUpdateNoTrades } = settings;
-    let { startDate, endDate, dirName, fileEncoding, retry, retryDelay, chunkDelay, firstServer } = settings;
+    let { startDate, endDate, dirName, fileEncoding, retry, retryDelay, chunkDelay, servers } = settings;
     startDate   = parseDateOption(startDate);
     dirName     = +dirName;
     retry       = +retry;
     retryDelay  = +retryDelay;
     chunkDelay  = +chunkDelay;
-    firstServer = +firstServer;
     
     if (!startDate)                                   { abort('Invalid option:', '--start-date',    '\n\tPattern not matched:'.red, '^\\d{1,3}(y|m|d)$');       return; }
     if (endDate) {
@@ -296,6 +295,10 @@ async function intraday(args, subOpts) {
     }
     if ( !/^[0-4]$/.test(''+dirName) )                { abort('Invalid option:', '--dir-name',      '\n\tPattern not matched:'.red, '^[0-4]$');                 return; }
     if ( !/^(utf8(bom)?|ascii)$/.test(fileEncoding) ) { abort('Invalid option:', '--file-encoding', '\n\tPattern not matched:'.red, '^(utf8(bom)?|ascii)$');    return; }
+    if (typeof servers === 'string') {
+      servers = servers ? servers.trim().split(' ').map(i => +i) : [.1];
+      if ( servers.some(i=> !Number.isInteger(i)) )   {abort('Invalid option:', '--servers',       '\n\tContains something other than integer numbers.'.red);   return; }
+    }
     
     const _settings = {
       startDate,
@@ -308,7 +311,7 @@ async function intraday(args, subOpts) {
       retryCount: retry,
       retryDelay,
       chunkDelay,
-      firstServer
+      servers
     };
     const { error, data } = await tse.getIntraday(symbols, _settings);
     

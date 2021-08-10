@@ -34,7 +34,7 @@ The `0.x` and `1.x` versions were a direct port of the [official Windows app](ht
 	+ [`INTRADAY_UPDATE_CHUNK_DELAY`](#tseintraday_update_chunk_delay)
 	+ [`INTRADAY_UPDATE_RETRY_COUNT`](#tseintraday_update_retry_count)
 	+ [`INTRADAY_UPDATE_RETRY_DELAY`](#tseintraday_update_retry_delay)
-	+ [`INTRADAY_UPDATE_FIRST_SERVER`](#tseintraday_update_first_server)
+	+ [`INTRADAY_UPDATE_SERVERS`](#tseintraday_update_servers)
 	+ [`getIntraday()`](#tsegetintradaysymbols-string-settings-intradaysettings)
 	+ [`getIntradayInstruments()`](#tsegetintradayinstrumentsstruct-boolean-arr-boolean-structkey-string)
 	+ [`itdGroupCols`](#tseitdgroupcols)
@@ -168,7 +168,8 @@ tse itd ذوب -o . -H       # file without headers
 tse itd ذوب --retry 0          # only request once without any retrying
 tse itd ذوب --retry-delay 5000 # wait 5 seconds between each retry
 tse itd ذوب --chunk-delay 2000 # wait 2 seconds before requesting another day
-tse itd ذوب --first-server 4   # start from the "cdn4.tsetmc.com" base url
+tse itd ذوب --servers "4 8"    # only use "cdn4.tsetmc.com" and "cdn8.tsetmc.com" servers
+tse itd ذوب --servers "7"      # only use "cdn7.tsetmc.com" server
 ```
 
 # Node
@@ -543,11 +544,11 @@ Default: `9`
 Amount of delay (in ms) to wait before making another retry.  
 Only integers.  
 Default: `1000`
-#### `tse.INTRADAY_UPDATE_FIRST_SERVER`
-The CDN server from which to start the update process.  
-Value of `0` will result to `cdn.tsetmc.com` base URLs.  
-Only integers.  
-Default: `1`
+#### `tse.INTRADAY_UPDATE_SERVERS`
+Array of integer numbers to use as CDN servers in the update process.  
+Value of `0` will result to `cdn.tsetmc.com` server.  
+Only an array of only integers.  
+Default: `[1,2,3,4,5,6,7,8,9]`
 #### `tse.getIntradayInstruments(struct?: boolean, arr?: boolean, structKey?: string)`
 Returns the list of instruments crawled by [`getIntraday()`](#tsegetintradaysymbols-string-settings-intradaysettings).  
 The information of each instrument is from the latest crawled day.  
@@ -594,7 +595,7 @@ Crawl intraday data from the instrument's history page of the [tsetmc.com](http:
 	+ **`chunkDelay`:** Per call option of [`INTRADAY_UPDATE_CHUNK_DELAY`](#tseintraday_update_chunk_delay). Default: `value of constant`
 	+ **`retryCount`:** Per call option of [`INTRADAY_UPDATE_RETRY_COUNT`](#tseintraday_update_retry_count). Default: `value of constant`
 	+ **`retryDelay`:** Per call option of [`INTRADAY_UPDATE_RETRY_DELAY`](#tseintraday_update_retry_delay). Default: `value of constant`
-	+ **`firstServer`:** Per call option of [`INTRADAY_UPDATE_FIRST_SERVER`](#tseintraday_update_first_server). Default: `value of constant`
+	+ **`servers`:** Per call option of [`INTRADAY_UPDATE_SERVERS`](#tseintraday_update_servers). Default: `value of constant`
 
 **return:** `Result`
 ```typescript

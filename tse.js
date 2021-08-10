@@ -974,10 +974,10 @@ async function getInstruments(struct=true, arr=true, structKey='InsCode') {
 }
 //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 let INTRADAY_URL = (server='',inscode='',deven='') => `http://cdn${server}.tsetmc.com/Loader.aspx?ParTree=15131P&i=${inscode}&d=${deven}`;
-let INTRADAY_UPDATE_CHUNK_DELAY  = 100;
-let INTRADAY_UPDATE_RETRY_COUNT  = 9;
-let INTRADAY_UPDATE_RETRY_DELAY  = 1000;
-let INTRADAY_UPDATE_FIRST_SERVER = 1;
+let INTRADAY_UPDATE_CHUNK_DELAY = 100;
+let INTRADAY_UPDATE_RETRY_COUNT = 9;
+let INTRADAY_UPDATE_RETRY_DELAY = 1000;
+let INTRADAY_UPDATE_SERVERS     = [1,2,3,4,5,6,7,8,9];
 const itdDefaultSettings = {
   startDate: '20010321',
   endDate: '',
@@ -989,7 +989,7 @@ const itdDefaultSettings = {
   chunkDelay: INTRADAY_UPDATE_CHUNK_DELAY,
   retryCount: INTRADAY_UPDATE_RETRY_COUNT,
   retryDelay: INTRADAY_UPDATE_RETRY_DELAY,
-  firstServer: INTRADAY_UPDATE_FIRST_SERVER
+  servers: INTRADAY_UPDATE_SERVERS
 };
 const itdGroupCols = [
   [ 'price',  ['time','last','close','open','high','low','count','volume','value','discarded'] ],
@@ -1106,9 +1106,9 @@ const itdUpdateManager = (function () {
   let timeouts = new Map();
   let qeudRetry = -1;
   let resolve;
-  let nextsrv = n => n<9 ? ++n : firstServer;
+  let nextsrv = i => (i = servers.indexOf(i)+1, servers[i < servers.length ? i : 0]);
   let writing = [];
-  let chunkDelay, retryCount, retryDelay, firstServer, shouldCache;
+  let chunkDelay, retryCount, retryDelay, servers, shouldCache;
   let pf, pn, ptot, pSR, pR;
   let inslastdeven = {};
   let extractedIns = {};
@@ -1238,10 +1238,10 @@ const itdUpdateManager = (function () {
   }
   
   async function start(inscode_devens, opts, po) {
-    ({ chunkDelay, retryCount, retryDelay, firstServer, shouldCache } = opts);
+    ({ chunkDelay, retryCount, retryDelay, servers, shouldCache } = opts);
     ({ pf, pn, ptot } = po);
     if (isBrowser) src = objify( inscode_devens.map(([a,b]) => [ a, b.map(i=>[i,undefined]) ]) );
-    let chunks = [...inscode_devens].reduce((r,[inscode,devens]) => r=[...r, ...(devens ? devens.map(i=>[firstServer,inscode,''+i]) : []) ], []);
+    let chunks = [...inscode_devens].reduce((r,[inscode,devens]) => r=[...r, ...(devens ? devens.map(i=>[servers[0],inscode,''+i]) : []) ], []);
     total = chunks.length;
     pSR = ptot.div(total);        // each successful request:   ptot / total
     pR = pSR.div(retryCount + 2); // each request:              pSR / (retryCount + 2)
@@ -1377,10 +1377,11 @@ async function getIntraday(symbols=[], _settings={}) {
   }).filter(i=>i);
   if (pf) pf(pn= +Big(pn).plus( ptot.mul(0.01) ) );
   
-  let { chunkDelay, retryCount, retryDelay, firstServer } = settings;
+  let { chunkDelay, retryCount, retryDelay, servers } = settings;
+  if (!Array.isArray(servers) || servers.some(i=> !Number.isInteger(i))) servers = itdDefaultSettings.servers;
   
   if (toUpdate.length > 0) {
-    let { succs, fails } = await itdUpdateManager(toUpdate, {shouldCache: cache, chunkDelay, retryCount, retryDelay, firstServer}, {pf, pn, ptot: ptot.mul(0.85)});
+    let { succs, fails } = await itdUpdateManager(toUpdate, {shouldCache: cache, chunkDelay, retryCount, retryDelay, servers}, {pf, pn, ptot: ptot.mul(0.85)});
     
     if (fails.length) {
       let k = Object.fromEntries( selection.map(i => [i.InsCode, i.Symbol]) );
@@ -1466,8 +1467,8 @@ const instance = {
   get INTRADAY_UPDATE_RETRY_DELAY() { return INTRADAY_UPDATE_RETRY_DELAY; },
   set INTRADAY_UPDATE_RETRY_DELAY(v) { if (Number.isInteger(v)) INTRADAY_UPDATE_RETRY_DELAY = v; },
   
-  get INTRADAY_UPDATE_FIRST_SERVER() { return INTRADAY_UPDATE_FIRST_SERVER; },
-  set INTRADAY_UPDATE_FIRST_SERVER(v) { if (Number.isInteger(v)) INTRADAY_UPDATE_FIRST_SERVER = v; },
+  get INTRADAY_UPDATE_SERVERS() { return INTRADAY_UPDATE_SERVERS; },
+  set INTRADAY_UPDATE_SERVERS(v) { if (Array.isArray(v) && !v.some(i => !Number.isInteger(i))) INTRADAY_UPDATE_SERVERS = v; },
   
   itdGroupCols
 };
