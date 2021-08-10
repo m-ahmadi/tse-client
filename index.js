@@ -109,7 +109,7 @@ cmd.command('intraday [symbols...]').alias('itd').description('Crawl Intraday Da
   .option('-r, --re-update-no-trades',       'Update already cached items that have no "trade" data. default: false')
   .option('--retry <number>',                'Amount of retry attempts before giving up. default: '+defaultSettings.intraday.retry)
   .option('--retry-delay <number>',          'Amount of delay (in ms) to wait before making another retry. default: '+defaultSettings.intraday.retryDelay)
-  .option('--chunk-delay <number>',          'Amount of delay (in ms) to wait before requesting another chunk of dates. default: '+defaultSettings.intraday.retryDelay)
+  .option('--chunk-delay <number>',          'Amount of delay (in ms) to wait before requesting another chunk of dates. default: '+defaultSettings.intraday.chunkDelay)
   .option('--servers <string>',              'A space-separated string of positive integers to use as CDN servers in the update process. default: "'+defaultSettings.intraday.servers.join(' ')+'"')
   .action(intraday);
 cmd.parse(process.argv);
