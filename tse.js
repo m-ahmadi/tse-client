@@ -90,7 +90,7 @@ const storage = (function () {
           return [ z ? j.slice(0,-3) : j, readFileSync(join(d,i,j), z ? null : 'utf8') ];
         });
         return [ i, Object.fromEntries(files) ];
-      }).filter(i=>i);
+      });
       return Object.fromEntries(result);
     };
     const itdSetItem = async function (key, obj) {
