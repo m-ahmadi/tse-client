@@ -107,7 +107,7 @@ cmd.command('intraday [symbols...]').alias('itd').description('Crawl Intraday Da
   .option('-z, --gzip',                      'Output raw gzip files. default: false')
   .option('-y, --alt-date',                  'Output results with Shamsi dates. default: false')
   .option('-r, --re-update-no-trades',       'Update already cached items that have no "trade" data. default: false')
-  .option('--retry <number>',                'Amount of retry attempts before giving up. default: 9')
+  .option('--retry <number>',                'Amount of retry attempts before giving up. default: 8')
   .option('--retry-delay <number>',          'Amount of delay (in ms) to wait before making another retry. default: 1000')
   .option('--chunk-delay <number>',          'Amount of delay (in ms) to wait before requesting another chunk of dates. default: 100')
   .option('--servers <string>',              'A space-separated string of integer numbers to use as CDN servers in the update process. default: "1 2 3 4 5 6 7 8 9"')

@@ -539,7 +539,7 @@ Default: `100`
 #### `tse.INTRADAY_UPDATE_RETRY_COUNT`
 Amount of retry attempts before giving up.  
 Only integers.  
-Default: `9`
+Default: `8`
 #### `tse.INTRADAY_UPDATE_RETRY_DELAY`
 Amount of delay (in ms) to wait before making another retry.  
 Only integers.  
