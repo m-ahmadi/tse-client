@@ -314,7 +314,7 @@ Default: `1`
 Amount of instruments per request.  
 Only integers.  
 Min: `1`  
-Max: `60`  
+Max: `59`  
 Default: `50`
 #### `tse.PRICES_UPDATE_CHUNK_DELAY`
 Amount of delay (in ms) to wait before requesting another chunk of instruments.  
