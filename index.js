@@ -307,10 +307,10 @@ async function intraday(args, subOpts) {
       cache,
       gzip,
       reUpdateNoTrades,
-      updateOnly: outdir ? false : true,
+      updateOnly:    outdir ? false : true,
       onprogress:    (n) => progress.tick(n - progress.curr),
       progressTotal: outdir ? 86 : 100,
-      retryCount: retry,
+      retryCount:    retry,
       retryDelay,
       chunkDelay,
       servers
