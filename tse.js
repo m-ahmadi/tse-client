@@ -1378,7 +1378,7 @@ async function getIntraday(symbols=[], _settings={}) {
   if (pf) pf(pn= +Big(pn).plus( ptot.mul(0.01) ) );
   
   let { chunkDelay, retryCount, retryDelay, servers } = settings;
-  if (!Array.isArray(servers) || servers.some(i=> !Number.isInteger(i))) servers = itdDefaultSettings.servers;
+  if (!Array.isArray(servers) || servers.some(i => !Number.isInteger(i) || i < 0)) servers = itdDefaultSettings.servers;
   
   if (toUpdate.length > 0) {
     let { succs, fails } = await itdUpdateManager(toUpdate, {shouldCache: cache, chunkDelay, retryCount, retryDelay, servers}, {pf, pn, ptot: ptot.mul(0.85)});
@@ -1468,7 +1468,7 @@ const instance = {
   set INTRADAY_UPDATE_RETRY_DELAY(v) { if (Number.isInteger(v)) INTRADAY_UPDATE_RETRY_DELAY = v; },
   
   get INTRADAY_UPDATE_SERVERS() { return INTRADAY_UPDATE_SERVERS; },
-  set INTRADAY_UPDATE_SERVERS(v) { if (Array.isArray(v) && !v.some(i => !Number.isInteger(i))) INTRADAY_UPDATE_SERVERS = v; },
+  set INTRADAY_UPDATE_SERVERS(v) { if (Array.isArray(v) && !v.some(i => !Number.isInteger(i) || i < 0)) INTRADAY_UPDATE_SERVERS = v; },
   
   itdGroupCols
 };

@@ -110,7 +110,7 @@ cmd.command('intraday [symbols...]').alias('itd').description('Crawl Intraday Da
   .option('--retry <number>',                'Amount of retry attempts before giving up. default: '+defaultSettings.intraday.retry)
   .option('--retry-delay <number>',          'Amount of delay (in ms) to wait before making another retry. default: '+defaultSettings.intraday.retryDelay)
   .option('--chunk-delay <number>',          'Amount of delay (in ms) to wait before requesting another chunk of dates. default: '+defaultSettings.intraday.retryDelay)
-  .option('--servers <string>',              'A space-separated string of integer numbers to use as CDN servers in the update process. default: "'+defaultSettings.intraday.servers.join(' ')+'"')
+  .option('--servers <string>',              'A space-separated string of positive integers to use as CDN servers in the update process. default: "'+defaultSettings.intraday.servers.join(' ')+'"')
   .action(intraday);
 cmd.parse(process.argv);
 
@@ -296,8 +296,9 @@ async function intraday(args, subOpts) {
     if ( !/^[0-4]$/.test(''+dirName) )                { abort('Invalid option:', '--dir-name',      '\n\tPattern not matched:'.red, '^[0-4]$');                 return; }
     if ( !/^(utf8(bom)?|ascii)$/.test(fileEncoding) ) { abort('Invalid option:', '--file-encoding', '\n\tPattern not matched:'.red, '^(utf8(bom)?|ascii)$');    return; }
     if (typeof servers === 'string') {
-      servers = servers ? servers.trim().split(' ').map(i => +i) : [.1];
-      if ( servers.some(i=> !Number.isInteger(i)) )   {abort('Invalid option:', '--servers',       '\n\tContains something other than integer numbers.'.red);   return; }
+      servers = servers.trim();
+      if ( !/^(\d+\s?)+$/.test(servers) )             { abort('Invalid option:', '--servers',       '\n\tPattern not matched:'.red, '^(\\d+\\s?)+$', '\n\t'+(!servers?'Cannot be empty.':'Cannot contain anything other than positive integers.').red); return; }
+      servers = servers.split(' ').map(i => +i);
     }
     
     const _settings = {

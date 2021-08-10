@@ -545,9 +545,9 @@ Amount of delay (in ms) to wait before making another retry.
 Only integers.  
 Default: `1000`
 #### `tse.INTRADAY_UPDATE_SERVERS`
-Array of integer numbers to use as CDN servers in the update process.  
-Value of `0` will result to `cdn.tsetmc.com` server.  
-Only an array of only integers.  
+Array of positive integers to use as CDN servers in the update process.  
+Note that `0` will result to `cdn.tsetmc.com` server.  
+Only an array of only positive integers.  
 Default: `[1,2,3,4,5,6,7,8,9]`
 #### `tse.getIntradayInstruments(struct?: boolean, arr?: boolean, structKey?: string)`
 Returns the list of instruments crawled by [`getIntraday()`](#tsegetintradaysymbols-string-settings-intradaysettings).  
