@@ -620,6 +620,11 @@ interface IntradaySettings {
   gzip?:                        boolean;
   onprogress?(current: number): void;
   progressTotal?:               number;
+  chunkDelay?:                  number;
+  chunkMaxWait?:                number;
+  retryCount?:                  number;
+  retryDelay?:                  number;
+  servers?:                     number[];
 }
 
 interface CustomError {
