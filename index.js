@@ -359,8 +359,6 @@ async function intraday(args, subOpts) {
       }
     }
     
-    const datalen = data.length;
-    
     if (outdir) {
       const symins = await tse.getInstruments(true, false, 'Symbol');
       let bom = '';
@@ -376,6 +374,8 @@ async function intraday(args, subOpts) {
         const { jy, jm, jd } = toJalaali(+s.slice(0,4), +s.slice(4,6), +s.slice(6,8));
         return (jy*10000) + (jm*100) + jd + '';
       };
+      
+      const datalen = data.length;
       
       data.forEach((item, i) => {
         if (!item || item.filter(i => i[1] === 'N/A').length === item.length) {
@@ -421,7 +421,7 @@ async function intraday(args, subOpts) {
     if (!progress.complete) progress.tick(progress.total - progress.curr);
     
     if (incompleteError) {
-      log((' √: '+(datalen - incompleteCount)).green + ('\n X: '+incompleteCount).red);
+      log((' √: '+(symbols.length - incompleteCount)).green + ('\n X: '+incompleteCount).red);
       log(incompleteError);
     } else {
       log(' √'.green);
