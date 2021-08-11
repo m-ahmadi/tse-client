@@ -992,6 +992,7 @@ async function getInstruments(struct=true, arr=true, structKey='InsCode') {
 //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 let INTRADAY_URL = (server='',inscode='',deven='') => `http://${server ? 'cdn'+server+'.' : ''}tsetmc.com/Loader.aspx?ParTree=15131P&i=${inscode}&d=${deven}`;
 let INTRADAY_UPDATE_CHUNK_DELAY = 100;
+let INTRADAY_UPDATE_CHUNK_MAX_WAIT = 60000;
 let INTRADAY_UPDATE_RETRY_COUNT = 3;
 let INTRADAY_UPDATE_RETRY_DELAY = 1000;
 let INTRADAY_UPDATE_SERVERS     = [0,7,8,9];
@@ -1005,6 +1006,7 @@ const itdDefaultSettings = {
   onprogress: undefined,
   progressTotal: 100,
   chunkDelay: INTRADAY_UPDATE_CHUNK_DELAY,
+  chunkMaxWait: INTRADAY_UPDATE_CHUNK_MAX_WAIT,
   retryCount: INTRADAY_UPDATE_RETRY_COUNT,
   retryDelay: INTRADAY_UPDATE_RETRY_DELAY,
   servers: INTRADAY_UPDATE_SERVERS
@@ -1129,7 +1131,7 @@ const itdUpdateManager = (function () {
   let resolve;
   let nextsrv = i => (i = servers.indexOf(i)+1, servers[i < servers.length ? i : 0]);
   let writing = [];
-  let chunkDelay, retryCount, retryDelay, servers, shouldCache;
+  let chunkDelay, chunkMaxWait, retryCount, retryDelay, servers, shouldCache;
   let pf, pn, ptot, pSR, pR;
   let inslastdeven = {};
   let extractedIns = {};
@@ -1219,7 +1221,13 @@ const itdUpdateManager = (function () {
   async function request(chunk=[], id) {
     let [server, inscode, deven] = chunk;
     
-    fetch(INTRADAY_URL(server, inscode, deven))
+    let controller, signal;
+    if (typeof AbortController !== 'undefined') {
+      controller = new AbortController();
+      signal = controller.signal;
+    }
+    
+    fetch(INTRADAY_URL(server, inscode, deven), signal ? {signal} : undefined)
       .then(async res => {
         let { status } = res;
         
@@ -1245,6 +1253,8 @@ const itdUpdateManager = (function () {
       })
       .catch(() => onresult(undefined, chunk, id));
     
+    if (controller) setTimeout(() => controller.abort(), chunkMaxWait);
+    
     if (pf) pf(pn= +Big(pn).plus(pR) );
   }
   
@@ -1259,7 +1269,7 @@ const itdUpdateManager = (function () {
   }
   
   async function start(inscode_devens, opts, po) {
-    ({ chunkDelay, retryCount, retryDelay, servers, shouldCache } = opts);
+    ({ chunkDelay, chunkMaxWait, retryCount, retryDelay, servers, shouldCache } = opts);
     ({ pf, pn, ptot } = po);
     if (isBrowser) src = objify( inscode_devens.map(([a,b]) => [ a, b.map(i=>[i,undefined]) ]) );
     let chunks = [...inscode_devens].reduce((r,[inscode,devens]) => r=[...r, ...(devens ? devens.map(i=>[servers[0],inscode,''+i]) : []) ], []);
@@ -1398,11 +1408,11 @@ async function getIntraday(symbols=[], _settings={}) {
   }).filter(i=>i);
   if (pf) pf(pn= +Big(pn).plus( ptot.mul(0.01) ) );
   
-  let { chunkDelay, retryCount, retryDelay, servers } = settings;
+  let { chunkDelay, chunkMaxWait, retryCount, retryDelay, servers } = settings;
   if (!Array.isArray(servers) || servers.some(i => !Number.isInteger(i) || i < 0)) servers = itdDefaultSettings.servers;
   
   if (toUpdate.length > 0) {
-    let { succs, fails } = await itdUpdateManager(toUpdate, {shouldCache: cache, chunkDelay, retryCount, retryDelay, servers}, {pf, pn, ptot: ptot.mul(0.85)});
+    let { succs, fails } = await itdUpdateManager(toUpdate, {shouldCache: cache, chunkDelay, chunkMaxWait, retryCount, retryDelay, servers}, {pf, pn, ptot: ptot.mul(0.85)});
     
     if (fails.length) {
       let k = Object.fromEntries( selection.map(i => [i.InsCode, i.Symbol]) );
@@ -1483,6 +1493,9 @@ const instance = {
   
   get INTRADAY_UPDATE_CHUNK_DELAY() { return INTRADAY_UPDATE_CHUNK_DELAY; },
   set INTRADAY_UPDATE_CHUNK_DELAY(v) { if (Number.isInteger(v)) INTRADAY_UPDATE_CHUNK_DELAY = v; },
+  
+  get INTRADAY_UPDATE_CHUNK_MAX_WAIT() { return INTRADAY_UPDATE_CHUNK_MAX_WAIT; },
+  set INTRADAY_UPDATE_CHUNK_MAX_WAIT(v) { if (Number.isInteger(v)) INTRADAY_UPDATE_CHUNK_MAX_WAIT = v; },
   
   get INTRADAY_UPDATE_RETRY_COUNT() { return INTRADAY_UPDATE_RETRY_COUNT; },
   set INTRADAY_UPDATE_RETRY_COUNT(v) { if (Number.isInteger(v)) INTRADAY_UPDATE_RETRY_COUNT = v; },

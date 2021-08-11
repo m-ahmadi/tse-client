@@ -32,6 +32,7 @@ The `0.x` and `1.x` versions were a direct port of the [official Windows app](ht
 	+ [`columnList`](#tsecolumnlist)
 	+ [`INTRADAY_URL`](#tseintraday_url)
 	+ [`INTRADAY_UPDATE_CHUNK_DELAY`](#tseintraday_update_chunk_delay)
+	+ [`INTRADAY_UPDATE_CHUNK_MAX_WAIT`](#tseintraday_update_chunk_max_wait)
 	+ [`INTRADAY_UPDATE_RETRY_COUNT`](#tseintraday_update_retry_count)
 	+ [`INTRADAY_UPDATE_RETRY_DELAY`](#tseintraday_update_retry_delay)
 	+ [`INTRADAY_UPDATE_SERVERS`](#tseintraday_update_servers)
@@ -168,6 +169,7 @@ tse itd ذوب -o . -H       # file without headers
 tse itd ذوب --retry 0          # only request once without any retrying
 tse itd ذوب --retry-delay 5000 # wait 5 seconds between each retry
 tse itd ذوب --chunk-delay 2000 # wait 2 seconds before requesting another day
+tse itd ذوب --chunk-max-wait 20000 # force end a request if not finished in 20 seconds
 tse itd ذوب --servers "4 8"    # only use "cdn4.tsetmc.com" and "cdn8.tsetmc.com" servers
 tse itd ذوب --servers "7"      # only use "cdn7.tsetmc.com" server
 ```
@@ -536,6 +538,11 @@ Default:
 #### `tse.INTRADAY_UPDATE_CHUNK_DELAY`
 Amount of delay (in ms) to wait before requesting another chunk of dates.  
 Default: `100`
+#### `tse.INTRADAY_UPDATE_CHUNK_MAX_WAIT`
+Max time (in ms) to wait for a request to finish before force ending it.  
+In Node, it needs Node v15+ or it has no effect.  
+Only integers.  
+Default: `60000`
 #### `tse.INTRADAY_UPDATE_RETRY_COUNT`
 Amount of retry attempts before giving up.  
 Only integers.  
@@ -594,6 +601,7 @@ Crawl intraday data from the instrument's history page of the [tsetmc.com](http:
 	+ **`onprogress`:** A callback function which gets called with a number indicating the progress. Default: `undefined`
 	+ **`progressTotal`:** A number to use as the completion point of progress. Default: `100`
 	+ **`chunkDelay`:** Per call option of [`INTRADAY_UPDATE_CHUNK_DELAY`](#tseintraday_update_chunk_delay). Default: `value of constant`
+	+ **`chunkMaxWait`:** Per call option of [`INTRADAY_UPDATE_CHUNK_MAX_WAIT`](#tseintraday_update_chunk_max_wait). Default: `value of constant`
 	+ **`retryCount`:** Per call option of [`INTRADAY_UPDATE_RETRY_COUNT`](#tseintraday_update_retry_count). Default: `value of constant`
 	+ **`retryDelay`:** Per call option of [`INTRADAY_UPDATE_RETRY_DELAY`](#tseintraday_update_retry_delay). Default: `value of constant`
 	+ **`servers`:** Per call option of [`INTRADAY_UPDATE_SERVERS`](#tseintraday_update_servers). Default: `value of constant`
