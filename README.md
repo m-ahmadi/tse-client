@@ -531,7 +531,7 @@ The URL from which the data is crawled.
 Must be a function that returns a valid URL string.  
 Default:
 ```javascript
-(server='', inscode='', deven='') => `http://cdn${server ? server : ''}.tsetmc.com/Loader.aspx?ParTree=15131P&i=${inscode}&d=${deven}`;
+(server='', inscode='', deven='') => `http://${server ? 'cdn'+server+'.' : ''}tsetmc.com/Loader.aspx?ParTree=15131P&i=${inscode}&d=${deven}`;
 ```
 #### `tse.INTRADAY_UPDATE_CHUNK_DELAY`
 Amount of delay (in ms) to wait before requesting another chunk of dates.  
@@ -546,7 +546,7 @@ Only integers.
 Default: `1000`
 #### `tse.INTRADAY_UPDATE_SERVERS`
 Array of positive integers to use as CDN servers in the update process.  
-Note that `0` will result to `cdn.tsetmc.com` server.  
+Note that `0` will result to `tsetmc.com` server.  
 Only an array of only positive integers.  
 Default: `[1,2,3,4,5,6,7,8,9]`
 #### `tse.getIntradayInstruments(struct?: boolean, arr?: boolean, structKey?: string)`
