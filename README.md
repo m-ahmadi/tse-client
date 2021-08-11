@@ -166,12 +166,12 @@ tse itd ذوب -o . -e ascii # file encoding
 tse itd ذوب -o . -n 2     # directory name
 tse itd ذوب -o . -H       # file without headers
 
-tse itd ذوب --retry 0          # only request once without any retrying
-tse itd ذوب --retry-delay 5000 # wait 5 seconds between each retry
-tse itd ذوب --chunk-delay 2000 # wait 2 seconds before requesting another day
+tse itd ذوب --retry 0              # only request once without any retrying
+tse itd ذوب --retry-delay 5000     # wait 5 seconds between each retry
+tse itd ذوب --chunk-delay 2000     # wait 2 seconds before requesting another day
 tse itd ذوب --chunk-max-wait 20000 # force end a request if not finished in 20 seconds
-tse itd ذوب --servers "4 8"    # only use "cdn4.tsetmc.com" and "cdn8.tsetmc.com" servers
-tse itd ذوب --servers "7"      # only use "cdn7.tsetmc.com" server
+tse itd ذوب --servers "4 8"        # only use "cdn4.tsetmc.com" and "cdn8.tsetmc.com" servers
+tse itd ذوب --servers "7"          # only use "cdn7.tsetmc.com" server
 ```
 
 # Node

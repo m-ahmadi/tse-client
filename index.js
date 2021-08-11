@@ -282,25 +282,25 @@ async function intraday(args, subOpts) {
     startDate = parseDateOption(startDate);
     dirName   = +dirName;
     
-    if (!startDate)                                   { abort('Invalid option:', '--start-date',    '\n\tPattern not matched:'.red, '^\\d{1,3}(y|m|d)$');       return; }
+    if (!startDate)                                   { abort('Invalid option:', '--start-date',     '\n\tPattern not matched:'.red, '^\\d{1,3}(y|m|d)$');       return; }
     if (endDate) {
       endDate = parseDateOption(endDate);
-      if (!endDate)                                   { abort('Invalid option:', '--end-date',      '\n\tPattern not matched:'.red, '^\\d{1,3}(y|m|d)$');       return; }
-      if (+endDate < +startDate)                      { abort('Invalid option:', '--end-date',      '\n\tCannot be less than'.red, '--start-date');             return; }
+      if (!endDate)                                   { abort('Invalid option:', '--end-date',       '\n\tPattern not matched:'.red, '^\\d{1,3}(y|m|d)$');       return; }
+      if (+endDate < +startDate)                      { abort('Invalid option:', '--end-date',       '\n\tCannot be less than'.red, '--start-date');             return; }
     }
     if (outdir) {
       if ( !existsSync(outdir) ) mkdirSync(outdir);
-      if ( !statSync(outdir).isDirectory() )          { abort('Invalid option:', '--output-dir',    '\n\tPath is not a directory:'.red,  resolve(outdir).grey); return; }
+      if ( !statSync(outdir).isDirectory() )          { abort('Invalid option:', '--output-dir',     '\n\tPath is not a directory:'.red,  resolve(outdir).grey); return; }
     }
-    if ( !/^[0-4]$/.test(''+dirName) )                { abort('Invalid option:', '--dir-name',      '\n\tPattern not matched:'.red, '^[0-4]$');                 return; }
-    if ( !/^(utf8(bom)?|ascii)$/.test(fileEncoding) ) { abort('Invalid option:', '--file-encoding', '\n\tPattern not matched:'.red, '^(utf8(bom)?|ascii)$');    return; }
-    if ( !/^\d+$/.test(retry) )                       { abort('Invalid option:', '--retry',         '\n\tPattern not matched:'.red, '^\\d+$');                  return; }
-    if ( !/^\d+$/.test(retryDelay) )                  { abort('Invalid option:', '--retry-delay',   '\n\tPattern not matched:'.red, '^\\d+$');                  return; }
-    if ( !/^\d+$/.test(chunkDelay) )                  { abort('Invalid option:', '--chunk-delay',   '\n\tPattern not matched:'.red, '^\\d+$');                  return; }
-    if ( !/^\d+$/.test(chunkMaxWait) )                { abort('Invalid option:', '--chunk-max-wait','\n\tPattern not matched:'.red, '^\\d+$');                  return; }
+    if ( !/^[0-4]$/.test(''+dirName) )                { abort('Invalid option:', '--dir-name',       '\n\tPattern not matched:'.red, '^[0-4]$');                 return; }
+    if ( !/^(utf8(bom)?|ascii)$/.test(fileEncoding) ) { abort('Invalid option:', '--file-encoding',  '\n\tPattern not matched:'.red, '^(utf8(bom)?|ascii)$');    return; }
+    if ( !/^\d+$/.test(retry) )                       { abort('Invalid option:', '--retry',          '\n\tPattern not matched:'.red, '^\\d+$');                  return; }
+    if ( !/^\d+$/.test(retryDelay) )                  { abort('Invalid option:', '--retry-delay',    '\n\tPattern not matched:'.red, '^\\d+$');                  return; }
+    if ( !/^\d+$/.test(chunkDelay) )                  { abort('Invalid option:', '--chunk-delay',    '\n\tPattern not matched:'.red, '^\\d+$');                  return; }
+    if ( !/^\d+$/.test(chunkMaxWait) )                { abort('Invalid option:', '--chunk-max-wait', '\n\tPattern not matched:'.red, '^\\d+$');                  return; }
     if (typeof servers === 'string') {
       servers = servers.trim();
-      if ( !/^(\d+\s?)+$/.test(servers) )             { abort('Invalid option:', '--servers',       '\n\tPattern not matched:'.red, '^(\\d+\\s?)+$', '\n\t'+(!servers?'Cannot be empty.':'Cannot contain anything other than positive integers.').red); return; }
+      if ( !/^(\d+\s?)+$/.test(servers) )             { abort('Invalid option:', '--servers',        '\n\tPattern not matched:'.red, '^(\\d+\\s?)+$', '\n\t'+(!servers?'Cannot be empty.':'Cannot contain anything other than positive integers.').red); return; }
       servers = servers.split(' ').map(i => +i);
     }
     
