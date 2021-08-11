@@ -992,9 +992,9 @@ async function getInstruments(struct=true, arr=true, structKey='InsCode') {
 //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 let INTRADAY_URL = (server='',inscode='',deven='') => `http://${server ? 'cdn'+server+'.' : ''}tsetmc.com/Loader.aspx?ParTree=15131P&i=${inscode}&d=${deven}`;
 let INTRADAY_UPDATE_CHUNK_DELAY = 100;
-let INTRADAY_UPDATE_RETRY_COUNT = 8;
+let INTRADAY_UPDATE_RETRY_COUNT = 3;
 let INTRADAY_UPDATE_RETRY_DELAY = 1000;
-let INTRADAY_UPDATE_SERVERS     = [1,2,3,4,5,6,7,8,9];
+let INTRADAY_UPDATE_SERVERS     = [0,7,8,9];
 const itdDefaultSettings = {
   startDate: '20010321',
   endDate: '',

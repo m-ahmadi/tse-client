@@ -539,7 +539,7 @@ Default: `100`
 #### `tse.INTRADAY_UPDATE_RETRY_COUNT`
 Amount of retry attempts before giving up.  
 Only integers.  
-Default: `8`
+Default: `3`
 #### `tse.INTRADAY_UPDATE_RETRY_DELAY`
 Amount of delay (in ms) to wait before making another retry.  
 Only integers.  
@@ -548,7 +548,7 @@ Default: `1000`
 Array of positive integers to use as CDN servers in the update process.  
 Note that `0` will result to `tsetmc.com` server.  
 Only an array of only positive integers.  
-Default: `[1,2,3,4,5,6,7,8,9]`
+Default: `[0,7,8,9]`
 #### `tse.getIntradayInstruments(struct?: boolean, arr?: boolean, structKey?: string)`
 Returns the list of instruments crawled by [`getIntraday()`](#tsegetintradaysymbols-string-settings-intradaysettings).  
 The information of each instrument is from the latest crawled day.  
