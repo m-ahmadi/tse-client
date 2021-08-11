@@ -277,11 +277,8 @@ async function intraday(args, subOpts) {
     
     const { gzip, outdir, cache, fileHeaders, altDate, reUpdateNoTrades } = settings;
     let { startDate, endDate, dirName, fileEncoding, retry, retryDelay, chunkDelay, servers } = settings;
-    startDate   = parseDateOption(startDate);
-    dirName     = +dirName;
-    retry       = +retry;
-    retryDelay  = +retryDelay;
-    chunkDelay  = +chunkDelay;
+    startDate = parseDateOption(startDate);
+    dirName   = +dirName;
     
     if (!startDate)                                   { abort('Invalid option:', '--start-date',    '\n\tPattern not matched:'.red, '^\\d{1,3}(y|m|d)$');       return; }
     if (endDate) {
@@ -295,6 +292,9 @@ async function intraday(args, subOpts) {
     }
     if ( !/^[0-4]$/.test(''+dirName) )                { abort('Invalid option:', '--dir-name',      '\n\tPattern not matched:'.red, '^[0-4]$');                 return; }
     if ( !/^(utf8(bom)?|ascii)$/.test(fileEncoding) ) { abort('Invalid option:', '--file-encoding', '\n\tPattern not matched:'.red, '^(utf8(bom)?|ascii)$');    return; }
+    if ( !/^\d+$/.test(retry) )                       { abort('Invalid option:', '--retry',         '\n\tPattern not matched:'.red, '^\\d+$');                  return; }
+    if ( !/^\d+$/.test(retryDelay) )                  { abort('Invalid option:', '--retry-delay',   '\n\tPattern not matched:'.red, '^\\d+$');                  return; }
+    if ( !/^\d+$/.test(chunkDelay) )                  { abort('Invalid option:', '--chunk-delay',   '\n\tPattern not matched:'.red, '^\\d+$');                  return; }
     if (typeof servers === 'string') {
       servers = servers.trim();
       if ( !/^(\d+\s?)+$/.test(servers) )             { abort('Invalid option:', '--servers',       '\n\tPattern not matched:'.red, '^(\\d+\\s?)+$', '\n\t'+(!servers?'Cannot be empty.':'Cannot contain anything other than positive integers.').red); return; }
@@ -310,9 +310,9 @@ async function intraday(args, subOpts) {
       updateOnly:    outdir ? false : true,
       onprogress:    (n) => progress.tick(n - progress.curr),
       progressTotal: outdir ? 86 : 100,
-      retryCount:    retry,
-      retryDelay,
-      chunkDelay,
+      retryCount:    +retry,
+      retryDelay:    +retryDelay,
+      chunkDelay:    +chunkDelay,
       servers
     };
     const { error, data } = await tse.getIntraday(symbols, _settings);
