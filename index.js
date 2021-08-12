@@ -39,7 +39,7 @@ const defaultSettings = {
     retryDelay:       tse.INTRADAY_UPDATE_RETRY_DELAY,
     chunkDelay:       tse.INTRADAY_UPDATE_CHUNK_DELAY,
     chunkMaxWait:     tse.INTRADAY_UPDATE_CHUNK_MAX_WAIT,
-    servers:          tse.INTRADAY_UPDATE_SERVERS
+    servers:          tse.INTRADAY_UPDATE_SERVERS.join(' ')
   }
 };
 if ( !existsSync(join(__dirname,'settings.json')) ) saveSettings(defaultSettings);
@@ -112,7 +112,7 @@ cmd.command('intraday [symbols...]').alias('itd').description('Crawl Intraday Da
   .option('--retry-delay <number>',          'Amount of delay (in ms) to wait before making another retry. default: '+defaultSettings.intraday.retryDelay)
   .option('--chunk-delay <number>',          'Amount of delay (in ms) to wait before requesting another chunk of dates. default: '+defaultSettings.intraday.chunkDelay)
   .option('--chunk-max-wait <number>',       'Max time (in ms) to wait for a request to finish before force ending it. (needs Node v15+ or it has no effect) default: '+defaultSettings.intraday.chunkMaxWait)
-  .option('--servers <string>',              'A space-separated string of positive integers to use as CDN servers in the update process. default: "'+defaultSettings.intraday.servers.join(' ')+'"')
+  .option('--servers <string>',              'A space-separated string of positive integers to use as CDN servers in the update process. default: "'+defaultSettings.intraday.servers+'"')
   .action(intraday);
 cmd.parse(process.argv);
 
@@ -281,6 +281,7 @@ async function intraday(args, subOpts) {
     let { startDate, endDate, dirName, fileEncoding, retry, retryDelay, chunkDelay, chunkMaxWait, servers } = settings;
     startDate = parseDateOption(startDate);
     dirName   = +dirName;
+    servers   = servers.trim();
     
     if (!startDate)                                   { abort('Invalid option:', '--start-date',     '\n\tPattern not matched:'.red, '^\\d{1,3}(y|m|d)$');       return; }
     if (endDate) {
@@ -298,11 +299,7 @@ async function intraday(args, subOpts) {
     if ( !/^\d+$/.test(retryDelay) )                  { abort('Invalid option:', '--retry-delay',    '\n\tPattern not matched:'.red, '^\\d+$');                  return; }
     if ( !/^\d+$/.test(chunkDelay) )                  { abort('Invalid option:', '--chunk-delay',    '\n\tPattern not matched:'.red, '^\\d+$');                  return; }
     if ( !/^\d+$/.test(chunkMaxWait) )                { abort('Invalid option:', '--chunk-max-wait', '\n\tPattern not matched:'.red, '^\\d+$');                  return; }
-    if (typeof servers === 'string') {
-      servers = servers.trim();
-      if ( !/^(\d+\s?)+$/.test(servers) )             { abort('Invalid option:', '--servers',        '\n\tPattern not matched:'.red, '^(\\d+\\s?)+$', '\n\t'+(!servers?'Cannot be empty.':'Cannot contain anything other than positive integers.').red); return; }
-      servers = servers.split(' ').map(i => +i);
-    }
+    if ( !/^(\d+\s?)+$/.test(servers) )               { abort('Invalid option:', '--servers',        '\n\tPattern not matched:'.red, '^(\\d+\\s?)+$', '\n\t'+(!servers?'Cannot be empty.':'Cannot contain anything other than positive integers.').red); return; }
     
     const _settings = {
       startDate,
@@ -317,7 +314,7 @@ async function intraday(args, subOpts) {
       retryDelay:    +retryDelay,
       chunkDelay:    +chunkDelay,
       chunkMaxWait:  +chunkMaxWait,
-      servers
+      servers:       servers.split(' ').map(i => +i)
     };
     const { error, data } = await tse.getIntraday(symbols, _settings);
     
