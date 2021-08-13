@@ -520,7 +520,7 @@ function shouldUpdate(deven='', lastPossibleDeven) {
   if (!deven || deven === '0') return true; // first time (never updated before)
   
   const today = new Date();
-  const todayDeven = today.getFullYear()*10000 + today.getMonth()+1 + today.getDate()*100 + '';
+  const todayDeven = today.getFullYear()*10000 + (today.getMonth()+1)*100 + today.getDate() + '';
   const daysPassed = dayDiff(lastPossibleDeven, deven);
   const inWeekend = [4,5].includes( today.getDay() );
   const lastUpdateWeekday = strToDate(lastPossibleDeven).getDay();
