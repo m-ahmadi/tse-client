@@ -27,7 +27,7 @@ const storage = (function () {
       try { statSync(datadir).isDirectory(); } catch { datadir = defaultdir; }
     } else {
       datadir = defaultdir;
-      if ( !existsSync(datadir) ) mkdirSync(datadir);
+      if ( !existsSync(datadir) ) mkdirSync(datadir, {recursive: true});
       writeFileSync(pathfile, datadir);
     }
     
@@ -121,7 +121,7 @@ const storage = (function () {
       get CACHE_DIR() { return datadir; },
       set CACHE_DIR(newdir) {
         if (typeof newdir === 'string') {
-          if ( !existsSync(newdir) ) mkdirSync(newdir);
+          if ( !existsSync(newdir) ) mkdirSync(newdir, {recursive: true});
           if ( statSync(newdir).isDirectory() ) {
             datadir = newdir;
             writeFileSync(pathfile, datadir);
