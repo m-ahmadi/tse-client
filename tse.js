@@ -1034,7 +1034,7 @@ if (isNode) {
   zip   = str => gzipSync(str);
   unzip = buf => gunzipSync(buf).toString();
 } else if (isBrowser) {
-  const { gzip, ungzip } = pako || {};
+  const { gzip, ungzip } = window.pako || {};
   zip   = str => gzip(str);
   unzip = buf => ungzip(buf, {to: 'string'});
 }
