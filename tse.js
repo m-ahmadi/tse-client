@@ -1331,10 +1331,13 @@ async function getIntraday(symbols=[], _settings={}) {
   let storedInscodeDevens = await storage.getItemAsync('tse.inscode_devens');
   storedInscodeDevens = storedInscodeDevens ? storedInscodeDevens.split('\n').map(i=>i.split(';')).map(([i,d]) => [i,d.split(',').map(i=>+i)]): [];
   const storedInscodes = new Set(storedInscodeDevens.map(i => i[0]));
+  const storedLastdevens = [...new Set(storedInscodeDevens.map(([,d])=> d[d.length-1]))];
   
+  const endDate = +settings.endDate;
+  const _endDate = endDate || +dateToStr(new Date());
   const { cache } = settings;
   
-  if ( !storedInscodeDevens.length || [...selins].find(i => !storedInscodes.has(i)) ) {
+  if ( !storedInscodeDevens.length || [...selins].find(i => !storedInscodes.has(i)) || storedLastdevens.some(i => i < _endDate) ) {
     const upres = await updatePrices(selection, cache, {pf, pn, ptot: ptot.mul(0.10)});
     const { succs, fails, error } = upres;
     ({ pn } = upres);
@@ -1375,7 +1378,7 @@ async function getIntraday(symbols=[], _settings={}) {
   
   /** note:  ↓... let == const (mostly) */
   
-  let [startDate, endDate] = [+settings.startDate, +settings.endDate];
+  let startDate = +settings.startDate;
   
   let isInRange = endDate
     ? i => i >= startDate && i <= endDate
