@@ -1337,7 +1337,7 @@ async function getIntraday(symbols=[], _settings={}) {
   const _endDate = endDate || +dateToStr(new Date());
   const { cache } = settings;
   
-  if ( !storedInscodeDevens.length || [...selins].find(i => !storedInscodes.has(i)) || storedLastdevens.some(i => i < _endDate) ) {
+  if ( !storedInscodeDevens.length || [...selins].some(i => !storedInscodes.has(i)) || storedLastdevens.some(i => i < _endDate) ) {
     const upres = await updatePrices(selection, cache, {pf, pn, ptot: ptot.mul(0.10)});
     const { succs, fails, error } = upres;
     ({ pn } = upres);
