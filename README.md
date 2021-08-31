@@ -185,36 +185,36 @@ npm install tse-client
 const tse = require('tse-client');
 
 (async () => {
-  
+
   // basic
-  let { error, data } = await tse.getPrices(['ذوب', 'فولاد']);
-  if (!error) console.log(data);
+  let res = await tse.getPrices(['ذوب', 'فولاد']);
+  if (!res.error) console.log(res.data);
   
   // adjusted data
-  let { data } = await tse.getPrices(['خساپا'], {adjustPrices: 1});
+  res = await tse.getPrices(['خساپا'], {adjustPrices: 1});
   
   // select columns (default names)
-  let { data } = await tse.getPrices(['شپنا'], {columns: [0,3,4]});
+  res = await tse.getPrices(['شپنا'], {columns: [0,3,4]});
   
   // select columns (custom names)
-  let { data } = await tse.getPrices(['شپنا'], {columns: [[0,'DATE'],[3,'MAX'],[4,'MIN']]});
+  res = await tse.getPrices(['شپنا'], {columns: [[0,'DATE'],[3,'MAX'],[4,'MIN']]});
   
   // view column info
   console.table(tse.columnList);
   
   // list of instruments
-  let instruments = await tse.getInstruments();
+  const instruments = await tse.getInstruments();
   console.log(
     instruments.filter(i => i.YVal === '300' && i.CSecVal === '27') // گروه فلزات بازار بورس
   );
   
   // intraday crawler
-  let { data, error } = await tse.getIntraday(['ذوب', 'فولاد']), {
+  res = await tse.getIntraday(['ذوب', 'فولاد']), {
     startDate: '20201122',
     endDate: '20201122',
     gzip: false
   });
-  
+
 })();
 ```
 
@@ -224,38 +224,7 @@ const tse = require('tse-client');
 ```html
 <script src="https://cdn.jsdelivr.net/npm/tse-client/dist/tse.bundle.min.js"></script>
 <script>
-  (async () => {
-
-    // basic
-    let { error, data } = await tse.getPrices(['ذوب', 'فولاد']);
-    if (!error) console.log(data);
-    
-    // adjusted data
-    let { data } = await tse.getPrices(['خساپا'], {adjustPrices: 1});
-    
-    // select columns (default names)
-    let { data } = await tse.getPrices(['شپنا'], {columns: [0,3,4]});
-    
-    // select columns (custom names)
-    let { data } = await tse.getPrices(['شپنا'], {columns: [[0,'DATE'],[3,'MAX'],[4,'MIN']]});
-    
-    // view column info
-    console.table(tse.columnList);
-    
-    // list of instruments
-    let instruments = await tse.getInstruments();
-    console.log(
-      instruments.filter(i => i.YVal === '300' && i.CSecVal === '27') // گروه فلزات بازار بورس
-    );
-   
-   // intraday crawler
-   let { data, error } = await tse.getIntraday(['ذوب', 'فولاد']), {
-      startDate: '20201122',
-      endDate: '20201122',
-      gzip: false
-   });
-    
-  })();
+  tse.getPrices(['فولاد']).then(res => console.log(res.data[0]));
 </script>
 ```
 
@@ -269,7 +238,7 @@ const tse = require('tse-client');
 
 <script src="https://cdn.jsdelivr.net/npm/tse-client/dist/tse.min.js"></script>
 <script>
-  tse.getPrices(['فولاد']).then(({data}) => console.log(data[0]));
+  tse.getPrices(['فولاد']).then(res => console.log(res.data[0]));
 </script>
 ```
 
@@ -282,11 +251,10 @@ $a  = isset($_GET['a'])  ? $_GET['a']  : '';
 $a2 = isset($_GET['a2']) ? $_GET['a2'] : '';
 
 echo file_get_contents("http://service.tsetmc.com/tsev2/data/TseClient2.aspx?t=$t&a=$a&a2=$a2");
-?>
 ```
 ```javascript
 tse.API_URL = 'http://path/to/proxy.php';
-tse.getPrices(['فولاد']).then(({data}) => console.log(data[0]));
+tse.getPrices(['فولاد']).then(res => console.log(res.data[0]));
 ```
 #### Some Info:
 | file | desc
