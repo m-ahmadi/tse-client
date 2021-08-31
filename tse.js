@@ -174,7 +174,7 @@ const storage = (function () {
     
     const itdstore = localforage.createInstance({name: 'tse.intraday'});
     
-    const itdGetItems = async function	(selins=new Set(), full=false) {
+    const itdGetItems = async function (selins=new Set(), full=false) {
       const result = {};
       if (full) {
         await itdstore.iterate((val, key) => {
