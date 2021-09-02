@@ -514,7 +514,7 @@ function parseFilterStr(str='') {
     if ( !map[key] )               continue;
     if ( !/^[\d\w,]+$/.test(val) ) continue;
     
-    result[ map[key] ] = val.split(',')
+    result[ map[key] ] = key === 'i' ? val.split(',').map(i=> i+' ') : val.split(',');
   }
   
   return Object.keys(result).length === arr.length ? result : undefined;
@@ -814,7 +814,7 @@ async function listIdTables(opts, instruments) {
   }
   
   if (idIndustry) {
-    const rdy = raw.CSecVal.map(([id,desc,count]) => [id,count,desc]).sort(sorter);
+    const rdy = raw.CSecVal.map(([id,desc,count]) => [id.trimEnd(),count,desc]).sort(sorter);
     printTable(rdy, ['id','count','desc']);
   }
   
