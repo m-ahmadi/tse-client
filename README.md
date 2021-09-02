@@ -636,6 +636,7 @@ time | count | volume | price | discarded
 
 ## [`client`](http://cdn.tsetmc.com/Site.aspx?ParTree=1114111116&LnkIdn=3568)
 ![](/samples/itdcols-client.png)
+
 column | desc | desc Fa
 -----------|----------------------------------------|----------------------------
 `pbvol`    | Person Buy Volume                      | حجم خرید حقیقی
