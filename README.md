@@ -185,7 +185,7 @@ npm install tse-client
 const tse = require('tse-client');
 
 (async () => {
-
+  
   // basic
   let res = await tse.getPrices(['ذوب', 'فولاد']);
   if (!res.error) console.log(res.data);
@@ -214,7 +214,7 @@ const tse = require('tse-client');
     endDate: '20201122',
     gzip: false
   });
-
+  
 })();
 ```
 
