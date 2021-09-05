@@ -319,8 +319,8 @@ class InstrumentITD {
     this.InsCode      = row[0];
     this.LVal30       = cleanFa(row[1]); // نام 30 رقمي فارسي نماد
     this.LVal18AFC    = cleanFa(row[2]); // کد 18 رقمي فارسي نماد
-    this.FlowNameBare = cleanFa(row[3]);
-    this.FlowName     = cleanFa(row[4]);
+    this.FlowTitle    = cleanFa(row[3]);
+    this.CGrValCotTitle = cleanFa(row[4]);
     this.Flow         = row[5];
     this.CGrValCot    = row[6];
     this.CIsin        = row[7];

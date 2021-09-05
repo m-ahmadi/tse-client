@@ -543,8 +543,8 @@ interface InstrumentITD {
   InsCode:      string;
   LVal30:       string;
   LVal18AFC:    string;
-  FlowNameBare: string;
-  FlowName:     string;
+  FlowTitle:    string;
+  CGrValCotTitle: string;
   Flow:         string;
   CGrValCot:    string;
   CIsin:        string;
