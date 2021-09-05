@@ -316,17 +316,17 @@ class InstrumentITD {
   constructor(_row='') {
     const row = _row.split(',');
     if (row.length !== 11) throw new Error('Invalid InstrumentITD data!');
-    this.InsCode      = row[0];
-    this.LVal30       = cleanFa(row[1]); // نام 30 رقمي فارسي نماد
-    this.LVal18AFC    = cleanFa(row[2]); // کد 18 رقمي فارسي نماد
-    this.FlowTitle    = cleanFa(row[3]);
+    this.InsCode        = row[0];
+    this.LVal30         = cleanFa(row[1]); // نام 30 رقمي فارسي نماد
+    this.LVal18AFC      = cleanFa(row[2]); // کد 18 رقمي فارسي نماد
+    this.FlowTitle      = cleanFa(row[3]);
     this.CGrValCotTitle = cleanFa(row[4]);
-    this.Flow         = row[5];
-    this.CGrValCot    = row[6];
-    this.CIsin        = row[7];
-    this.InstrumentID = row[8];
-    this.ZTitad       = row[9];          // تعداد سھام
-    this.BaseVol      = row[10];         // حجم مبنا
+    this.Flow           = row[5];
+    this.CGrValCot      = row[6];
+    this.CIsin          = row[7];
+    this.InstrumentID   = row[8];
+    this.ZTitad         = row[9];          // تعداد سھام
+    this.BaseVol        = row[10];         // حجم مبنا
   }
 }
 class Share {

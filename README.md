@@ -540,17 +540,17 @@ The information of each instrument is from the latest crawled day.
 
 ```typescript
 interface InstrumentITD {
-  InsCode:      string;
-  LVal30:       string;
-  LVal18AFC:    string;
-  FlowTitle:    string;
+  InsCode:        string;
+  LVal30:         string;
+  LVal18AFC:      string;
+  FlowTitle:      string;
   CGrValCotTitle: string;
-  Flow:         string;
-  CGrValCot:    string;
-  CIsin:        string;
-  InstrumentID: string;
-  ZTitad:       string;
-  BaseVol:      string;
+  Flow:           string;
+  CGrValCot:      string;
+  CIsin:          string;
+  InstrumentID:   string;
+  ZTitad:         string;
+  BaseVol:        string;
 }
 
 interface InstrumentsITD {
