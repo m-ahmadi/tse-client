@@ -205,7 +205,7 @@ const tse = require('tse-client');
   // list of instruments
   const instruments = await tse.getInstruments();
   console.log(
-    instruments.filter(i => i.YVal === '300' && i.CSecVal === '27') // گروه فلزات بازار بورس
+    instruments.filter(i => i.YVal === '300' && i.CSecVal === '27 ') // گروه فلزات بازار بورس
   );
   
   // intraday crawler
