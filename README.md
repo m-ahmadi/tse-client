@@ -52,7 +52,7 @@ The `0.x` and `1.x` versions were a direct port of the [official Windows app](ht
 
 #### Install:
 ```shell
-npm install tse-client -g
+npm i tse-client -g
 ```
 #### Basic:
 ```shell
@@ -178,7 +178,7 @@ tse itd ذوب --servers "7"          # only use "cdn7.tsetmc.com" server
 
 #### Install:
 ```shell
-npm install tse-client
+npm i tse-client
 ```
 #### Usage:
 ```javascript
