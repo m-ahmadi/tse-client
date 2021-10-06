@@ -358,7 +358,7 @@ function parseInstruments(struct=false, arr=false, structKey='InsCode', itd=fals
   }
   return instruments;
 }
-function parseShares(struct=false, arr=false, structKey='InsCode') {
+function parseShares(struct=false, arr=true) {
   let rows = storage.getItem('tse.shares');
   rows = rows ? rows.split('\n') : [];
   const shares = arr ? [] : {};
@@ -367,8 +367,9 @@ function parseShares(struct=false, arr=false, structKey='InsCode') {
     if (arr) {
       shares.push(item);
     } else {
-      const key = struct ? item[structKey] : row.split(',', 2)[1];
-      shares[key] = item;
+      const key = struct ? item.InsCode : row.split(',', 2)[1];
+      if (!shares[key]) shares[key] = [];
+      shares[key].push(item);
     }
   }
   return shares;
@@ -566,7 +567,7 @@ async function updateInstruments() {
     currentInstruments = parseInstruments();
     currentShares      = parseShares();
     const insDevens = Object.keys(currentInstruments).map( k => +currentInstruments[k].split(',',9)[8] );
-    const shareIds  = Object.keys(currentShares).map( k => +currentShares[k].split(',',1)[0] );
+    const shareIds  = currentShares.map(i => +i.split(',',1)[0]);
     lastDeven = Math.max(...insDevens);
     lastId    = Math.max(...shareIds);
   }
@@ -650,9 +651,8 @@ async function updateInstruments() {
   }
   
   if (shares !== '') {
-    if (currentShares && Object.keys(currentShares).length) {
-      shares.split(';').forEach(i => currentShares[ i.split(',',1)[0] ] = i);
-      shares = Object.keys(currentShares).map(k => currentShares[k]).join('\n');
+    if (currentShares && currentShares.length) {
+      shares = currentShares.concat( shares.split(';') ).join('\n');
     } else {
       shares = shares.replace(/;/g, '\n');
     }
@@ -907,7 +907,7 @@ async function getPrices(symbols=[], _settings={}) {
   });
   
   const { adjustPrices, daysWithoutTrade, startDate, csv } = settings;
-  const shares = parseShares(true, true);
+  const shares = parseShares(true);
   const pi = Big(ptot).mul(0.20).div(selection.length);
   
   if (csv) {
