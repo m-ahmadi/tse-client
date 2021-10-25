@@ -4,8 +4,8 @@ Works in Browser, Node, and as CLI.
 The `0.x` and `1.x` versions were a direct port of the [official Windows app](http://cdn.tsetmc.com/Site.aspx?ParTree=111A11). 
 
 <p float="left">
-	<img src="samples/comparison-a.gif" width="533" />
-	<img src="samples/comparison-b.gif" width="300" />
+	<img src="samples/comparison-a.gif" width="513" />
+	<img src="samples/comparison-b.gif" width="288" />
 </p>
 
 ### [Table of Contents](#table-of-contents)
