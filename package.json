@@ -38,7 +38,7 @@
   },
   "devDependencies": {
     "dequal": "^2.0.2",
-    "terser": "^5.6.0"
+    "terser": "^5.10.0"
   },
   "keywords": [
     "tsetmc",
