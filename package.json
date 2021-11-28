@@ -33,7 +33,7 @@
     "jalaali-js": "^1.2.3",
     "localforage": "^1.10.0",
     "node-fetch": "^2.6.6",
-    "pako": "^1.0.11",
+    "pako": "^2.0.4",
     "progress": "^2.0.3"
   },
   "devDependencies": {
