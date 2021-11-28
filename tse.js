@@ -439,11 +439,12 @@ function adjust(cond, closingPrices, allShares, inscode) {
   const shares = allShares.filter(share => share.InsCode === inscode).reduce((r,i) => (r[i.DEven] = i, r), {});
   const cp = closingPrices;
   const len = closingPrices.length;
-  const res = [];
+  const adjustedClosingPrices = [];
+  let res = cp;
   if ( (cond === 1 || cond === 2) && len > 1 ) {
     let gaps = new Big('0.0');
     let num = new Big('1.0');
-    res.push( cp[len-1] );
+    adjustedClosingPrices.push( cp[len-1] );
     if (cond === 1) {
       for (let i=len-2; i>=0; i-=1) {
         if ( !Big(cp[i].PClosing).eq(cp[i+1].PriceYesterday) ) {
@@ -488,12 +489,13 @@ function adjust(cond, closingPrices, allShares, inscode) {
           PriceFirst:     first            // first
         };
         
-        res.push(adjustedClosingPrice);
+        adjustedClosingPrices.push(adjustedClosingPrice);
       }
+      
+      res = adjustedClosingPrices.reverse();
     }
   }
-  return res.reverse();
-  // return res;
+  return res;
 }
 function getCell(columnName, instrument, closingPrice) {
   const c = columnName;
