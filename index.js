@@ -106,9 +106,9 @@ cmd.command('intraday [symbols...]').alias('itd').description('Crawl Intraday Da
           '-k, --no-cache'
     ].join('\n  '))
   .option('-m, --end-date <string>',         'Upper boundary for --start-date. default: ""'+t3+'Accepts same patterns as --start-date'+t3+'Cannot be less than --start-date'+t3+'If empty, then latest possible date is used')
-  .option('-z, --gzip',                      'Output raw gzip files. default: false')
-  .option('-y, --alt-date',                  'Output results with Shamsi dates. default: false')
-  .option('-r, --re-update-no-trades',       'Update already cached items that have no "trade" data. default: false')
+  .option('-z, --gzip',                      'Boolean. Output raw gzip files. default: false')
+  .option('-y, --alt-date',                  'Boolean. Output results with Shamsi dates. default: false')
+  .option('-r, --re-update-no-trades',       'Boolean. Update already cached items that have no "trade" data. default: false')
   .option('--retry <number>',                'Amount of retry attempts before giving up. default: '+defaultSettings.intraday.retry)
   .option('--retry-delay <number>',          'Amount of delay (in ms) to wait before making another retry. default: '+defaultSettings.intraday.retryDelay)
   .option('--chunk-delay <number>',          'Amount of delay (in ms) to wait before requesting another chunk of dates. default: '+defaultSettings.intraday.chunkDelay)
