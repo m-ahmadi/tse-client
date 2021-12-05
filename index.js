@@ -29,6 +29,7 @@ const defaultSettings = {
     startDate:        '1d',
     endDate:          '',
     gzip:             false,
+    altDate:          false,
     outdir:           '',
     dirName:          4,
     fileEncoding:     'utf8bom',
