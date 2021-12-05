@@ -105,7 +105,7 @@ cmd.command('intraday [symbols...]').alias('itd').description('Crawl Intraday Da
           '-H, --file-no-headers',
           '-k, --no-cache'
     ].join('\n  '))
-  .option('-m, --end-date <string>',         'Upper boundary for --start-date. default: ""'+t3+'Accepts same patterns as --start-date'+t3+'Cannot be less than --start-date'+t3+'If empty, then latest possible date is used')
+  .option('-m, --end-date <string>',         'Upper boundary for --start-date. default: ""'+t3+'accepts same patterns as --start-date'+t3+'cannot be less than --start-date'+t3+'if empty, then latest possible date is used')
   .option('-z, --gzip',                      'Boolean. Output raw gzip files. default: false')
   .option('-y, --alt-date',                  'Boolean. Output results with Shamsi dates. default: false')
   .option('-r, --re-update-no-trades',       'Boolean. Update already cached items that have no "trade" data. default: false')
