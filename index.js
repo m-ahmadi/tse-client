@@ -615,7 +615,7 @@ function saveSettings(obj) {
 }
 function printTable(table=[], cols=[]) {
   if (!table.length) return '';
-  const colors = ['yellow', 'cyan', 'green', 'green'];
+  const colors = ['yellow', 'cyan', 'green', 'green', 'green'];
   
   const maxlen = Array(table[0].length).fill(0);
   
@@ -727,14 +727,14 @@ async function list(opts) {
     const flows = [,'بورس','فرابورس',,'پایه'];
     const list = alli.map(i => {
       const row = rows[i];
-      const [sym,name,orig] = [5,6,18].map(i=>row[i]);
+      const [sym,name,dvn,orig] = [5,6,8,18].map(i=> row[i]);
       const flow = flows[+row[9]];
       return row.length === 19
-        ? [sym, orig, name, flow]
-        : ['',  sym,  name, flow];
+        ? [sym, orig, flow, dvn, name]
+        : ['',  sym,  flow, dvn, name];
     }).sort((a,b)=>a[1].localeCompare(b[1],'fa'));
     
-    printTable(list, ['renamed','original','Name','Flow']);
+    printTable(list, ['renamed','original','Flow','DEven','Name']);
   }
   
   if (typeof search === 'string') {
