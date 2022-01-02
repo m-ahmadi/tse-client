@@ -652,7 +652,7 @@ function printTable(table=[], cols=[]) {
       const c = colors[i];
       s += ` ${cell[c]} ${' '.repeat(n)} │`;
     });
-    s +=  '\n';
+    s += '\n';
   }
   
   s += line;
