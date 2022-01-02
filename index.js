@@ -49,6 +49,7 @@ const { log } = console;
 const t  = '\n\t\t\t\t\t ';
 const t2 = '\n\t\t\t\t ';
 const t3 = '\n\t\t\t       ';
+const BOM = '\ufeff';
 
 cmd
   .helpOption('-h, --help', 'Show help.')
@@ -216,7 +217,7 @@ if (cmd.opts().cacheDir) { handleCacheDir(cmd.opts().cacheDir); return; }
     const symins = await tse.getInstruments(true, false, 'Symbol');
     let bom = '';
     if (fileEncoding === 'utf8bom') {
-      bom = '\ufeff';
+      bom = BOM;
       fileEncoding = undefined;
     }
     
@@ -365,7 +366,7 @@ async function intraday(args, subOpts) {
       const symins = await tse.getInstruments(true, false, 'Symbol');
       let bom = '';
       if (fileEncoding === 'utf8bom') {
-        bom = '\ufeff';
+        bom = BOM;
         fileEncoding = undefined;
       }
       
