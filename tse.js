@@ -580,12 +580,13 @@ async function updateInstruments() {
   if ( !shouldUpdate(''+lastDeven, lastPossibleDeven) ) return;
   
   let error;
-  const res = await rq.InstrumentAndShare(lastDeven, lastId).catch(err => error = err);
+  const res = await rq.InstrumentAndShare(+dateToStr(new Date()), lastId).catch(err => error = err);
   if (error) return { title: 'Failed request: InstrumentAndShare', detail: error };
-  
-  const splitted  = res.split('@');
-  let instruments = splitted[0];
-  let shares      = splitted[1];
+  let shares = res.split('@')[1];
+
+  error = 0;
+  let instruments = await rq.Instrument(lastDeven).catch(err => error = err);
+  if (error) return { title: 'Failed request: Instrument', detail: error };
   
   // if (instruments === '*') console.warn('Cannot update during trading session hours.');
   // if (instruments === '')  console.warn('Already updated: ', 'Instruments');
