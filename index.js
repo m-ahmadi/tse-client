@@ -90,6 +90,7 @@ cmd.command('list').alias('ls').description('Show information about current sett
   .option('-G, --id-symbol-gcode',           'Show all possible symbol-group IDs. "Instrument.CGrValCot"')
   .option('-O, --id-sort [columnIndex]',     'Sort the IDs table by specifying the index of the column. default: 1'+t2+'put underline at end for ascending sort: 1_')
   .option('-R, --renamed-symbols',           'Show the symbols that were renamed for maintaining symbol uniqueness.')
+  .option('--csv',                           'Print CSV text instead of formatted text. Only applies to -R and --id-* options.')
   .option('--search <query>',                'Search symbols.')
   .action(list);
 cmd.command('intraday [symbols...]').alias('itd').description('Crawl Intraday Data. (help: tse itd -h)')
@@ -662,7 +663,7 @@ function printTable(table=[], cols=[]) {
 }
 
 async function list(opts) {
-  const { savedSymbols, savedSettings: _savedSettings, allColumns, filterMatch, renamedSymbols, search } = opts;
+  const { savedSymbols, savedSettings: _savedSettings, allColumns, filterMatch, renamedSymbols, csv, search } = opts;
   const { table } = console;
   
   if (savedSymbols) {
@@ -715,7 +716,7 @@ async function list(opts) {
   }
   
   if (renamedSymbols) {
-    log('\nThe renamed symbols:'.yellow);
+    if (!csv) log('\nThe renamed symbols:'.yellow);
     const rows = (await tse.getInstruments(false, true)).map(i=> i.split(','));
     
     const renamed   = rows.filter(i=> i.length === 19);
@@ -734,7 +735,13 @@ async function list(opts) {
         : ['',  sym,  flow, dvn, name];
     }).sort((a,b)=>a[1].localeCompare(b[1],'fa'));
     
-    printTable(list, ['renamed','original','Flow','DEven','Name']);
+    const header = ['renamed','original','Flow','DEven','Name'];
+    if (csv) {
+      const csvstr = [header, ...list].map(i=> i.join(',')).join('\n');
+      log(BOM + csvstr);
+    } else {
+      printTable(list, header);
+    }
   }
   
   if (typeof search === 'string') {
@@ -760,7 +767,7 @@ async function list(opts) {
   }
 }
 async function listIdTables(opts, instruments) {
-  const { idMarket, idSymbol, idIndustry, idBoard, idMarketCode, idSymbolGcode, idSort } = opts;
+  const { idMarket, idSymbol, idIndustry, idBoard, idMarketCode, idSymbolGcode, idSort, csv } = opts;
   
   const raw = require('./info.json');
   
@@ -804,33 +811,42 @@ async function listIdTables(opts, instruments) {
     }
   }
   
+  const print = (list, header) => {
+    if (csv) {
+      const csvstr = [header, ...list].map(i=> i.join(',')).join('\n');
+      log(BOM + csvstr);
+    } else {
+      printTable(list, header);
+    }
+  };
+  
   if (idMarket) {
     const rdy = raw.Flow.map(([id,desc,count]) => [id,count,desc]).sort(sorter)
-    printTable(rdy, ['id','count','desc']);
+    print(rdy, ['id','count','desc']);
   }
   
   if (idSymbol) {
     const rdy = raw.YVal.map(([id,group,desc,count]) => [id, count, group, desc]).sort(sorter);
-    printTable(rdy, ['id','count','group','desc']);
+    print(rdy, ['id','count','group','desc']);
   }
   
   if (idIndustry) {
     const rdy = raw.CSecVal.map(([id,desc,count]) => [id.trimEnd(),count,desc]).sort(sorter);
-    printTable(rdy, ['id','count','desc']);
+    print(rdy, ['id','count','desc']);
   }
   
   if (idBoard) {
     const rdy = raw.CComVal.map(([id,desc,count]) => [id,count,desc]).sort(sorter);
-    printTable(rdy, ['id','count','desc']);
+    print(rdy, ['id','count','desc']);
   }
   
   if (idMarketCode) {
     const rdy = raw.YMarNSC.map(([id,desc,count]) => [id,count,desc]).sort(sorter);
-    printTable(rdy, ['id','count','desc']);
+    print(rdy, ['id','count','desc']);
   }
   
   if (idSymbolGcode) {
     const rdy = raw.CGrValCot.map(([id,desc,count]) => [id,count,desc]).sort(sorter);
-    printTable(rdy, ['id','count','desc']);
+    print(rdy, ['id','count','desc']);
   }
 } 
