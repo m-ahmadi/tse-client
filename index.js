@@ -849,4 +849,4 @@ async function listIdTables(opts, instruments) {
     const rdy = raw.CGrValCot.map(([id,desc,count]) => [id,count,desc]).sort(sorter);
     print(rdy, ['id','count','desc']);
   }
-} 
+}
