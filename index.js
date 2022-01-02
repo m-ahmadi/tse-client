@@ -811,7 +811,6 @@ async function listIdTables(opts, instruments) {
   if (idSymbol) {
     const rdy = raw.YVal.map(([id,group,desc,count]) => [id, count, group, desc]).sort(sorter);
     printTable(rdy, ['id','count','group','desc']);
-    if (sorter) rdy.sort(sorter);
   }
   
   if (idIndustry) {
