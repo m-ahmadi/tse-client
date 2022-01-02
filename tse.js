@@ -610,37 +610,34 @@ async function updateInstruments() {
     }
     
     let _rows = [...rows.map(i=> [...i])];
-    let dups = _rows
-      .map(i=> i[5])                         // symbols
-      .filter((v,i,a) => a.indexOf(v) !== i) // duplicate symbols
-      .map(i => _rows.filter(j=> j[5]===i)); // duplicate items
     
-    dups.forEach(dup => {
-      let rm = dup.map(i=>i[6].includes('-حذف'));
-      if ( rm.includes(true) ) {
-        rm.forEach((v,i) => v
-          ? dup[i][5] = dup[i][5]+'-حذف'
-          : dup[i] = undefined
-        );
-        return;
-      }
+    let dups = [...new Set(
+      _rows.map(i=> i[5])                      // symbols
+        .filter((v,i,a) => a.indexOf(v) !== i) // duplicate symbols (unique)
+    )].map(i => _rows.filter(j=> j[5] === i)); // duplicate items
+    
+    for (dup of dups) {
+      let dupSorted = dup.sort((a,b) => +b[8] - a[8]);
       
-      if (new Set(dup.map(i=>i[9])).size === 1) {
-        dup.forEach(i => i[5] += '-'+i[0].slice(0,7) );
-      } else {
-        let lo = Math.min(...dup.map(i=> +i[9]));
-        dup.forEach((v,i) => +v[9] !== lo
-          ? v[5] = v[5] + v[9]
-          : dup[i] = undefined
-        );
-      }
+      dupSorted.forEach((i,j) => {
+        if (j > 0) {
+          let postfix = '-ق' + (j+1);
+          let origsym = i[5];
+          i.push(origsym);
+          i[5] = origsym + postfix;
+        }
+      });
+    }
+    
+    let code_idx = new Map(rows.map((i,j) => [i[0], j]));
+    
+    dups.flat().forEach(i => {
+      let j = code_idx.get(i[0]);
+      rows[j] = i;
     });
     
-    dups.flat().filter(i=>i)
-      .map(i=> [rows.findIndex(j=> j[0]===i[0]), i[5]])
-      .forEach(([i,v]) => (rows[i].push(rows[i][5]), rows[i][5] = v));
-    
     instruments = rows;
+    code_idx = undefined;
     _rows = undefined;
     rows = undefined;
     
