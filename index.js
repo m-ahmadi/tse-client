@@ -719,10 +719,10 @@ async function list(opts) {
     const rows = (await tse.getInstruments(false, true)).map(i=> i.split(','));
     
     const renamed   = rows.filter(i=> i.length === 19);
-    const renOrig   = renamed.map(i=> i[18]);
-    const unrenamed = rows.filter(i=> renOrig.includes(i[5])).map(i=> i[0]);
-    const all       = [...renamed.map(i=>i[0]), ...unrenamed];
-    const alli      = rows.map((v,i) => all.includes(v[0]) ? i : -1).filter(i=>i!==-1);
+    const renOrig   = new Set(renamed.map(i=> i[18]));
+    const unrenamed = rows.filter(i=> renOrig.has(i[5])).map(i=> i[0]);
+    const all       = new Set([...renamed.map(i=> i[0]), ...unrenamed]);
+    const alli      = rows.map((v,i) => all.has(v[0]) ? i : -1).filter(i=>i!==-1);
     
     const flows = [,'بورس','فرابورس',,'پایه'];
     const list = alli.map(i => {
