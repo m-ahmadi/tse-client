@@ -609,12 +609,14 @@ async function updateInstruments() {
       rows = instruments.split(';').map(i=> i.split(','));
     }
     
-    let _rows = [...rows.map(i=> [...i])];
+    let _rows = [...rows.map(i=> (i=[...i], i[5]=cleanFa(i[5]).trim(), i))];
     
     let dups = [...new Set(
       _rows.map(i=> i[5])                      // symbols
         .filter((v,i,a) => a.indexOf(v) !== i) // duplicate symbols (unique)
     )].map(i => _rows.filter(j=> j[5] === i)); // duplicate items
+    
+    let code_idx = new Map(rows.map((i,j) => [i[0], j]));
     
     for (dup of dups) {
       let dupSorted = dup.sort((a,b) => +b[8] - a[8]);
@@ -622,14 +624,13 @@ async function updateInstruments() {
       dupSorted.forEach((i,j) => {
         if (j > 0) {
           let postfix = '-ق' + (j+1);
-          let origsym = i[5];
+          let oj = code_idx.get(i[0]);
+          let origsym = rows[oj][5];
           i.push(origsym);
           i[5] = origsym + postfix;
         }
       });
     }
-    
-    let code_idx = new Map(rows.map((i,j) => [i[0], j]));
     
     dups.flat().forEach(i => {
       let j = code_idx.get(i[0]);
