@@ -215,13 +215,13 @@ if (cmd.opts().cacheDir) { handleCacheDir(cmd.opts().cacheDir); return; }
       }
     }
     
-    const symins = await tse.getInstruments(true, false, 'Symbol');
     let bom = '';
     if (fileEncoding === 'utf8bom') {
       bom = BOM;
       fileEncoding = undefined;
     }
     
+    const symins = await tse.getInstruments(true, false, 'Symbol');
     const datalen = data.length;
     
     data.forEach((file, i) => {
@@ -364,7 +364,6 @@ async function intraday(args, subOpts) {
     }
     
     if (outdir) {
-      const symins = await tse.getInstruments(true, false, 'Symbol');
       let bom = '';
       if (fileEncoding === 'utf8bom') {
         bom = BOM;
@@ -379,6 +378,7 @@ async function intraday(args, subOpts) {
         return (jy*10000) + (jm*100) + jd + '';
       };
       
+      const symins = await tse.getInstruments(true, false, 'Symbol');
       const datalen = data.length;
       
       data.forEach((item, i) => {
