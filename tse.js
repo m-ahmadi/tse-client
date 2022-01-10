@@ -387,8 +387,8 @@ function cleanFa(str) {
     .replace(/\s?\u200C\s?/g, ' ') // zero-width non-joiner
     .replace(/\u200D/g, '')        // zero-width joiner
     .replace(/\uFEFF/g, '')        // zero-width no-break space
-    .replace(/ك/g,'ک')
-    .replace(/ي/g,'ی');
+    .replace(/ك/g, 'ک')
+    .replace(/ي/g, 'ی');
 }
 function gregToShamsi(s) {
   const { jy, jm, jd } = jalaali.toJalaali(+s.slice(0,4), +s.slice(4,6), +s.slice(6,8));
