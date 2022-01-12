@@ -622,12 +622,15 @@ async function updateInstruments() {
       let dupSorted = dup.sort((a,b) => +b[8] - a[8]);
       
       dupSorted.forEach((i,j) => {
+        let oj = code_idx.get(i[0]);
+        let origsym = rows[oj][5];
+        
         if (j > 0) {
           let postfix = '-ق' + (j+1);
-          let oj = code_idx.get(i[0]);
-          let origsym = rows[oj][5];
           i.push(origsym);
           i[5] = origsym + postfix;
+        } else {
+          i[5] = origsym;
         }
       });
     }
