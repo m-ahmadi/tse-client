@@ -437,7 +437,7 @@ let storedPrices = {};
 Big.DP = 40;
 Big.RM = 2; // http://mikemcl.github.io/big.js/#rm
 function adjust(cond, closingPrices, allShares, inscode) {
-  const shares = allShares.filter(share => share.InsCode === inscode).reduce((r,i) => (r[i.DEven] = i, r), {});
+  const shares = new Map(allShares.filter(share => share.InsCode === inscode).map(i => [i.DEven, i]));
   const cp = closingPrices;
   const len = closingPrices.length;
   const adjustedClosingPrices = [];
@@ -458,7 +458,7 @@ function adjust(cond, closingPrices, allShares, inscode) {
         const curr = cp[i];
         const next = cp[i+1];
         const pricesDontMatch = !Big(curr.PClosing).eq(next.PriceYesterday);
-        const targetShare = shares[next.DEven];
+        const targetShare = shares.get(next.DEven);
         
         if (cond === 1 && pricesDontMatch) {
           num = num.times(next.PriceYesterday).div(curr.PClosing);
