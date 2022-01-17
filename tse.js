@@ -713,7 +713,7 @@ const pricesUpdateManager = (function () {
   function onresult(response, chunk, id) {
     const inscodes = chunk.map(([insCode]) => insCode);
     
-    if ( typeof response === 'string' && /^[\d.,;@-]+$/.test(response) ) {
+    if ( typeof response === 'string' && (/^[\d.,;@-]+$/.test(response) || response === '') ) {
       const res = response.replace(/;/g, '\n').split('@').map((v,i)=> [chunk[i][0], v]);
       
       for (const [inscode, newdata] of res) {
