@@ -915,6 +915,27 @@ async function getPrices(symbols=[], _settings={}) {
   const shares = parseShares(true);
   const pi = Big(ptot).mul(0.20).div(selection.length);
   
+  const getInstrumentPrices = (instrument) => {
+    const inscode = instrument.InsCode;
+    
+    let prices = storedPrices[inscode];
+    if (!prices) return;
+    
+    prices = prices.split('\n').map(i => new ClosingPrice(i));
+    
+    if (adjustPrices === 1 || adjustPrices === 2) {
+      prices = adjust(adjustPrices, prices, shares, inscode);
+    }
+    
+    if (!daysWithoutTrade) {
+      prices = prices.filter(i => +i.ZTotTran > 0);
+    }
+    
+    prices = prices.filter(i => +i.DEven > +startDate);
+    
+    return prices;
+  };
+  
   if (csv) {
     const { csvHeaders, csvDelimiter } = settings;
     const headers = csvHeaders ? columns.map(i => i.header).join() + '\n' : '';
@@ -923,20 +944,8 @@ async function getPrices(symbols=[], _settings={}) {
       if (!instrument) return;
       let res = headers;
       
-      const inscode = instrument.InsCode;
-      
-      let prices = storedPrices[inscode];
+      const prices = getInstrumentPrices(instrument);
       if (!prices) return res;
-      prices = prices.split('\n').map(i => new ClosingPrice(i));
-      if (adjustPrices === 1 || adjustPrices === 2) {
-        prices = adjust(adjustPrices, prices, shares, inscode);
-      }
-      
-      if (!daysWithoutTrade) {
-        prices = prices.filter(i => +i.ZTotTran > 0);
-      }
-      
-      prices = prices.filter(i => +i.DEven > +startDate);
       
       res += prices
         .map(price => 
@@ -955,20 +964,8 @@ async function getPrices(symbols=[], _settings={}) {
       if (!instrument) return;
       const res = Object.fromEntries( columns.map(i => [i.header, []]) );
       
-      const inscode = instrument.InsCode;
-      
-      let prices = storedPrices[inscode];
+      const prices = getInstrumentPrices(instrument);
       if (!prices) return res;
-      prices = prices.split('\n').map(i => new ClosingPrice(i));
-      if (adjustPrices === 1 || adjustPrices === 2) {
-        prices = adjust(adjustPrices, prices, shares, inscode);
-      }
-      
-      if (!daysWithoutTrade) {
-        prices = prices.filter(i => +i.ZTotTran > 0);
-      }
-      
-      prices = prices.filter(i => +i.DEven > +startDate);
       
       for (const price of prices) {
         for (const {header, name} of columns) {
