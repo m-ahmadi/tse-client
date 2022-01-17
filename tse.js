@@ -921,10 +921,12 @@ async function getPrices(symbols=[], _settings={}) {
     
     result.data = selection.map(instrument => {
       if (!instrument) return;
+      let res = headers;
+      
       const inscode = instrument.InsCode;
       
       let prices = storedPrices[inscode];
-      if (!prices) return headers;
+      if (!prices) return res;
       prices = prices.split('\n').map(i => new ClosingPrice(i));
       if (adjustPrices === 1 || adjustPrices === 2) {
         prices = adjust(adjustPrices, prices, shares, inscode);
@@ -934,14 +936,16 @@ async function getPrices(symbols=[], _settings={}) {
         prices = prices.filter(i => +i.ZTotTran > 0);
       }
       
-      if (pf) pf(pn= +Big(pn).plus(pi) );
+      prices = prices.filter(i => +i.DEven > +startDate);
       
-      return headers + prices
-        .filter(i => +i.DEven > +startDate)
+      res += prices
         .map(price => 
           columns.map(i => getCell(i.name, instrument, price)).join(csvDelimiter)
         )
         .join('\n');
+      
+      if (pf) pf(pn= +Big(pn).plus(pi) );
+      return res;
     });
     
   } else {
