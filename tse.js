@@ -417,6 +417,7 @@ let PRICES_UPDATE_CHUNK       = 50;
 let PRICES_UPDATE_CHUNK_DELAY = 300;
 let PRICES_UPDATE_RETRY_COUNT = 3;
 let PRICES_UPDATE_RETRY_DELAY = 1000;
+const SYMBOL_RENAME_STRING    = '-ق';
 const defaultSettings = {
   columns: [0,2,3,4,5,6,7,8,9],
   adjustPrices: 0,
@@ -626,7 +627,7 @@ async function updateInstruments() {
         let origsym = rows[oj][5];
         
         if (j > 0) {
-          let postfix = '-ق' + (j+1);
+          let postfix = SYMBOL_RENAME_STRING + (j+1);
           i.push(origsym);
           i[5] = origsym + postfix;
         } else {
