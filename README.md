@@ -435,6 +435,7 @@ const defaultSettings = {
   csv:              false,
   csvHeaders:       true,
   csvDelimiter:     ',',
+  cache:            true,
   onprogress:       undefined,
   progressTotal:    100
 };
