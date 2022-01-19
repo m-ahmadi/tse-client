@@ -172,15 +172,15 @@ if (cmd.opts().cacheDir) { handleCacheDir(cmd.opts().cacheDir); return; }
     if ( !/^(utf8(bom)?|ascii)$/.test(fileEncoding) ) { abort('Invalid option:', '--file-encoding',  '\n\tPattern not matched:'.red, '^(utf8(bom)?|ascii)$');        return; }
     
     const _settings = {
-      columns:          priceColumnsParsed,
-      adjustPrices:     priceAdjust,
-      daysWithoutTrade: priceDaysWithoutTrade,
-      startDate:        priceStartDate,
-      csv:              true,
-      csvHeaders:       fileHeaders,
-      csvDelimiter:     fileDelimiter,
-      onprogress:       (n) => progress.tick(n - progress.curr),
-      progressTotal:    86,
+      columns:             priceColumnsParsed,
+      adjustPrices:        priceAdjust,
+      daysWithoutTrade:    priceDaysWithoutTrade,
+      startDate:           priceStartDate,
+      csv:                 true,
+      csvHeaders:          fileHeaders,
+      csvDelimiter:        fileDelimiter,
+      onprogress:          (n) => progress.tick(n - progress.curr),
+      progressTotal:       86,
       cache,
       mergeSimilarSymbols: mergedSymbols
     };

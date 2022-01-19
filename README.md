@@ -436,17 +436,17 @@ enum ErrorType {
 **Example:**
 ```javascript
 const defaultSettings = {
-  columns:          [0,2,3,4,5,6,7,8,9],
-  adjustPrices:     0,
-  daysWithoutTrade: false,
-  startDate:        '20010321',
+  columns:             [0,2,3,4,5,6,7,8,9],
+  adjustPrices:        0,
+  daysWithoutTrade:    false,
+  startDate:           '20010321',
   mergeSimilarSymbols: true,
-  csv:              false,
-  csvHeaders:       true,
-  csvDelimiter:     ',',
-  cache:            true,
-  onprogress:       undefined,
-  progressTotal:    100
+  csv:                 false,
+  csvHeaders:          true,
+  csvDelimiter:        ',',
+  cache:               true,
+  onprogress:          undefined,
+  progressTotal:       100
 };
 
 const result = await tse.getPrices(symbols=['sym1', 'sym2', ...], defaultSettings);

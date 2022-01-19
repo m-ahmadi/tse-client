@@ -458,8 +458,7 @@ function adjust(cond, closingPrices, allShares, inscodes) {
     }
     if ( (cond === 1 && gaps.div(len).lt('0.08')) || cond === 2 ) {
       for (let i=len-2; i>=0; i-=1) {
-        const curr = cp[i];
-        const next = cp[i+1];
+        const [curr, next] = [ cp[i], cp[i+1] ];
         const pricesDontMatch = !Big(curr.PClosing).eq(next.PriceYesterday) && curr.InsCode === next.InsCode;
         const targetShare = shares.get(next.DEven);
         
