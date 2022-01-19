@@ -396,6 +396,9 @@ interface PriceSettings {
   adjustPrices?:                AdjustOption;
   daysWithoutTrade?:            boolean;
   startDate?:                   string;
+  csv?:                         boolean;
+  csvHeaders?:                  boolean;
+  csvDelimiter?:                string;
   cache?:                       boolean;
   onprogress?(current: number): void;
   progressTotal?:               number;
