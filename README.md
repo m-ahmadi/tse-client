@@ -358,6 +358,7 @@ Update (if needed) and return prices of instruments.
 		`2`: Capital Increase &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;(*`افزایش سرمایه`*)
 	+ **`startDate`:** Only return prices after this date. Min: `'20010321'`. Default: `'20010321'`
 	+ **`daysWithoutTrade`:** Whether to include days that have `0` trades. Default: `false`
+	+ **`mergeSimilarSymbols`:** Whether to merge the data of similar [renamed symbols](#renamed-symbols). Default: `true`
 	+ **`cache`:** Whether to cache the downloaded data. Default: `true`
 	+ **`csv`:** Generate results as CSV strings. Default: `false`
 	+ **`csvHeaders`:** Include header row when generating CSV results. Default: `true`
@@ -396,6 +397,7 @@ interface PriceSettings {
   adjustPrices?:                AdjustOption;
   daysWithoutTrade?:            boolean;
   startDate?:                   string;
+  mergeSimilarSymbols?:         boolean;
   csv?:                         boolean;
   csvHeaders?:                  boolean;
   csvDelimiter?:                string;
@@ -432,6 +434,7 @@ const defaultSettings = {
   adjustPrices:     0,
   daysWithoutTrade: false,
   startDate:        '20010321',
+  mergeSimilarSymbols: true,
   csv:              false,
   csvHeaders:       true,
   csvDelimiter:     ',',

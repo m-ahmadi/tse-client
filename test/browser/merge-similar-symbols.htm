@@ -1,0 +1,49 @@
+<head>
+	<meta charset="utf8" />
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/uplot/dist/uPlot.min.css" />
+</head>
+<script src="https://cdn.jsdelivr.net/npm/big.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jalaali-js/dist/jalaali.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/localforage"></script>
+<script src="../../tse.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/uplot/dist/uPlot.iife.min.js"></script>
+
+<script>
+(async () => {
+	r = await tse.getPrices(['ذوب', 'ذوب-ق2'], {mergeSimilarSymbols: 0});
+	console.log(r.data);
+	
+	r = await tse.getPrices(['ذوب', 'ذوب-ق2'], {mergeSimilarSymbols: 1});
+	console.log(r.data);
+	
+	
+	sym = 'ذوب';
+	
+	r = await tse.getPrices([sym], {adjustPrices: 0});
+	plot(r.data[0], sym+' - adjust 0');
+	
+	r = await tse.getPrices([sym], {adjustPrices: 2});
+	plot(r.data[0], sym+' - adjust 2');
+	
+	r = await tse.getPrices([sym], {adjustPrices: 1});
+	plot(r.data[0], sym+' - adjust 1');
+})();
+
+
+function plot(d, title) {
+	const colors = [, 'black', 'blue'];
+	const labels = [, 'close', 'last'];
+	const data = [d.date, d.close, d.last];
+	new uPlot({
+		width: 1850,
+		height: 200,
+		series: data.map((v,i) => ( i === 0 ? {} : {stroke: colors[i], label: labels[i]} )),
+		legend: {show: true},
+		class: 'box',
+		title
+	}, [
+		data[0].map(i => (i=''+i, Date.UTC(+i.slice(0,4), +i.slice(4,6)-1, +i.slice(6,8)) / 1000)),
+		...data.slice(1)
+	], document.body);
+}
+</script>

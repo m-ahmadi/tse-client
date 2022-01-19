@@ -418,11 +418,13 @@ let PRICES_UPDATE_CHUNK_DELAY = 300;
 let PRICES_UPDATE_RETRY_COUNT = 3;
 let PRICES_UPDATE_RETRY_DELAY = 1000;
 const SYMBOL_RENAME_STRING    = '-ق';
+const MERGED_SYMBOL_CONTENT   = 'merged';
 const defaultSettings = {
   columns: [0,2,3,4,5,6,7,8,9],
   adjustPrices: 0,
   daysWithoutTrade: false,
   startDate: '20010321',
+  mergeSimilarSymbols: true,
   cache: true,
   csv: false,
   csvHeaders: true,
@@ -436,8 +438,8 @@ let storedPrices = {};
 
 Big.DP = 40;
 Big.RM = 2; // http://mikemcl.github.io/big.js/#rm
-function adjust(cond, closingPrices, allShares, inscode) {
-  const shares = new Map(allShares.filter(share => share.InsCode === inscode).map(i => [i.DEven, i]));
+function adjust(cond, closingPrices, allShares, inscodes) {
+  const shares = new Map(allShares.filter(share => inscodes.has(share.InsCode)).map(i => [i.DEven, i]));
   const cp = closingPrices;
   const len = closingPrices.length;
   const adjustedClosingPrices = [];
@@ -448,7 +450,8 @@ function adjust(cond, closingPrices, allShares, inscode) {
     adjustedClosingPrices.push( cp[len-1] );
     if (cond === 1) {
       for (let i=len-2; i>=0; i-=1) {
-        if ( !Big(cp[i].PClosing).eq(cp[i+1].PriceYesterday) ) {
+        const [curr, next] = [ cp[i], cp[i+1] ];
+        if (!Big(curr.PClosing).eq(next.PriceYesterday) && curr.InsCode === next.InsCode) {
           gaps = gaps.plus(1);
         }
       }
@@ -457,7 +460,7 @@ function adjust(cond, closingPrices, allShares, inscode) {
       for (let i=len-2; i>=0; i-=1) {
         const curr = cp[i];
         const next = cp[i+1];
-        const pricesDontMatch = !Big(curr.PClosing).eq(next.PriceYesterday);
+        const pricesDontMatch = !Big(curr.PClosing).eq(next.PriceYesterday) && curr.InsCode === next.InsCode;
         const targetShare = shares.get(next.DEven);
         
         if (cond === 1 && pricesDontMatch) {
@@ -884,6 +887,37 @@ async function getPrices(symbols=[], _settings={}) {
     return result;
   }
   
+  const { mergeSimilarSymbols } = settings;
+  
+  let merges = new Map();
+  let extrasIndex = -1;
+  
+  if (mergeSimilarSymbols) {
+    const syms = Object.keys(instruments);
+    const ins = syms.map(k => instruments[k])
+    const roots = new Set(ins.filter(i => i.SymbolOriginal).map(i => i.SymbolOriginal));
+    
+    merges = new Map([...roots].map(i => [ i, [] ]));
+    
+    ins.forEach((i, j) => {
+      const { SymbolOriginal: orig, Symbol: sym, InsCode: code } = i;
+      const renamedOrRoot = orig || sym;
+      if (!merges.has(renamedOrRoot)) return;
+      const regx = new RegExp(SYMBOL_RENAME_STRING+'(\\d+)');
+      merges.get(renamedOrRoot).push({ sym, code, order: orig ? +sym.match(regx)[1] : 1 });
+    });
+    
+    [...merges].forEach(([, v]) => v.sort((a,b) => a.order - b.order));
+    
+    const extras = selection.map(({Symbol: sym}) =>
+      merges.has(sym) &&
+      merges.get(sym).slice(1).map(i => instruments[i.sym])
+    ).flat().filter(i=>i);
+    
+    extrasIndex = selection.length;
+    selection.push(...extras);
+  }
+  
   const updateResult = await updatePrices(selection, settings.cache, {pf, pn, ptot: ptot.mul(0.78)});
   const { succs, fails, error } = updateResult;
   ({ pn } = updateResult);
@@ -904,6 +938,8 @@ async function getPrices(symbols=[], _settings={}) {
     selection.forEach((v,i,a) => fails.includes(v.InsCode) ? a[i] = undefined : 0);
   }
   
+  if (mergeSimilarSymbols) selection.splice(extrasIndex);
+  
   const columns = settings.columns.map(i => {
     const row = !Array.isArray(i) ? [i] : i;
     const column = new Column(row);
@@ -915,16 +951,36 @@ async function getPrices(symbols=[], _settings={}) {
   const shares = parseShares(true);
   const pi = Big(ptot).mul(0.20).div(selection.length);
   
+  const storedPricesMerged = {};
+  
+  if (mergeSimilarSymbols) {
+    for (const [, merge] of [...merges]) {
+      const codes = merge.map(i => i.code);
+      const [latest] = codes;
+      storedPricesMerged[latest] = codes.map(code => storedPrices[code]).reverse().filter(i=>i).join('\n');
+    }
+  }
+  
   const getInstrumentPrices = (instrument) => {
-    const inscode = instrument.InsCode;
+    const { InsCode: inscode, Symbol: sym, SymbolOriginal: symOrig } = instrument;
     
-    let prices = storedPrices[inscode];
+    let prices, inscodes;
+    
+    if (symOrig) {
+      if (mergeSimilarSymbols) return MERGED_SYMBOL_CONTENT;
+      prices = storedPrices[inscode];
+      inscodes = new Set(inscode);
+    } else {
+      const isRoot = merges.has(sym);
+      prices = isRoot ? storedPricesMerged[inscode] : storedPrices[inscode];
+      inscodes = new Set(isRoot ? merges.get(sym).map(i => i.code) : inscode);
+    }
     if (!prices) return;
     
     prices = prices.split('\n').map(i => new ClosingPrice(i));
     
     if (adjustPrices === 1 || adjustPrices === 2) {
-      prices = adjust(adjustPrices, prices, shares, inscode);
+      prices = adjust(adjustPrices, prices, shares, inscodes);
     }
     
     if (!daysWithoutTrade) {
@@ -946,6 +1002,7 @@ async function getPrices(symbols=[], _settings={}) {
       
       const prices = getInstrumentPrices(instrument);
       if (!prices) return res;
+      if (prices === MERGED_SYMBOL_CONTENT) return prices;
       
       res += prices
         .map(price => 
@@ -966,6 +1023,7 @@ async function getPrices(symbols=[], _settings={}) {
       
       const prices = getInstrumentPrices(instrument);
       if (!prices) return res;
+      if (prices === MERGED_SYMBOL_CONTENT) return prices;
       
       for (const price of prices) {
         for (const {header, name} of columns) {
