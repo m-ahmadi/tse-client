@@ -137,6 +137,12 @@ tse
 ```shell
 tse ذوب -k
 ```
+#### Similar [renamed symbols](#renamed-symbols) are merged by default:
+```shell
+tse ذوب       # merged data of ذوب and ذوب-ق2
+tse ذوب -u    # only the data of ذوب
+tse ذوب-ق2 -u # only the data of ذوب-ق2 
+```
 #### View saved settings and more:
 ```shell
 tse ls -S

@@ -24,6 +24,7 @@ const defaultSettings = {
   fileEncoding:          'utf8bom',
   fileHeaders:           true,
   cache:                 true,
+  mergedSymbols:         true,
   intraday: {
     symbols:          [],
     startDate:        '1d',
@@ -73,6 +74,7 @@ cmd
   .option('-e, --file-encoding <string>',    'Encoding of the generated files. options: utf8|utf8bom|ascii. default: "utf8bom"')
   .option('-H, --file-no-headers',           'Boolean. Generate files without the header row. default: false')
   .option('-k, --no-cache',                  'Boolean. Do not cache the data. default: false')
+  .option('-u, --no-merged-symbols',         'Boolean. Do not merge the data of similar symbols. default: false')
   .option('--save',                          'Boolean. Save options for later use. default: false')
   .option('--save-reset',                    'Boolean. Reset saved options back to defaults. default: false')
   .option('--cache-dir [path]',              'Show or change the location of cache directory.'+t+'if [path] is provided, new location is set but'+t+'existing content is not moved to the new location.')
@@ -146,7 +148,7 @@ if (cmd.opts().cacheDir) { handleCacheDir(cmd.opts().cacheDir); return; }
   if (symbols.length) {
     const progress = new Progress(':bar :percent (Elapsed: :elapsed s)', {total: 100, width: 18, complete: '█', incomplete: '░', clear: true});
     
-    const { priceColumns, priceDaysWithoutTrade, fileDelimiter, fileHeaders, fileOutdir, fileExtension, cache } = settings;
+    const { priceColumns, priceDaysWithoutTrade, fileDelimiter, fileHeaders, fileOutdir, fileExtension, cache, mergedSymbols } = settings;
     let { priceStartDate, priceAdjust, fileName, fileEncoding } = settings;
     priceStartDate = parseDateOption(priceStartDate);
     priceAdjust    = +priceAdjust;
@@ -179,7 +181,8 @@ if (cmd.opts().cacheDir) { handleCacheDir(cmd.opts().cacheDir); return; }
       csvDelimiter:     fileDelimiter,
       onprogress:       (n) => progress.tick(n - progress.curr),
       progressTotal:    86,
-      cache
+      cache,
+      mergeSimilarSymbols: mergedSymbols
     };
     const { error, data } = await tse.getPrices(symbols, _settings);
     
