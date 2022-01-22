@@ -93,6 +93,7 @@ cmd.command('list').alias('ls').description('Show information about current sett
   .option('-O, --id-sort [columnIndex]',     'Sort the IDs table by specifying the index of the column. default: 1'+t2+'put underline at end for ascending sort: 1_')
   .option('-R, --renamed-symbols',           'Show the symbols that were renamed for maintaining symbol uniqueness.')
   .option('--csv',                           'Print CSV text instead of formatted text. Only applies to -R and --id-* options.')
+  .option('--json',                          'Print JSON text instead of formatted text. Only applies to -R and --id-* options.')
   .option('--search <query>',                'Search symbols.')
   .action(list);
 cmd.command('intraday [symbols...]').alias('itd').description('Crawl Intraday Data. (help: tse itd -h)')
@@ -666,7 +667,7 @@ function printTable(table=[], cols=[]) {
 }
 
 async function list(opts) {
-  const { savedSymbols, savedSettings: _savedSettings, allColumns, filterMatch, renamedSymbols, csv, search } = opts;
+  const { savedSymbols, savedSettings: _savedSettings, allColumns, filterMatch, renamedSymbols, csv, json, search } = opts;
   const { table } = console;
   
   if (savedSymbols) {
@@ -719,7 +720,7 @@ async function list(opts) {
   }
   
   if (renamedSymbols) {
-    if (!csv) log('\nThe renamed symbols:'.yellow);
+    if (!csv && !json) log('\nThe renamed symbols:'.yellow);
     const rows = (await tse.getInstruments(false, true)).map(i=> i.split(','));
     
     const renamed   = rows.filter(i=> i.length === 19);
@@ -742,6 +743,9 @@ async function list(opts) {
     if (csv) {
       const csvstr = [header, ...list].map(i=> i.join(',')).join('\n');
       log(BOM + csvstr);
+    } else if (json) {
+      const jsonstr = JSON.stringify([header, ...list]);
+      log(jsonstr);
     } else {
       printTable(list, header);
     }
@@ -770,7 +774,7 @@ async function list(opts) {
   }
 }
 async function listIdTables(opts, instruments) {
-  const { idMarket, idSymbol, idIndustry, idBoard, idMarketCode, idSymbolGcode, idSort, csv } = opts;
+  const { idMarket, idSymbol, idIndustry, idBoard, idMarketCode, idSymbolGcode, idSort, csv, json } = opts;
   
   const raw = require('./info.json');
   
@@ -818,6 +822,9 @@ async function listIdTables(opts, instruments) {
     if (csv) {
       const csvstr = [header, ...list].map(i=> i.join(',')).join('\n');
       log(BOM + csvstr);
+    } else if (json) {
+      const jsonstr = JSON.stringify([header, ...list]);
+      log(jsonstr);
     } else {
       printTable(list, header);
     }
