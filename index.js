@@ -84,12 +84,12 @@ cmd.command('list').alias('ls').description('Show information about current sett
   .option('-D, --saved-settings',            'List saved settings.')
   .option('-F, --filter-match <string>',     'List symbols that match a filter string. (same string syntax as: tse -f)')
   .option('-A, --all-columns',               'Show all possible column indexes.')
-  .option('-T, --id-symbol',                 'Show all possible symbol-type IDs. "Instrument.YVal"')
-  .option('-I, --id-industry',               'Show all possible industry-sector IDs. "Instrument.CSecVal"')
-  .option('-M, --id-market',                 'Show all possible market-type IDs. "Instrument.Flow"')
-  .option('-B, --id-board',                  'Show all possible board IDs. "Instrument.CComVal"')
+  .option('-T, --id-symbol-type',            'Show all possible symbol-type IDs. "Instrument.YVal"')
+  .option('-I, --id-industry-sector-code',   'Show all possible industry-sector-code IDs. "Instrument.CSecVal"')
+  .option('-M, --id-market',                 'Show all possible market IDs. "Instrument.Flow"')
+  .option('-B, --id-board-code',             'Show all possible board-code IDs. "Instrument.CComVal"')
   .option('-Y, --id-market-code',            'Show all possible market-code IDs. "Instrument.YMarNSC"')
-  .option('-G, --id-symbol-gcode',           'Show all possible symbol-group IDs. "Instrument.CGrValCot"')
+  .option('-G, --id-symbol-group-code',      'Show all possible symbol-group-code IDs. "Instrument.CGrValCot"')
   .option('-O, --id-sort [columnIndex]',     'Sort the IDs table by specifying the index of the column. default: 1'+t2+'put underline at end for ascending sort: 1_')
   .option('-R, --renamed-symbols',           'Show the symbols that were renamed for maintaining symbol uniqueness.')
   .option('--csv',                           'Print CSV text instead of formatted text. Only applies to -R and --id-* options.')
@@ -766,15 +766,15 @@ async function list(opts) {
     }
   }
   
-  const { idSymbol, idIndustry, idMarket, idBoard, idMarketCode, idSymbolGcode } = opts;
+  const { idSymbolType, idIndustrySectorCode, idMarket, idBoardCode, idMarketCode, idSymbolGroupCode } = opts;
   
-  if (idSymbol || idIndustry || idMarket || idBoard || idMarketCode || idSymbolGcode) {
+  if (idSymbolType || idIndustrySectorCode || idMarket || idBoardCode || idMarketCode || idSymbolGroupCode) {
     const ins = await tse.getInstruments();
     await listIdTables(opts, ins);
   }
 }
 async function listIdTables(opts, instruments) {
-  const { idSymbol, idIndustry, idMarket, idBoard, idMarketCode, idSymbolGcode, idSort, csv, json } = opts;
+  const { idSymbolType, idIndustrySectorCode, idMarket, idBoardCode, idMarketCode, idSymbolGroupCode, idSort, csv, json } = opts;
   
   const raw = require('./info.json');
   
@@ -830,12 +830,12 @@ async function listIdTables(opts, instruments) {
     }
   };
   
-  if (idSymbol) {
+  if (idSymbolType) {
     const rdy = raw.YVal.map(([id,group,desc,count]) => [id, count, group, desc]).sort(sorter);
     print(rdy, ['id','count','group','desc']);
   }
   
-  if (idIndustry) {
+  if (idIndustrySectorCode) {
     const rdy = raw.CSecVal.map(([id,desc,count]) => [id.trimEnd(),count,desc]).sort(sorter);
     print(rdy, ['id','count','desc']);
   }
@@ -845,7 +845,7 @@ async function listIdTables(opts, instruments) {
     print(rdy, ['id','count','desc']);
   }
   
-  if (idBoard) {
+  if (idBoardCode) {
     const rdy = raw.CComVal.map(([id,desc,count]) => [id,count,desc]).sort(sorter);
     print(rdy, ['id','count','desc']);
   }
@@ -855,7 +855,7 @@ async function listIdTables(opts, instruments) {
     print(rdy, ['id','count','desc']);
   }
   
-  if (idSymbolGcode) {
+  if (idSymbolGroupCode) {
     const rdy = raw.CGrValCot.map(([id,desc,count]) => [id,count,desc]).sort(sorter);
     print(rdy, ['id','count','desc']);
   }
