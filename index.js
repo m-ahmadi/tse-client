@@ -713,7 +713,8 @@ async function list(opts) {
       const ins = await tse.getInstruments();
       const predicate = getFilterPredicate(filters);
       const matchedSymbols = predicate ? ins.filter(predicate).map(i => i.Symbol) : [];
-      log(matchedSymbols.sort().join('\n'));
+      matchedSymbols.sort((a,b) => a.localeCompare(b,'fa'));
+      log(matchedSymbols.join('\n'));
     } else {
       log('Invalid filter string.'.redBold);
     }
