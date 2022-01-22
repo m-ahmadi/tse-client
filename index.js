@@ -508,10 +508,10 @@ function handleCacheDir(newdir) {
 
 // helpers
 function parseFilterStr(str='') {
-  const map = {m:'flow', t:'yval', i:'csecval'};
+  const map = {t:'YVal', i:'CSecVal', m:'Flow'};
   
   const arr = str.split(' ');
-  const result = {};
+  const result = new Map();
   
   for (const i of arr) {
     if (i.indexOf('=') === -1) continue;
@@ -521,10 +521,12 @@ function parseFilterStr(str='') {
     if ( !map[key] )               continue;
     if ( !/^[\d\w,]+$/.test(val) ) continue;
     
-    result[ map[key] ] = key === 'i' ? val.split(',').map(i=> i+' ') : val.split(',');
+    const parsed = key === 'i' ? val.split(',').map(i=> i+' ') : val.split(',');
+    
+    result.set(map[key], new Set(parsed));
   }
   
-  return Object.keys(result).length === arr.length ? result : undefined;
+  return result.size === arr.length ? result : undefined;
 }
 function parseColstr(str='') {
   if (!str) return;
@@ -567,17 +569,9 @@ function parseDateOption(s) {
   return result;
 }
 function getFilterPredicate(filters) {
-  const { flow, yval, csecval } = {flow:[], yval:[], csecval:[], ...filters};
-  const [f,y,c] = [flow, yval, csecval].map(i => i.length);
-  const predicate = 
-    y &&  f &&  c ? i => yval.includes(i.YVal) && flow.includes(i.Flow) && csecval.includes(i.CSecVal) :
-    y &&  f && !c ? i => yval.includes(i.YVal) && flow.includes(i.Flow) :
-    y && !f &&  c ? i => yval.includes(i.YVal) && csecval.includes(i.CSecVal) :
-   !y &&  f &&  c ? i => flow.includes(i.Flow) && csecval.includes(i.CSecVal) :
-    y && !f && !c ? i => yval.includes(i.YVal) :
-   !y &&  f && !c ? i => flow.includes(i.Flow) :
-   !y && !f &&  c ? i => csecval.includes(i.CSecVal) :
-   undefined;
+  const keys = [...filters.keys()];
+  const predicate = instrument =>
+    keys.every( key => filters.get(key).has(instrument[key]) );
   return predicate;
 }
 function abort(m1, m2, ...rest) {
