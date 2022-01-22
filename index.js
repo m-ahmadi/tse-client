@@ -61,9 +61,12 @@ cmd
   .option('-s, --symbol <string>',           'A space-separated string of symbols.')
   .option('-i, --symbol-file <string>',      'Path to a file that contains newline-separated symbols.')
   .option('-f, --symbol-filter <string>',    'Select symbols based on a space separated string of filter options. (AND-based)'+t+
-                                               't=id,id,...    symbol-type ids     (tse ls -T)'+t+
-                                               'i=id,id,...    industry-sector ids (tse ls -I)'+t+
-                                               'm=id,id,...    market ids          (tse ls -M)')
+                                               't=id,id,...    symbol-type ids       (tse ls -T)'+t+
+                                               'i=id,id,...    industry-sector ids   (tse ls -I)'+t+
+                                               'm=id,id,...    market ids            (tse ls -M)'+t+
+                                               'b=id,id,...    board-code ids        (tse ls -B)'+t+
+                                               'y=id,id,...    market-code ids       (tse ls -Y)'+t+
+                                               'g=id,id,...    symbol-group-code ids (tse ls -G)')
   .option('-d, --symbol-delete',             'Boolean. Delete specified symbols from selection. default: false')
   .option('-a, --symbol-all',                'Boolean. Select all symbols. default: false')
   .option('-c, --price-columns <string>',    'A comma/space separated list of column indexes with optional headers.'+t+'index only:      1,2,3'+t+'index & header:  1:a 2:b 3:c'+t+'default: "0 2 3 4 5 6 7 8 9" (help: tse ls -A)')
@@ -511,7 +514,7 @@ function handleCacheDir(newdir) {
 
 // helpers
 function parseFilterStr(str='') {
-  const map = {t:'YVal', i:'CSecVal', m:'Flow'};
+  const map = {t:'YVal', i:'CSecVal', m:'Flow', b:'CComVal', y:'YMarNSC', g:'CGrValCot'};
   
   const arr = str.split(' ');
   const result = new Map();
