@@ -709,7 +709,7 @@ async function list(opts) {
   if (filterMatch) {
     const filters = parseFilterStr(filterMatch);
     if (filters) {
-      const ins = await tse.getInstruments(true, true);
+      const ins = await tse.getInstruments();
       const predicate = getFilterPredicate(filters);
       const matchedSymbols = predicate ? ins.filter(predicate).map(i => i.Symbol) : [];
       log(matchedSymbols.sort().join('\n'));
@@ -750,7 +750,7 @@ async function list(opts) {
   if (typeof search === 'string') {
     const str = search;
     if (str.length > 1) {
-      const ins = await tse.getInstruments(true, true);
+      const ins = await tse.getInstruments();
       const res = ins
         .filter(i => i.Symbol.includes(str) || i.Name.includes(str))
         .map(i => `${i.Symbol.yellowBold} (${i.Name.grey})`)
@@ -765,7 +765,7 @@ async function list(opts) {
   const { idMarket, idSymbol, idIndustry, idBoard, idMarketCode, idSymbolGcode } = opts;
   
   if (idMarket ||  idSymbol || idIndustry || idBoard || idMarketCode || idSymbolGcode) {
-    const ins = await tse.getInstruments(true, true);
+    const ins = await tse.getInstruments();
     await listIdTables(opts, ins);
   }
 }
