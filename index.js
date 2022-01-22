@@ -60,7 +60,7 @@ cmd
   .arguments('[symbols...]').action(() => 0)
   .option('-s, --symbol <string>',           'A space-separated string of symbols.')
   .option('-i, --symbol-file <string>',      'Path to a file that contains newline-separated symbols.')
-  .option('-f, --symbol-filter <string>',    'Select symbols based on a filter string. (AND-based)'+t+'market type:     m=id,id,... (help: tse ls -M)'+t+'symbol type:     t=id,id,... (help: tse ls -T)'+t+'industry sector: i=id,id,... (help: tse ls -I)'+t+'example:  tse -m "t=300,303 i=27"'+t+'only see: tse ls -F "t=300,303 i=27"')
+  .option('-f, --symbol-filter <string>',    'Select symbols based on a filter string. (AND-based)'+t+'market type:     m=id,id,... (help: tse ls -M)'+t+'symbol type:     t=id,id,... (help: tse ls -T)'+t+'industry sector: i=id,id,... (help: tse ls -I)'+t+'example:  tse -f "t=300,303 i=27"'+t+'only see: tse ls -F "t=300,303 i=27"')
   .option('-d, --symbol-delete',             'Boolean. Delete specified symbols from selection. default: false')
   .option('-a, --symbol-all',                'Boolean. Select all symbols. default: false')
   .option('-c, --price-columns <string>',    'A comma/space separated list of column indexes with optional headers.'+t+'index only:      1,2,3'+t+'index & header:  1:a 2:b 3:c'+t+'default: "0 2 3 4 5 6 7 8 9" (help: tse ls -A)')
