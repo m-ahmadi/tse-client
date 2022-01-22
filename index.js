@@ -84,9 +84,9 @@ cmd.command('list').alias('ls').description('Show information about current sett
   .option('-D, --saved-settings',            'List saved settings.')
   .option('-F, --filter-match <string>',     'List symbols that match a filter string. (same string syntax as: tse -f)')
   .option('-A, --all-columns',               'Show all possible column indexes.')
-  .option('-M, --id-market',                 'Show all possible market-type IDs. "Instrument.Flow"')
   .option('-T, --id-symbol',                 'Show all possible symbol-type IDs. "Instrument.YVal"')
   .option('-I, --id-industry',               'Show all possible industry-sector IDs. "Instrument.CSecVal"')
+  .option('-M, --id-market',                 'Show all possible market-type IDs. "Instrument.Flow"')
   .option('-B, --id-board',                  'Show all possible board IDs. "Instrument.CComVal"')
   .option('-Y, --id-market-code',            'Show all possible market-code IDs. "Instrument.YMarNSC"')
   .option('-G, --id-symbol-gcode',           'Show all possible symbol-group IDs. "Instrument.CGrValCot"')
@@ -766,15 +766,15 @@ async function list(opts) {
     }
   }
   
-  const { idMarket, idSymbol, idIndustry, idBoard, idMarketCode, idSymbolGcode } = opts;
+  const { idSymbol, idIndustry, idMarket, idBoard, idMarketCode, idSymbolGcode } = opts;
   
-  if (idMarket ||  idSymbol || idIndustry || idBoard || idMarketCode || idSymbolGcode) {
+  if (idSymbol || idIndustry || idMarket || idBoard || idMarketCode || idSymbolGcode) {
     const ins = await tse.getInstruments();
     await listIdTables(opts, ins);
   }
 }
 async function listIdTables(opts, instruments) {
-  const { idMarket, idSymbol, idIndustry, idBoard, idMarketCode, idSymbolGcode, idSort, csv, json } = opts;
+  const { idSymbol, idIndustry, idMarket, idBoard, idMarketCode, idSymbolGcode, idSort, csv, json } = opts;
   
   const raw = require('./info.json');
   
@@ -830,11 +830,6 @@ async function listIdTables(opts, instruments) {
     }
   };
   
-  if (idMarket) {
-    const rdy = raw.Flow.map(([id,desc,count]) => [id,count,desc]).sort(sorter)
-    print(rdy, ['id','count','desc']);
-  }
-  
   if (idSymbol) {
     const rdy = raw.YVal.map(([id,group,desc,count]) => [id, count, group, desc]).sort(sorter);
     print(rdy, ['id','count','group','desc']);
@@ -842,6 +837,11 @@ async function listIdTables(opts, instruments) {
   
   if (idIndustry) {
     const rdy = raw.CSecVal.map(([id,desc,count]) => [id.trimEnd(),count,desc]).sort(sorter);
+    print(rdy, ['id','count','desc']);
+  }
+  
+  if (idMarket) {
+    const rdy = raw.Flow.map(([id,desc,count]) => [id,count,desc]).sort(sorter)
     print(rdy, ['id','count','desc']);
   }
   
