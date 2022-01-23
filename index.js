@@ -61,12 +61,15 @@ cmd
   .option('-s, --symbol <string>',           'A space-separated string of symbols.')
   .option('-i, --symbol-file <string>',      'Path to a file that contains newline-separated symbols.')
   .option('-f, --symbol-filter <string>',    'Select symbols based on a space separated string of filter options. (AND-based)'+t+
-                                               't=id,id,...    symbol-type ids       (tse ls -T)'+t+
-                                               'i=id,id,...    industry-sector ids   (tse ls -I)'+t+
-                                               'm=id,id,...    market ids            (tse ls -M)'+t+
-                                               'b=id,id,...    board-code ids        (tse ls -B)'+t+
-                                               'y=id,id,...    market-code ids       (tse ls -Y)'+t+
-                                               'g=id,id,...    symbol-group-code ids (tse ls -G)')
+                                               't=id,id,...       symbol-type ids       (tse ls -T)'+t+
+                                               'i=id,id,...       industry-sector ids   (tse ls -I)'+t+
+                                               'm=id,id,...       market ids            (tse ls -M)'+t+
+                                               'b=id,id,...       board-code ids        (tse ls -B)'+t+
+                                               'y=id,id,...       market-code ids       (tse ls -Y)'+t+
+                                               'g=id,id,...       symbol-group-code ids (tse ls -G)'+t+
+                                               'P=regex|!regex    only symbols that match the pattern. put ! before regex to negate it. (e.g. P=\\d$ or P=!\\d$)'+t+
+                                               'D=regex|!regex    only symbols that their last trade day (Gregorian YYYYMMDD) match the pattern (e.g. D=^2022)'+t+
+                                               'R                 boolean. if present, then exclude renamed symbols')
   .option('-d, --symbol-delete',             'Boolean. Delete specified symbols from selection. default: false')
   .option('-a, --symbol-all',                'Boolean. Select all symbols. default: false')
   .option('-c, --price-columns <string>',    'A comma/space separated list of column indexes with optional headers.'+t+'index only:      1,2,3'+t+'index & header:  1:a 2:b 3:c'+t+'default: "0 2 3 4 5 6 7 8 9" (help: tse ls -A)')
@@ -479,8 +482,7 @@ function resolveSymbols(allSymbols, savedSymbols=[], instruments, { args, symbol
   if (symbolFilter) {
     const filters = parseFilterStr(symbolFilter);
     if (filters) {
-      const predicate = getFilterPredicate(filters);
-      const syms = predicate ? instruments.filter(predicate).map(i => i.Symbol) : [];
+      const syms = filterSymbols(instruments, filters);
       symbols.push(...syms);
     } else {
       log('Invalid filter string.'.redBold);
@@ -516,23 +518,49 @@ function handleCacheDir(newdir) {
 function parseFilterStr(str='') {
   const map = {t:'YVal', i:'CSecVal', m:'Flow', b:'CComVal', y:'YMarNSC', g:'CGrValCot'};
   
+  const norm = new Set(Object.keys(map));
+  const spec = new Set(['P', 'D', 'R']);
+  
   const arr = str.split(' ');
-  const result = new Map();
+  
+  const normal = new Map();
+  const special = new Map();
   
   for (const i of arr) {
-    if (i.indexOf('=') === -1) continue;
+    const arg = i.slice(0,1);
+    const isNormal = norm.has(arg);
+    const isSpecial = spec.has(arg);
     
-    const [key, val] = i.split('=');
+    if (isNormal) {
+      if (i.indexOf('=') === -1) continue;
+      const [key, val] = i.split('=');
+      if ( !map[key] ) continue;
+      if ( !/^[\d\w,]+$/.test(val) ) continue;
+      const parsed = key === 'i' ? val.split(',').map(i=> i+' ') : val.split(',');
+      normal.set(map[key], new Set(parsed));
+      continue;
+    }
     
-    if ( !map[key] )               continue;
-    if ( !/^[\d\w,]+$/.test(val) ) continue;
-    
-    const parsed = key === 'i' ? val.split(',').map(i=> i+' ') : val.split(',');
-    
-    result.set(map[key], new Set(parsed));
+    if (isSpecial) {
+      if (arg === 'P' || arg === 'D') {
+        if (i.indexOf('=') === -1) continue;
+        let [, val] = i.split('=');
+        let not;
+        if (val[0] === '!') {
+          val = val.slice(1);
+          not = true;
+        }
+        let r;
+        try { r = new RegExp(val); } catch { continue; }
+        special.set(arg, not ? s => !r.test(s)  : s => r.test(s));
+        continue;
+      }
+      
+      if (arg === 'R') special.set(arg, true);
+    }
   }
   
-  return result.size === arr.length ? result : undefined;
+  return normal.size + special.size === arr.length ? { normal, special } : undefined;
 }
 function parseColstr(str='') {
   if (!str) return;
@@ -574,11 +602,24 @@ function parseDateOption(s) {
   
   return result;
 }
-function getFilterPredicate(filters) {
-  const keys = [...filters.keys()];
-  const predicate = instrument =>
-    keys.every( key => filters.get(key).has(instrument[key]) );
-  return predicate;
+function filterSymbols(instruments, filters) {
+  const { normal, special } = filters;
+  const keys = [...normal.keys()];
+  const { P, D, R } = Object.fromEntries([...special]);
+  
+  const syms = instruments.filter(instrument => {
+    const { Symbol, DEven, SymbolOriginal } = instrument;
+    const renamed = SymbolOriginal ? true : false;
+    const conds = [
+      keys.every( key => normal.get(key).has(instrument[key]) ),
+      P            ? P(Symbol) : true,
+      D            ? D(DEven)  : true,
+      R && renamed ? false     : true
+    ];
+    return conds.every(i => i);
+  }).map(i => i.Symbol);
+  
+  return syms;
 }
 function abort(m1, m2, ...rest) {
   console.log('\n');
@@ -711,8 +752,7 @@ async function list(opts) {
     const filters = parseFilterStr(filterMatch);
     if (filters) {
       const ins = await tse.getInstruments();
-      const predicate = getFilterPredicate(filters);
-      const matchedSymbols = predicate ? ins.filter(predicate).map(i => i.Symbol) : [];
+      const matchedSymbols = filterSymbols(ins, filters);
       matchedSymbols.sort((a,b) => a.localeCompare(b,'fa'));
       log(matchedSymbols.join('\n'));
     } else {
