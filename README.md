@@ -142,15 +142,6 @@ tse ls -F "i=72 D=^2022"      # نمادهای گروه رایانه که روز
 tse ls -F "i=57 t=303"        # گروه بانکی بازار فرابورس
 tse ls -F "i=57 t=303 R"      # گروه بانکی بازار فرابورس منهای نمادهای تغییرنام داده شده
 ```
-#### Save settings:
-```shell
-tse ذوب فولاد -o ./mytse --save
-tse
-tse -x txt
-tse -n 3 --save
-tse -o ./myother --save
-tse
-```
 #### Disable caching:
 ```shell
 tse ذوب -k
@@ -160,6 +151,15 @@ tse ذوب -k
 tse ذوب       # merged data of ذوب and ذوب-ق2
 tse ذوب -u    # only the data of ذوب
 tse ذوب-ق2 -u # only the data of ذوب-ق2 
+```
+#### Save settings:
+```shell
+tse ذوب فولاد -o ./mytse --save
+tse
+tse -x txt
+tse -n 3 --save
+tse -o ./myother --save
+tse
 ```
 #### View saved settings and more:
 ```shell
