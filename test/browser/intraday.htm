@@ -63,9 +63,8 @@ async function getSyms() {
 	if (!f.disabled) {
 		const filters = parseFilterStr(f.value);
 		if (filters) {
-			const ins = await tse.getInstruments(true, true);
-			const predicate = getFilterPredicate(filters);
-			const matched = predicate ? ins.filter(predicate).map(i => i.Symbol) : [];
+			const ins = await tse.getInstruments();
+			const matched = filterSymbols(ins, filters);
 			syms = [...syms, ...matched];
 		}
 		
@@ -75,37 +74,70 @@ async function getSyms() {
 	return [...new Set(syms)];
 }
 function parseFilterStr(str='') {
-	const map = {m:'flow', t:'yval', i:'csecval'};
+	const map = {t:'YVal', i:'CSecVal', m:'Flow', b:'CComVal', y:'YMarNSC', g:'CGrValCot'};
+	
+	const norm = new Set(Object.keys(map));
+	const spec = new Set(['P', 'D', 'R']);
 	
 	const arr = str.split(' ');
-	const result = {};
+	
+	const normal = new Map();
+	const special = new Map();
 	
 	for (const i of arr) {
-		if (i.indexOf('=') === -1) continue;
+		const arg = i.slice(0,1);
+		const isNormal = norm.has(arg);
+		const isSpecial = spec.has(arg);
 		
-		const [key, val] = i.split('=');
+		if (isNormal) {
+			if (i.indexOf('=') === -1) continue;
+			const [key, val] = i.split('=');
+			if ( !map[key] ) continue;
+			if ( !/^[\d\w,]+$/.test(val) ) continue;
+			const parsed = key === 'i' ? val.split(',').map(i=> i+' ') : val.split(',');
+			normal.set(map[key], new Set(parsed));
+			continue;
+		}
 		
-		if ( !map[key] )               continue;
-		if ( !/^[\d\w,]+$/.test(val) ) continue;
-		
-		result[ map[key] ] = val.split(',')
+		if (isSpecial) {
+			if (arg === 'P' || arg === 'D') {
+				if (i.indexOf('=') === -1) continue;
+				let [, val] = i.split('=');
+				let not;
+				if (val[0] === '!') {
+					val = val.slice(1);
+					not = true;
+				}
+				let r;
+				try { r = new RegExp(val); } catch { continue; }
+				special.set(arg, not ? s => !r.test(s)  : s => r.test(s));
+				continue;
+			}
+			
+			if (arg === 'R') special.set(arg, true);
+		}
 	}
 	
-	return Object.keys(result).length === arr.length ? result : undefined;
+	return normal.size + special.size === arr.length ? { normal, special } : undefined;
 }
-function getFilterPredicate(filters) {
-	const { flow, yval, csecval } = {flow:[], yval:[], csecval:[], ...filters};
-	const [f,y,c] = [flow, yval, csecval].map(i => i.length);
-	const predicate = 
-		y &&  f &&  c ? i => yval.includes(i.YVal) && flow.includes(i.Flow) && csecval.includes(i.CSecVal) :
-		y &&  f && !c ? i => yval.includes(i.YVal) && flow.includes(i.Flow) :
-		y && !f &&  c ? i => yval.includes(i.YVal) && csecval.includes(i.CSecVal) :
-	 !y &&  f &&  c ? i => flow.includes(i.Flow) && csecval.includes(i.CSecVal) :
-		y && !f && !c ? i => yval.includes(i.YVal) :
-	 !y &&  f && !c ? i => flow.includes(i.Flow) :
-	 !y && !f &&  c ? i => csecval.includes(i.CSecVal) :
-	 undefined;
-	return predicate;
+function filterSymbols(instruments, filters) {
+	const { normal, special } = filters;
+	const keys = [...normal.keys()];
+	const { P, D, R } = Object.fromEntries([...special]);
+	
+	const syms = instruments.filter(instrument => {
+		const { Symbol, DEven, SymbolOriginal } = instrument;
+		const renamed = SymbolOriginal ? true : false;
+		const conds = [
+			keys.every( key => normal.get(key).has(instrument[key]) ),
+			P            ? P(Symbol) : true,
+			D            ? D(DEven)  : true,
+			R && renamed ? false     : true
+		];
+		return conds.every(i => i);
+	}).map(i => i.Symbol);
+	
+	return syms;
 }
 function parseDateOption(s) {
 	let result;
@@ -122,8 +154,13 @@ function parseDateOption(s) {
 		const res = (d.getFullYear()*10000) + ((d.getMonth()+1)*100) + d.getDate();
 		result = res < mindate ? ''+mindate : ''+res;
 	} else if (/^\d{8}$/.test(s)) {
-		const {gy,gm,gd} = jalaali.toGregorian(+s.slice(0,4), +s.slice(4,6), +s.slice(6,8));
-		const res = (gy*10000) + (gm*100) + gd;
+		let src = [+s.slice(0,4), +s.slice(4,6), +s.slice(6,8)];
+		if (src[0] < 2000) {
+			const {gy,gm,gd} = jalaali.toGregorian(...src);
+			src = [gy,gm,gd];
+		}
+		const [y,m,d] = src;
+		const res = (y*10000) + (m*100) + d;
 		result = res < mindate ? ''+mindate : ''+res;
 	}
 	
