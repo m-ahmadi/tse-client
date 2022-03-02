@@ -631,7 +631,7 @@ async function updateInstruments() {
         if (j > 0) {
           let postfix = SYMBOL_RENAME_STRING + (j+1);
           i.push(origsym);
-          i[5] = origsym + postfix;
+          i[5] = origsym.trim() + postfix;
         } else {
           i[5] = origsym;
         }
