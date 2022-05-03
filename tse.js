@@ -5,8 +5,8 @@ const fetch   = isNode ? require('node-fetch') : isBrowser ? window.fetch   : un
 const Big     = isNode ? require('big.js')     : isBrowser ? window.Big     : undefined;
 const jalaali = isNode ? require('jalaali-js') : isBrowser ? window.jalaali : undefined;
 if (isBrowser) {
-  if (!Big)         throw new Error('Cannot find required dependecy: Big');
-  if (!localforage) throw new Error('Cannot find required dependecy: localforage');
+  if (!Big)         throw new Error('Cannot find required dependency: Big');
+  if (!localforage) throw new Error('Cannot find required dependency: localforage');
 }
 //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 // storage
