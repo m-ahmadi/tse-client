@@ -778,7 +778,8 @@ async function list(opts) {
       return row.length === 19
         ? [sym, orig, flow, dvn, name]
         : ['',  sym,  flow, dvn, name];
-    }).sort((a,b)=>a[1].localeCompare(b[1],'fa'));
+    }).sort((a,b)=>a[0].localeCompare(b[0],'fa'))
+      .sort((a,b)=>a[1].localeCompare(b[1],'fa'));
     
     const header = ['renamed','original','Flow','DEven','Name'];
     if (csv) {
