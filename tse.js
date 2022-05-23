@@ -968,11 +968,11 @@ async function getPrices(symbols=[], _settings={}) {
     if (symOrig) {
       if (mergeSimilarSymbols) return MERGED_SYMBOL_CONTENT;
       prices = storedPrices[inscode];
-      inscodes = new Set(inscode);
+      inscodes = new Set([inscode]);
     } else {
       const isRoot = merges.has(sym);
       prices = isRoot ? storedPricesMerged[inscode] : storedPrices[inscode];
-      inscodes = new Set(isRoot ? merges.get(sym).map(i => i.code) : inscode);
+      inscodes = new Set(isRoot ? merges.get(sym).map(i => i.code) : [inscode]);
     }
     if (!prices) return;
     
