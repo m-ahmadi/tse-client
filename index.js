@@ -762,22 +762,22 @@ async function list(opts) {
   
   if (renamedSymbols) {
     if (!csv && !json) log('\nThe renamed symbols:'.yellow);
-    const rows = (await tse.getInstruments(false, true)).map(i=> i.split(','));
+    const rows = await tse.getInstruments();
     
-    const renamed   = rows.filter(i=> i.length === 19);
-    const renOrig   = new Set(renamed.map(i=> i[18]));
-    const unrenamed = rows.filter(i=> renOrig.has(i[5])).map(i=> i[0]);
-    const all       = new Set([...renamed.map(i=> i[0]), ...unrenamed]);
-    const alli      = rows.map((v,i) => all.has(v[0]) ? i : -1).filter(i=>i!==-1);
+    const renamed   = rows.filter(i=> i.SymbolOriginal);
+    const renOrig   = new Set(renamed.map(i=> i.SymbolOriginal));
+    const unrenamed = rows.filter(i=> renOrig.has(i.Symbol) ).map(i=> i.InsCode);
+    const all       = new Set([...renamed.map(i=> i.InsCode), ...unrenamed]);
+    const alli      = rows.map((v,i) => all.has(v.InsCode) ? i : -1).filter(i=>i>-1);
     
     const flows = [,'بورس','فرابورس',,'پایه'];
     const list = alli.map(i => {
-      const row = rows[i];
-      const [sym,name,dvn,orig] = [5,6,8,18].map(i=> row[i]);
-      const flow = flows[+row[9]];
-      return row.length === 19
-        ? [sym, orig, flow, dvn, name]
-        : ['',  sym,  flow, dvn, name];
+      const instrument = rows[i];
+      const {Symbol, Name, DEven, SymbolOriginal, Flow} = instrument;
+      const flow = flows[+Flow];
+      return SymbolOriginal
+        ? [Symbol, SymbolOriginal, flow, DEven, Name]
+        : ['',     Symbol,         flow, DEven, Name];
     }).sort((a,b)=>a[0].localeCompare(b[0],'fa'))
       .sort((a,b)=>a[1].localeCompare(b[1],'fa'));
     
