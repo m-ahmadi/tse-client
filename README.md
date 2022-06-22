@@ -166,9 +166,6 @@ tse
 ```shell
 tse ls -S
 tse ls -D
-tse ls -F "i=34"
-tse ls -F "i=27 t=300"
-tse ls -M -T -I
 tse ls -T -O 1  # order by count (descending)
 tse ls -T -O 1_ # order by count (ascending)
 tse ls -h
