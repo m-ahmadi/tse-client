@@ -893,7 +893,7 @@ async function getPrices(symbols=[], _settings={}) {
   
   if (mergeSimilarSymbols) {
     const syms = Object.keys(instruments);
-    const ins = syms.map(k => instruments[k])
+    const ins = syms.map(k => instruments[k]);
     const roots = new Set(ins.filter(i => i.SymbolOriginal).map(i => i.SymbolOriginal));
     
     merges = new Map([...roots].map(i => [ i, [] ]));
