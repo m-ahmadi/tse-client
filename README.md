@@ -289,7 +289,7 @@ dependency | desc
 -------|-------------
 `big.js`      | `Required`. For price adjustment calculations.
 `localforage` | `Required`. For storing in `indexedDB`. 
-`jalaali-js`  | `Optional`. Only needed for `ShamsiDate` column. *(Recommanded to not exclude this, though you can)*
+`jalaali-js`  | `Optional`. Only needed for `dateshamsi` column. *(Recommanded to not exclude this, though you can)*
 `pako`        | `Semi-Required`. Only used by [`getIntraday()`](#tsegetintradaysymbols-string-settings-intradaysettings).
 
 
