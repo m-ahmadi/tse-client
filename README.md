@@ -536,6 +536,7 @@ Default:
 ```
 #### `tse.INTRADAY_UPDATE_CHUNK_DELAY`
 Amount of delay (in ms) to wait before requesting another chunk of dates.  
+Only integers.  
 Default: `100`
 #### `tse.INTRADAY_UPDATE_CHUNK_MAX_WAIT`
 Max time (in ms) to wait for a request to finish before force ending it.  
