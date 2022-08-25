@@ -411,6 +411,9 @@ function splitArr(arr, size){
     .map( (v, i) => i % size === 0 ? arr.slice(i, i+size) : undefined )
     .filter(i => i);
 }
+function isPosIntOrZero(n) {
+  return Number.isInteger(n) && n >= 0;
+}
 //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 let UPDATE_INTERVAL           = 1;
 let PRICES_UPDATE_CHUNK       = 50;
@@ -1528,19 +1531,19 @@ const instance = {
   },
   
   get UPDATE_INTERVAL() { return UPDATE_INTERVAL; },
-  set UPDATE_INTERVAL(v) { if (Number.isInteger(v)) UPDATE_INTERVAL = v; },
+  set UPDATE_INTERVAL(v) { if (isPosIntOrZero(v)) UPDATE_INTERVAL = v; },
   
   get PRICES_UPDATE_CHUNK() { return PRICES_UPDATE_CHUNK; },
   set PRICES_UPDATE_CHUNK(v) { if (Number.isInteger(v) && v > 0 && v < 60) PRICES_UPDATE_CHUNK = v; },
   
   get PRICES_UPDATE_CHUNK_DELAY() { return PRICES_UPDATE_CHUNK_DELAY; },
-  set PRICES_UPDATE_CHUNK_DELAY(v) { if (Number.isInteger(v)) PRICES_UPDATE_CHUNK_DELAY = v; },
+  set PRICES_UPDATE_CHUNK_DELAY(v) { if (isPosIntOrZero(v)) PRICES_UPDATE_CHUNK_DELAY = v; },
   
   get PRICES_UPDATE_RETRY_COUNT() { return PRICES_UPDATE_RETRY_COUNT; },
-  set PRICES_UPDATE_RETRY_COUNT(v) { if (Number.isInteger(v)) PRICES_UPDATE_RETRY_COUNT = v; },
+  set PRICES_UPDATE_RETRY_COUNT(v) { if (isPosIntOrZero(v)) PRICES_UPDATE_RETRY_COUNT = v; },
   
   get PRICES_UPDATE_RETRY_DELAY() { return PRICES_UPDATE_RETRY_DELAY; },
-  set PRICES_UPDATE_RETRY_DELAY(v) { if (Number.isInteger(v)) PRICES_UPDATE_RETRY_DELAY = v; },
+  set PRICES_UPDATE_RETRY_DELAY(v) { if (isPosIntOrZero(v)) PRICES_UPDATE_RETRY_DELAY = v; },
   
   get columnList() {
     return [...Array(15)].map((v,i) => ({name: cols[i], fname: colsFa[i]}));
@@ -1558,16 +1561,16 @@ const instance = {
   },
   
   get INTRADAY_UPDATE_CHUNK_DELAY() { return INTRADAY_UPDATE_CHUNK_DELAY; },
-  set INTRADAY_UPDATE_CHUNK_DELAY(v) { if (Number.isInteger(v)) INTRADAY_UPDATE_CHUNK_DELAY = v; },
+  set INTRADAY_UPDATE_CHUNK_DELAY(v) { if (isPosIntOrZero(v)) INTRADAY_UPDATE_CHUNK_DELAY = v; },
   
   get INTRADAY_UPDATE_CHUNK_MAX_WAIT() { return INTRADAY_UPDATE_CHUNK_MAX_WAIT; },
-  set INTRADAY_UPDATE_CHUNK_MAX_WAIT(v) { if (Number.isInteger(v)) INTRADAY_UPDATE_CHUNK_MAX_WAIT = v; },
+  set INTRADAY_UPDATE_CHUNK_MAX_WAIT(v) { if (isPosIntOrZero(v)) INTRADAY_UPDATE_CHUNK_MAX_WAIT = v; },
   
   get INTRADAY_UPDATE_RETRY_COUNT() { return INTRADAY_UPDATE_RETRY_COUNT; },
-  set INTRADAY_UPDATE_RETRY_COUNT(v) { if (Number.isInteger(v)) INTRADAY_UPDATE_RETRY_COUNT = v; },
+  set INTRADAY_UPDATE_RETRY_COUNT(v) { if (isPosIntOrZero(v)) INTRADAY_UPDATE_RETRY_COUNT = v; },
   
   get INTRADAY_UPDATE_RETRY_DELAY() { return INTRADAY_UPDATE_RETRY_DELAY; },
-  set INTRADAY_UPDATE_RETRY_DELAY(v) { if (Number.isInteger(v)) INTRADAY_UPDATE_RETRY_DELAY = v; },
+  set INTRADAY_UPDATE_RETRY_DELAY(v) { if (isPosIntOrZero(v)) INTRADAY_UPDATE_RETRY_DELAY = v; },
   
   get INTRADAY_UPDATE_SERVERS() { return INTRADAY_UPDATE_SERVERS; },
   set INTRADAY_UPDATE_SERVERS(v) { if (Array.isArray(v) && !v.some(i => !Number.isInteger(i) || i < 0)) INTRADAY_UPDATE_SERVERS = v; },

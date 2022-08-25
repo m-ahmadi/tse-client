@@ -301,25 +301,25 @@ Only string and valid URL.
 Default: `http://service.tsetmc.com/tsev2/data/TseClient2.aspx`
 #### `tse.UPDATE_INTERVAL`
 Update data only if these many days have passed since the last update.  
-Only integers.  
+Only positive integers or zero.  
 Default: `1`
 #### `tse.PRICES_UPDATE_CHUNK`
 Amount of instruments per request.  
-Only integers.  
+Only positive integers.  
 Min: `1`  
 Max: `59`  
 Default: `50`
 #### `tse.PRICES_UPDATE_CHUNK_DELAY`
 Amount of delay (in ms) to wait before requesting another chunk of instruments.  
-Only integers.  
+Only positive integers or zero.  
 Default: `300`
 #### `tse.PRICES_UPDATE_RETRY_COUNT`
 Amount of retry attempts before giving up.  
-Only integers.  
+Only positive integers or zero.  
 Default: `3`
 #### `tse.PRICES_UPDATE_RETRY_DELAY`
 Amount of delay (in ms) to wait before making another retry.  
-Only integers.  
+Only positive integers or zero.  
 Default: `1000`
 #### `tse.CACHE_DIR`
 Only in `Node`.  
@@ -536,20 +536,20 @@ Default:
 ```
 #### `tse.INTRADAY_UPDATE_CHUNK_DELAY`
 Amount of delay (in ms) to wait before requesting another chunk of dates.  
-Only integers.  
+Only positive integers or zero.  
 Default: `100`
 #### `tse.INTRADAY_UPDATE_CHUNK_MAX_WAIT`
 Max time (in ms) to wait for a request to finish before force ending it.  
 In Node, it needs Node v15+ or it has no effect.  
-Only integers.  
+Only positive integers or zero.  
 Default: `60000`
 #### `tse.INTRADAY_UPDATE_RETRY_COUNT`
 Amount of retry attempts before giving up.  
-Only integers.  
+Only positive integers or zero.  
 Default: `3`
 #### `tse.INTRADAY_UPDATE_RETRY_DELAY`
 Amount of delay (in ms) to wait before making another retry.  
-Only integers.  
+Only positive integers or zero.  
 Default: `1000`
 #### `tse.INTRADAY_UPDATE_SERVERS`
 Array of positive integers to use as CDN servers in the update process.  
