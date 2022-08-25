@@ -554,7 +554,7 @@ Default: `1000`
 #### `tse.INTRADAY_UPDATE_SERVERS`
 Array of positive integers to use as CDN servers in the update process.  
 Note that `0` will result to `tsetmc.com` server.  
-Only an array of only positive integers.  
+Only an array of only positive integers or zero.  
 Default: `[0,7,8,9]`
 #### `tse.getIntradayInstruments(struct?: boolean, arr?: boolean, structKey?: string)`
 Returns the list of instruments crawled by [`getIntraday()`](#tsegetintradaysymbols-string-settings-intradaysettings).  
