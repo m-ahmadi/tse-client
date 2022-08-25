@@ -8,7 +8,7 @@ if (isBrowser) {
   if (!Big)         throw new Error('Cannot find required dependency: Big');
   if (!localforage) throw new Error('Cannot find required dependency: localforage');
 }
-//@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+//@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 // storage
 const storage = (function () {
   let instance;
@@ -211,7 +211,7 @@ const storage = (function () {
   
   return instance;
 })();
-//@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+//@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 // request
 let API_URL = 'http://service.tsetmc.com/tsev2/data/TseClient2.aspx';
 const rq = {
@@ -254,7 +254,7 @@ const rq = {
     });
   }
 };
-//@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+//@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 // structs
 class ClosingPrice {
   constructor(_row='') {
@@ -340,7 +340,7 @@ class Share {
     this.NumberOfShareOld = parseInt( row[4] ); // Decimal
   }
 }
-//@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+//@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 // utils
 function parseInstruments(struct=false, arr=false, structKey='InsCode', itd=false) {
   let rows = storage.getItem('tse.instruments'+(itd?'.intraday':''));
@@ -411,7 +411,7 @@ function splitArr(arr, size){
     .map( (v, i) => i % size === 0 ? arr.slice(i, i+size) : undefined )
     .filter(i => i);
 }
-//@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+//@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 let UPDATE_INTERVAL           = 1;
 let PRICES_UPDATE_CHUNK       = 50;
 let PRICES_UPDATE_CHUNK_DELAY = 300;
@@ -1052,7 +1052,7 @@ async function getInstruments(struct=true, arr=true, structKey='InsCode') {
   
   return parseInstruments(struct, arr, structKey);
 }
-//@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+//@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 let INTRADAY_URL = (server='',inscode='',deven='') => `http://${server ? 'cdn'+server+'.' : ''}tsetmc.com/Loader.aspx?ParTree=15131P&i=${inscode}&d=${deven}`;
 let INTRADAY_UPDATE_CHUNK_DELAY    = 100;
 let INTRADAY_UPDATE_CHUNK_MAX_WAIT = 60000;
@@ -1514,7 +1514,7 @@ async function getIntradayInstruments(struct=true, arr=true, structKey='InsCode'
   if (valids.indexOf(structKey) === -1) structKey = 'InsCode';
   return parseInstruments(struct, arr, structKey, true);
 }
-//@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+//@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 const instance = {
   getPrices,
   getInstruments,
