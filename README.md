@@ -311,6 +311,7 @@ Max: `59`
 Default: `50`
 #### `tse.PRICES_UPDATE_CHUNK_DELAY`
 Amount of delay (in ms) to wait before requesting another chunk of instruments.  
+Only integers.  
 Default: `300`
 #### `tse.PRICES_UPDATE_RETRY_COUNT`
 Amount of retry attempts before giving up.  
