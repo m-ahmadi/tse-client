@@ -826,7 +826,7 @@ async function updatePrices(selection=[], shouldCache, {pf, pn, ptot}={}) {
       return [inscode, firstPossibleDeven, market];
     } else { // has data
       const lastdeven = lastdevens[inscode];
-      if (!lastdeven) return; // expired symbol
+      if (!lastdeven) return; // but expired symbol
       if ( shouldUpdate(lastdeven, lastPossibleDeven) ) { // but outdated
         return [inscode, lastdeven, market];
       }
