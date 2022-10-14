@@ -411,6 +411,9 @@ function splitArr(arr, size){
     .map( (v, i) => i % size === 0 ? arr.slice(i, i+size) : undefined )
     .filter(i => i);
 }
+function isObj(v) {
+  return Object.prototype.toString.call(v) === '[object Object]';
+}
 function isPosIntOrZero(n) {
   return Number.isInteger(n) && n >= 0;
 }
@@ -549,19 +552,25 @@ function shouldUpdate(deven='', lastPossibleDeven) {
   
   return result; 
 }
-async function getLastPossibleDeven() {
-  let lastPossibleDeven = storage.getItem('tse.lastPossibleDeven');
+async function getLastPossibleDevens() {
+  let NO, ID; // normalMarket, indexMarket
   
-  if ( !lastPossibleDeven || shouldUpdate(dateToStr(new Date()), lastPossibleDeven) ) {
+  const stored = storage.getItem('tse.lastPossibleDevens');
+  if (stored) [NO, ID] = stored.split(',');
+  
+  const today = dateToStr(new Date());
+  
+  if ( !stored || shouldUpdate(today, NO) || shouldUpdate(today, ID) ) {
     let error;
     const res = await rq.LastPossibleDeven().catch(err => error = err);
     if (error)                        return { title: 'Failed request: LastPossibleDeven', detail: error };
     if ( !/^\d{8};\d{8}$/.test(res) ) return { title: 'Invalid server response: LastPossibleDeven' };
-    lastPossibleDeven = res.split(';')[0] || res.split(';')[1];
-    storage.setItem('tse.lastPossibleDeven', lastPossibleDeven);
+    const splits = res.split(';');
+    storage.setItem('tse.lastPossibleDevens', splits.join(','));
+    [NO, ID] = splits;
   }
   
-  return lastPossibleDeven;
+  return [NO, ID];
 }
 async function updateInstruments() {
   const lastUpdate = storage.getItem('tse.lastInstrumentUpdate');
@@ -582,10 +591,12 @@ async function updateInstruments() {
     lastId    = Math.max(...shareIds);
   }
   
-  const lastPossibleDeven = await getLastPossibleDeven();
-  if (typeof lastPossibleDeven === 'object') return lastPossibleDeven;
+  const lastPossibleDevens = await getLastPossibleDevens();
+  if (isObj(lastPossibleDevens)) return lastPossibleDevens;
   
-  if ( !shouldUpdate(''+lastDeven, lastPossibleDeven) ) return;
+  const _lastDeven = ''+lastDeven;
+  const [lpdNO, lpdID] = lastPossibleDevens;
+  if ( !shouldUpdate(_lastDeven, lpdNO) && !shouldUpdate(_lastDeven, lpdID) ) return;
   
   let error;
   const res = await rq.InstrumentAndShare(+dateToStr(new Date()), lastId).catch(err => error = err);
@@ -809,12 +820,13 @@ async function updatePrices(selection=[], shouldCache, {pf, pn, ptot}={}) {
   let result = { succs: [], fails: [], error: undefined, pn };
   const pfin = +Big(pn).plus(ptot);
   
-  const lastPossibleDeven = await getLastPossibleDeven();
-  if (typeof lastPossibleDeven === 'object') {
-    result.error = lastPossibleDeven;
+  const lastPossibleDevens = await getLastPossibleDevens();
+  if (isObj(lastPossibleDevens)) {
+    result.error = lastPossibleDevens;
     if (pf) pf(pn= pfin);
     return result;
   }
+  const [lpdNO, lpdID] = lastPossibleDevens;
   
   const { startDate: firstPossibleDeven } = defaultSettings;
   
@@ -826,6 +838,11 @@ async function updatePrices(selection=[], shouldCache, {pf, pn, ptot}={}) {
       return [inscode, firstPossibleDeven, isNotNormalMarkets];
     } else { // has data
       const lastdeven = lastdevens[inscode];
+      const lastPossibleDeven =
+        market !== 'NO' ? lpdID :
+        market !== 'ID' ? lpdNO :
+        lpdNO;
+      
       if (!lastdeven) return; // but expired symbol
       if ( shouldUpdate(lastdeven, lastPossibleDeven) ) { // but outdated
         return [inscode, lastdeven, isNotNormalMarkets];
