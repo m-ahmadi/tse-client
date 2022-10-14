@@ -420,6 +420,7 @@ let PRICES_UPDATE_CHUNK       = 50;
 let PRICES_UPDATE_CHUNK_DELAY = 300;
 let PRICES_UPDATE_RETRY_COUNT = 3;
 let PRICES_UPDATE_RETRY_DELAY = 1000;
+const PRICES_UPDATE_POLLING_CYCLE = 500;
 const TRADING_SESSION_END_HOUR = 16;
 const SYMBOL_RENAME_STRING    = '-ق';
 const MERGED_SYMBOL_CONTENT   = 'merged';
@@ -690,7 +691,7 @@ const pricesUpdateManager = (function () {
   
   function poll() {
     if (timeouts.size > 0 || qeudRetry) {
-      setTimeout(poll, 500);
+      setTimeout(poll, PRICES_UPDATE_POLLING_CYCLE);
       return;
     }
     
@@ -1063,6 +1064,7 @@ let INTRADAY_UPDATE_CHUNK_MAX_WAIT = 60000;
 let INTRADAY_UPDATE_RETRY_COUNT    = 3;
 let INTRADAY_UPDATE_RETRY_DELAY    = 1000;
 let INTRADAY_UPDATE_SERVERS        = [0,7,8,9];
+const INTRADAY_UPDATE_POLLING_CYCLE = 500;
 const itdDefaultSettings = {
   startDate: '20010321',
   endDate: '',
@@ -1205,7 +1207,7 @@ const itdUpdateManager = (function () {
   
   function poll() {
     if (timeouts.size > 0 || qeudRetry) {
-      setTimeout(poll, 500);
+      setTimeout(poll, INTRADAY_UPDATE_POLLING_CYCLE);
       return;
     }
     
