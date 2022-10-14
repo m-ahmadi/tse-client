@@ -820,15 +820,15 @@ async function updatePrices(selection=[], shouldCache, {pf, pn, ptot}={}) {
   
   const toUpdate = selection.map(instrument => {
     const inscode = instrument.InsCode;
-    const market = instrument.YMarNSC === 'NO' ? 0 : 1;
+    const isNotNormalMarkets = instrument.YMarNSC === 'NO' ? 0 : 1;
     
     if ( !inscodes.has(inscode) ) { // doesn't have data
-      return [inscode, firstPossibleDeven, market];
+      return [inscode, firstPossibleDeven, isNotNormalMarkets];
     } else { // has data
       const lastdeven = lastdevens[inscode];
       if (!lastdeven) return; // but expired symbol
       if ( shouldUpdate(lastdeven, lastPossibleDeven) ) { // but outdated
-        return [inscode, lastdeven, market];
+        return [inscode, lastdeven, isNotNormalMarkets];
       }
     }
   }).filter(i=>i);
