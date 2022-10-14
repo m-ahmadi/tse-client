@@ -819,8 +819,8 @@ async function updatePrices(selection=[], shouldCache, {pf, pn, ptot}={}) {
   const { startDate: firstPossibleDeven } = defaultSettings;
   
   const toUpdate = selection.map(instrument => {
-    const inscode = instrument.InsCode;
-    const isNotNormalMarkets = instrument.YMarNSC === 'NO' ? 0 : 1;
+    const { InsCode: inscode, YMarNSC: market } = instrument;
+    const isNotNormalMarkets = market === 'NO' ? 0 : 1;
     
     if ( !inscodes.has(inscode) ) { // doesn't have data
       return [inscode, firstPossibleDeven, isNotNormalMarkets];
