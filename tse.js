@@ -420,6 +420,7 @@ let PRICES_UPDATE_CHUNK       = 50;
 let PRICES_UPDATE_CHUNK_DELAY = 300;
 let PRICES_UPDATE_RETRY_COUNT = 3;
 let PRICES_UPDATE_RETRY_DELAY = 1000;
+const TRADING_SESSION_END_HOUR = 16;
 const SYMBOL_RENAME_STRING    = '-ق';
 const MERGED_SYMBOL_CONTENT   = 'merged';
 const defaultSettings = {
@@ -536,7 +537,7 @@ function shouldUpdate(deven='', lastPossibleDeven) {
   
   const result = (
     daysPassed >= UPDATE_INTERVAL &&
-    (todayDeven === lastPossibleDeven ? today.getHours() > 16 : true) && // w8 until end of trading session
+    (todayDeven === lastPossibleDeven ? today.getHours() > TRADING_SESSION_END_HOUR : true) && // w8 until end of trading session
     !(
       // no update needed if: we are in weekend but ONLY if last time we updated was on last day (wednesday) of THIS week
       inWeekend &&
