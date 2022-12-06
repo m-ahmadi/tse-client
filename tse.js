@@ -637,7 +637,7 @@ async function updateInstruments() {
     
     let code_idx = new Map(rows.map((i,j) => [i[0], j]));
     
-    for (dup of dups) {
+    for (let dup of dups) {
       let dupSorted = dup.sort((a,b) => +b[8] - a[8]);
       
       dupSorted.forEach((i,j) => {
