@@ -222,7 +222,7 @@ const tse = require('tse-client');
   res = await tse.getPrices(['شپنا'], {columns: [[0,'DATE'],[3,'MAX'],[4,'MIN']]});
   
   // view column info
-  console.table(tse.columnList);
+  await console.table(tse.columnList);
   
   // list of instruments
   const instruments = await tse.getInstruments();
@@ -231,11 +231,12 @@ const tse = require('tse-client');
   );
   
   // intraday crawler
-  res = await tse.getIntraday(['ذوب', 'فولاد']), {
+  res = await tse.getIntraday(['ذوب', 'فولاد'], {
     startDate: '20201122',
     endDate: '20201122',
     gzip: false
   });
+  
   
 })();
 ```
