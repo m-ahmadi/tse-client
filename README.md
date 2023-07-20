@@ -194,6 +194,7 @@ tse itd ذوب --chunk-delay 2000     # wait 2 seconds before requesting another
 tse itd ذوب --chunk-max-wait 20000 # force end a request if not finished in 20 seconds (only in Node v15+)
 tse itd ذوب --servers "4 8"        # only use "cdn4.tsetmc.com" and "cdn8.tsetmc.com" servers
 tse itd ذوب --servers "7"          # only use "cdn7.tsetmc.com" server
+tse itd ذوب --servers "-1 0"       # only use "tsetmc.com" and "cdn.tsetmc.com" servers
 ```
 
 # Node
@@ -552,10 +553,11 @@ Amount of delay (in ms) to wait before making another retry.
 Only positive integers or zero.  
 Default: `1000`
 #### `tse.INTRADAY_UPDATE_SERVERS`
-Array of positive integers to use as CDN servers in the update process.  
-Note that `0` will result to `tsetmc.com` server.  
+Array of integers to use as CDN servers in the update process.  
+Note that any negative number will result to `tsetmc.com` server.  
+Note that `0` will result to `cdn.tsetmc.com` server.  
 Only an array of only positive integers or zero.  
-Default: `[0,7,8,9]`
+Default: `[-1,0]`
 #### `tse.getIntradayInstruments(struct?: boolean, arr?: boolean, structKey?: string)`
 Returns the list of instruments crawled by [`getIntraday()`](#tsegetintradaysymbols-string-settings-intradaysettings).  
 The information of each instrument is from the latest crawled day.  

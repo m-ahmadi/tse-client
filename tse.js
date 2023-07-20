@@ -1075,12 +1075,12 @@ async function getInstruments(struct=true, arr=true, structKey='InsCode') {
   return parseInstruments(struct, arr, structKey);
 }
 //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-let INTRADAY_URL = (server='',inscode='',deven='') => `http://${server ? 'cdn'+server+'.' : ''}tsetmc.com/Loader.aspx?ParTree=15131P&i=${inscode}&d=${deven}`;
+let INTRADAY_URL = (server='',inscode='',deven='') => `http://${server > 0 ? 'cdn'+server+'.' : server < 0 ? '' : 'cdn.'}tsetmc.com/Loader.aspx?ParTree=15131P&i=${inscode}&d=${deven}`;
 let INTRADAY_UPDATE_CHUNK_DELAY     = 100;
 let INTRADAY_UPDATE_CHUNK_MAX_WAIT  = 60000;
 let INTRADAY_UPDATE_RETRY_COUNT     = 3;
 let INTRADAY_UPDATE_RETRY_DELAY     = 1000;
-let INTRADAY_UPDATE_SERVERS         = [0,7,8,9];
+let INTRADAY_UPDATE_SERVERS         = [-1,0];
 const INTRADAY_UPDATE_POLLING_CYCLE = 1000 / 5; // 5 times per second
 const itdDefaultSettings = {
   startDate: '20010321',
@@ -1593,7 +1593,7 @@ const instance = {
   set INTRADAY_UPDATE_RETRY_DELAY(v) { if (isPosIntOrZero(v)) INTRADAY_UPDATE_RETRY_DELAY = v; },
   
   get INTRADAY_UPDATE_SERVERS() { return INTRADAY_UPDATE_SERVERS; },
-  set INTRADAY_UPDATE_SERVERS(v) { if (Array.isArray(v) && !v.some(i => !Number.isInteger(i) || i < 0)) INTRADAY_UPDATE_SERVERS = v; },
+  set INTRADAY_UPDATE_SERVERS(v) { if (Array.isArray(v) && !v.some(i => !Number.isInteger(i))) INTRADAY_UPDATE_SERVERS = v; },
   
   itdGroupCols
 };
