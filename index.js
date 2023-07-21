@@ -42,6 +42,9 @@ const defaultSettings = {
     chunkDelay:       tse.INTRADAY_UPDATE_CHUNK_DELAY,
     chunkMaxWait:     tse.INTRADAY_UPDATE_CHUNK_MAX_WAIT,
     servers:          tse.INTRADAY_UPDATE_SERVERS.join(' ')
+  },
+  instrument: {
+    cols: 'Symbol'
   }
 };
 if ( !existsSync(join(__dirname,'settings.json')) ) saveSettings(defaultSettings);
@@ -50,6 +53,8 @@ const { log } = console;
 const t  = '\n\t\t\t\t\t ';
 const t2 = '\n\t\t\t\t   ';
 const t3 = '\n\t\t\t       ';
+const t4 = '\n\t\t\t   ';
+
 const BOM = '\ufeff';
 
 cmd
@@ -88,11 +93,19 @@ cmd
   .option('--save-reset',                    'Boolean. Reset saved options back to defaults. default: false')
   .option('--cache-dir [path]',              'Show or change the location of cache directory.'+t+'if [path] is provided, new location is set but'+t+'existing content is not moved to the new location.')
   .version(''+JSON.parse(readFileSync(join(__dirname, 'package.json'), 'utf8')).version, '-v, --version', 'Show version number.');
+cmd.command('instrument').alias('i').description('View instrument data. By default output is shown in CSV text. (help: tse i -h)')
+  .option('-F, --filter <string>',           'Filter rows based on a filter string. (same string syntax as: tse -f)')
+  .option('--cols [string]',                 'Filter columns using comma-separated names of the columns to be shown. Default: "'+defaultSettings.instrument.cols+'"'+t4+'if empty, then selects all columns (e.g. tse i --cols)'+t4+'only accepts comma-separated spaceless words as ^\\w+(,\\w+)*$'+t4+'for a list of all column names run: `tse ls -N`')
+  .option('--header',                        'Include header row when printing CSV.')
+  .option('--json',                          'Print JSON.')
+  .option('--table',                         'Print using `console.table()`')
+  .option('--bom',                           'Prepend BOM character to output before printing.')
+  .action(instrument)
 cmd.command('list').alias('ls').description('Show information about current settings and more. (help: tse ls -h)')
   .option('-S, --saved-symbols',             'List saved symbols.')
   .option('-D, --saved-settings',            'List saved settings.')
-  .option('-F, --filter-match <string>',     'List symbols that match a filter string. (same string syntax as: tse -f)')
-  .option('-A, --all-columns',               'Show all possible column indexes.')
+  .option('-A, --price-columns',             'Show all possible price columns and indexes.')
+  .option('-N, --instrument-columns',        'Show all possible instrument columns.')
   .option('-T, --id-symbol-type',            'Show all possible symbol-type IDs. "Instrument.YVal"')
   .option('-I, --id-industry-sector-code',   'Show all possible industry-sector-code IDs. "Instrument.CSecVal"')
   .option('-M, --id-market',                 'Show all possible market IDs. "Instrument.Flow"')
@@ -482,7 +495,7 @@ function resolveSymbols(allSymbols, savedSymbols=[], instruments, { args, symbol
   if (symbolFilter) {
     const filters = parseFilterStr(symbolFilter);
     if (filters) {
-      const syms = filterSymbols(instruments, filters);
+      const syms = filterInstruments(instruments, filters).map(i => i.Symbol);
       symbols.push(...syms);
     } else {
       log('Invalid filter string.'.redBold);
@@ -602,12 +615,12 @@ function parseDateOption(s) {
   
   return result;
 }
-function filterSymbols(instruments, filters) {
+function filterInstruments(instruments, filters) {
   const { normal, special } = filters;
   const keys = [...normal.keys()];
   const { P, D, R } = Object.fromEntries([...special]);
   
-  const syms = instruments.filter(instrument => {
+  const ins = instruments.filter(instrument => {
     const { Symbol, DEven, SymbolOriginal } = instrument;
     const renamed = SymbolOriginal ? true : false;
     const conds = [
@@ -617,9 +630,9 @@ function filterSymbols(instruments, filters) {
       R && renamed ? false     : true
     ];
     return conds.every(i => i);
-  }).map(i => i.Symbol);
+  });
   
-  return syms;
+  return ins;
 }
 function abort(m1, m2, ...rest) {
   console.log('\n');
@@ -707,8 +720,56 @@ function printTable(table=[], cols=[]) {
   console.log(s);
 }
 
+async function instrument(args) {
+  const { filter, header, table, json, bom } = args;
+  let { cols=defaultSettings.instrument.cols, } = args;
+  
+  const ins = await tse.getInstruments();
+  const validCols = new Set(Object.keys(ins[0]));
+  
+  if (cols === '' || typeof cols === 'boolean') cols = [...validCols].join();
+  if (!/^\w+(,\w+)*$/.test(cols)) { abort('Invalid option:', '--cols', '\n\tPattern not matched:'.red, '^\\w+(,\\w+)*$');         return; }
+  
+  const colsUnik = [...new Set(cols.split(','))];
+  const wrongCols = colsUnik.filter(i => !validCols.has(i));
+  if (wrongCols.length)           { abort('Invalid option:', '--cols', '\n\tNo such column(s):'.red, wrongCols.join().whiteBold); return; }
+  
+  const sortFa = (a, b) => a.Symbol.localeCompare(b.Symbol, 'fa');
+  const bomOrNot = bom ? BOM : '';
+  
+  let finalInstruments;
+  
+  if (filter) {
+    const filters = parseFilterStr(filter);
+    if (filters) {
+      finalInstruments = filterInstruments(ins, filters).sort(sortFa);
+    } else {
+      abort('Invalid option:', '--filter', '\n\tFilter string syntax error.');
+      return;
+    }
+  } else {
+    finalInstruments = ins.sort(sortFa);
+  }
+  
+  if (table || json) {
+    const outObjs = finalInstruments.map(o => Object.fromEntries(colsUnik.map(k => [k, o[k]])) );
+    
+    if (table) {
+      console.table(outObjs);
+    } else if (json) {
+      const jsonstr = JSON.stringify(outObjs);
+      log(jsonstr);
+    }
+    return;
+  }
+  
+  const rows = finalInstruments.map(o => colsUnik.map(k => o[k]).join());
+  const finalRows = header ? [colsUnik, ...rows] : rows;
+  const csvstr = finalRows.join('\n');
+  log(bomOrNot + csvstr);
+}
 async function list(opts) {
-  const { savedSymbols, savedSettings: _savedSettings, allColumns, filterMatch, renamedSymbols, csv, json, search } = opts;
+  const { savedSymbols, savedSettings: _savedSettings, priceColumns, instrumentColumns, renamedSymbols, csv, json, search } = opts;
   const { table } = console;
   
   if (savedSymbols) {
@@ -743,21 +804,15 @@ async function list(opts) {
     table(y);
   }
   
-  if (allColumns) {
+  if (priceColumns) {
     log('\nAll valid column indexes:'.yellow);
     table(tse.columnList);
   }
   
-  if (filterMatch) {
-    const filters = parseFilterStr(filterMatch);
-    if (filters) {
-      const ins = await tse.getInstruments();
-      const matchedSymbols = filterSymbols(ins, filters);
-      matchedSymbols.sort((a,b) => a.localeCompare(b,'fa'));
-      log(matchedSymbols.join('\n'));
-    } else {
-      log('Invalid filter string.'.redBold);
-    }
+  if (instrumentColumns) {
+    const [obj] = await tse.getInstruments();
+    const cols = Object.keys(obj).join();
+    log(cols);
   }
   
   if (renamedSymbols) {
