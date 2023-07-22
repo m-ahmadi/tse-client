@@ -550,7 +550,7 @@ The URL from which the data is crawled.
 Must be a function that returns a valid URL string.  
 Default:
 ```javascript
-(server='', inscode='', deven='') => `http://${server ? 'cdn'+server+'.' : ''}tsetmc.com/Loader.aspx?ParTree=15131P&i=${inscode}&d=${deven}`;
+(server='', inscode='', deven='') => `http://${server > 0 ? 'cdn'+server+'.' : server < 0 ? '' : 'cdn.'}tsetmc.com/Loader.aspx?ParTree=15131P&i=${inscode}&d=${deven}`;
 ```
 #### `tse.INTRADAY_UPDATE_CHUNK_DELAY`
 Amount of delay (in ms) to wait before requesting another chunk of dates.  
