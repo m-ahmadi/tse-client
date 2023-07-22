@@ -153,7 +153,7 @@ tse ls -N                               # list all possible column names
 tse i -F "i=33" --header                # include header row (when printing csv)
 tse i -F "i=33" --table                 # print in table format
 tse i -F "i=33" --json                  # print as json
-tse i -F "i=33" --bom > o.csv           # bom encoding
+tse i -F "i=33" --bom > out.csv         # bom encoding
 
 tse i --cols --header --bom > out.csv             # all  instruments,  all  columns
 tse i --cols "Symbol,Name,CIsin" --bom > out.csv  # all  instruments,  some columns
