@@ -17,7 +17,6 @@ last<input id="_b" type="number" min="1" value="1" style="width:40px;">month(s)
 <script src="../dist/tse.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-let data = {};
 let charts = [];
 let saves = [];
 
@@ -32,7 +31,6 @@ async function makeChart(_symbol='', title='', w=+_w.value, h=+_h.value, monthsB
 	
 	const { data: [symbol] } = await tse.getPrices([_symbol], {startDate: lastMonths(monthsBack)});
 	if (!sync) { _add.disabled = false; _add.innerText = _add.innerText.slice(0,-3); }
-	data[_symbol] = {...symbol};
 	
 	const div = document.createElement('div');
 	div.style.width = w;
