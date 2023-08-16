@@ -1,6 +1,6 @@
 <meta charset="utf8"/><style>input[type=number]{width:60px;}</style>
 
-<button id="_add" onclick="makeChart(_syms.selectedOptions[0].value, _syms.selectedOptions[0].innerText, +_w.value, +_h.value, +_b.value), this.disabled=true, this.innerText = this.innerText+'...'">add</button>
+<button id="_add" onclick="makeChart(_syms.selectedOptions[0].value, _syms.selectedOptions[0].innerText, +_w.value, +_h.value, +_b.value).then(()=>setElems(1)), setElems(0)">add</button>
 <select id="_syms">
 	<option value="شاخص کل6">شاخص کل</option>
 	<option value="شاخص کل (هم وزن)6">شاخص کل هم وزن</option>
@@ -26,11 +26,9 @@ let saves = [];
 })();
 
 async function makeChart(_symbol='', title='', w=+_w.value, h=+_h.value, monthsBack=+_b.value, sync) {
-	if (!sync) _save.disabled = false;
 	saves.push([_symbol, title, w, h, monthsBack].join());
 	
 	const { data: [symbol] } = await tse.getPrices([_symbol], {startDate: lastMonths(monthsBack)});
-	if (!sync) { _add.disabled = false; _add.innerText = _add.innerText.slice(0,-3); }
 	
 	const div = document.createElement('div');
 	div.style.width = w;
@@ -154,5 +152,16 @@ function formatNum(n) {
 		res = res.replace(/(\-?)(\d+)\.\d\d.*(\w)/,'$1$2.'+fracRound+' $3');
 	}
 	return res;
+}
+
+function setElems(onOrOff) {
+	if (onOrOff) { // on
+		_save.disabled = false;
+		_add.disabled = false;
+		_add.innerText = _add.innerText.slice(0, -3);
+	} else { // off
+		_add.disabled = true;
+		_add.innerText = _add.innerText + '...';
+	}
 }
 </script> 
