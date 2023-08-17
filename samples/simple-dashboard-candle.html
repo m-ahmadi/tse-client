@@ -1,0 +1,219 @@
+<head>
+	<meta charset="utf8"/><style>input[type=number]{width:60px;}</style>
+	<script src="../dist/tse.bundle.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.0.1/dist/lightweight-charts.standalone.production.js"></script>
+</head>
+
+<button id="_add" onclick="addChart(undefined, _sym.value, +_w.value, +_h.value, +_b.value).then(()=>setElems(1)); setElems(0);" disabled>add</button>
+<input type="search" id="_sym" list="_syms" onfocus="!_syms.options.length && (loadSyms().then(()=>this.disabled=0), this.disabled=1); _add.disabled=!this.value" onclick="_add.disabled=!this.value" oninput="_add.disabled=!this.value" />
+<datalist id="_syms"></datalist>
+<input id="_w" type="number" min="1" value="600">
+<input id="_h" type="number" min="1" value="300">
+last<input id="_b" type="number" min="1" value="6" style="width:40px;">month(s)
+<button onclick="charts.forEach(i=>i.remove()); charts=[]; saves=[]; _save.disabled=false">clear</button>
+<button id="_save" onclick="localStorage.setItem('mytse2', saves.join('\n')), this.disabled=true" disabled>save</button>
+
+<div id="_charts" style="display: grid; grid-template-columns: auto auto auto; row-gap: .5rem; column-gap: .2rem;"></div>
+
+<script>
+let charts = [];
+let saves = [];
+let symfilter = i => [300,303,313,67,68,69].includes(+i.YVal) && ['تسه','انرژی','پذیره','عمده'].every(j => !i.Symbol.includes(j)) && !i.SymbolOriginal;
+abs = Math.abs;
+
+(async () => {
+	let savedConfs = (localStorage.getItem('mytse2') || '').split('\n').filter(i=>i).map(i=>i.split(','));
+	let savedSyms = savedConfs.map(i => i[0]);
+	if (savedSyms.length) {
+		let savedMonthsBacks = savedConfs.map(([,,monthsBack]) => +monthsBack);
+		let minSavedMonthsBacks = Math.min(...savedMonthsBacks);
+		data = await getData(savedSyms, minSavedMonthsBacks);
+		for (let [i, [s,w,h,m]] of savedConfs.entries()) await addChart(data[i], s, +w, +h, +m, 1);
+	}
+})();
+
+async function loadSyms() {
+	_syms.innerHTML = (await tse.getInstruments()).filter(symfilter).map(i => `<option value="${i.Symbol}" />`).sort((a,b)=>a.localeCompare(b,'fa')).join('\n');
+}
+
+async function addChart(symData, sym='', width=abs(_w.value), height=abs(_h.value), monthsBack=abs(_b.value), sync) {
+	saves.push([sym, width, height, monthsBack].join());
+	
+	// setup data
+	if (!symData) [symData] = await getData([sym], monthsBack);
+	
+	let startDate = +getRelativeDate(monthsBack);
+	let volumes = [];
+	let candleTypeByTime = new Map();
+	
+	let candles = symData.date.map((v,i) => {
+		if (v < startDate) return;
+		let [open, high, low, close, vol] = ['open','high','low','close','vol'].map(k => symData[k][i]);
+		v = ''+v;
+		let time = new Date(+v.slice(0,4), +v.slice(4,6)-1, +v.slice(6,8)) / 1e3;
+		let positive = i > 0 ? close >= symData.close[i-1] : true; // note: not used `yesterday` due to index symbols
+		let volumeColor = positive ? '#A7D2A8' : '#FEA6A7';
+		let candleColors = getCandleColors(positive);
+		let volume = {time, value: vol, color: volumeColor};
+		let candle = {time, open, high, low, close, ...candleColors};
+		volumes.push(volume);
+		candleTypeByTime.set(time, positive);
+		return candle;
+	}).filter(i=>i);
+	
+	// data validation
+	let [dataValid, errorText] = isDataValid(candles.map(i=>i.time), sym);
+	if (!dataValid) { alert(errorText); return; }
+	
+	// setup chart
+	let [wrap, chartContainer, legend] = [...Array(3)].map(()=> document.createElement('div'));
+	wrap.style.position = 'relative';
+	legend.style = 'display:block; left:3px; top:3px; position:absolute; z-index:2';
+	[_charts, wrap, chartContainer].forEach((v,i,a) => i>0 && a[i-1].append(v));
+	wrap.append(legend);
+	
+	let chart = LightweightCharts.createChart(chartContainer, {
+		width,
+		height,
+		rightPriceScale: {
+			scaleMargins: {top: 0.3, bottom: 0.25},
+		},
+		crosshair: {
+			mode: LightweightCharts.CrosshairMode.Normal
+		},
+		localization: {
+			priceFormatter: price => (price / 10).toFixed(2),
+			timeFormatter: formatToFaDate,
+		}
+	});
+	
+	let candleSeries = chart.addCandlestickSeries({priceLineVisible: false});
+	candleSeries.setData(candles);
+	
+	let volumeSeries = chart.addHistogramSeries({
+		priceScaleId: '',
+		priceFormat: {type: 'volume'},
+		lastValueVisible: false,
+		priceLineVisible: false,
+	});
+	volumeSeries.priceScale().applyOptions({scaleMargins:{top: 0.8, bottom: 0}});
+	volumeSeries.setData(volumes);
+	
+	// setup chart's legend
+	function template(symbol='', candle={}, volumeValue='') {
+		let {time} = candle;
+		let d = new Date(time * 1e3);
+		let dateStr = [d.getFullYear(), d.getMonth()+1, d.getDate()].join('-');
+		let dateStrFa = formatToFaDate(time);
+		let {open, high, low, close} = candle;
+		let positive = candleTypeByTime.get(time);
+		let color = positive ? 'green' : 'red';
+		let span = txt => '<span style="color: '+color+'">'+txt+'</span>';
+		return '<div>'+
+			'<strong>'+ symbol +' &emsp;</strong>'+
+			'O'+ span(open)  +' &nbsp;'+
+			'H'+ span(high)  +' &nbsp;'+
+			'L'+ span(low)   +' &nbsp;'+
+			'C'+ span(close) +''+
+			'<div>V'+ span(formatNum(volumeValue)) +'</div>'+
+			'<div style="font-size:12px;">'+ dateStrFa +'</div>'+
+			'<div style="font-size:12px;">'+ dateStr +'</div>'+
+		'</div>';
+	}
+	
+	let lastCandle = candles[candles.length-1];
+	let lastVolume = volumes[volumes.length-1];
+	function setLastBarText() {
+		legend.innerHTML = template(sym, lastCandle, lastVolume.value);
+	}
+	setLastBarText(); 
+	
+	chart.subscribeCrosshairMove(param => {
+		let { time, point:{x,y}={} } = param;
+		if (param === undefined || time === undefined || x < 0 || x > width || y < 0 || y > height) {
+			setLastBarText();   
+		} else {
+			let candle = param.seriesData.get(candleSeries);
+			let volume = param.seriesData.get(volumeSeries);
+			legend.innerHTML = template(sym, candle, volume.value);
+		}
+	});
+	
+	charts.push(wrap);
+}
+
+async function getData(syms=[], monthsBack) {
+	let {data, error} = await tse.getPrices(syms, {
+		columns: [0,1,2,3,4,6,7],
+		startDate: getRelativeDate(monthsBack),
+	});
+	if (error) throw Error('TSE Error.');
+	return data;
+}
+
+function isDataValid(times=[], sym) {
+	let hasNoData = !times.length > 0;
+	let timeIsNotInAscOrder = times.some((v,i,a) => i>0 ? v < a[i-1] : false);
+	let timeHasDupplicates = times.some((v,i,a) => i>0 ? v === a[i-1] : false);
+	if (hasNoData || timeIsNotInAscOrder || timeHasDupplicates) {
+		let possibleCauses = [
+			['has no data.', hasNoData],
+			['time is not in ascending order.', timeIsNotInAscOrder],
+			['time has dupplicates.', timeHasDupplicates],
+		];
+		let causes = possibleCauses.filter(([,isTrue]) => isTrue).map(([descr]) => descr);
+		let t = ' '.repeat(4);
+		let errorText = [
+			'Invalid Data: ' + sym,
+			t+ causes.join(),
+			t+ 'cannot make chart for this symbol.',
+			t+ 'aborted',
+		].join('\n');
+		return [false, errorText];
+	}
+	return [true];
+}
+
+function getRelativeDate(nMonths=1) {
+	let d = new Date();
+	d.setMonth(d.getMonth() - nMonths);
+	return d.getFullYear()*10000 + (d.getMonth()+1)*100 + d.getDate() + '';
+}
+
+function formatToFaDate(timestamp=0) {
+	let date = new Date(timestamp * 1e3);
+	let [jy, jm, jd] = new Intl.DateTimeFormat('fa-IR', {numberingSystem:'latn'}).format(date).split('/').map(parseFloat);
+	let faWeek = ['یکشنبه', 'دوشنبه', 'سه شنبه', 'چهارشنبه', 'پنجشنبه', 'جمعه', 'شنبه'];
+	let weekday = date.getDay();
+	return [jy, jm, jd].join('-') +' '+ faWeek[weekday];
+}
+
+function formatNum(n) {
+	return (
+		n > 999         && n < 1e6 ? (n / 1e3).toFixed(2) + ' K' :
+		n > 999_999     && n < 1e9 ? (n / 1e6).toFixed(2) + ' M' :
+		n > 999_999_999            ? (n / 1e9).toFixed(2) + ' B' :
+		n
+	);
+}
+
+function setElems(onOrOff) {
+	if (onOrOff) { // on
+		_save.disabled = false;
+		_add.disabled = false;
+		_add.innerText = _add.innerText.slice(0, -3);
+	} else { // off
+		_add.disabled = true;
+		_add.innerText = _add.innerText + '...';
+	}
+}
+
+function getCandleColors(up) {
+	let [upColor, downColor] = ['#26a69a', '#ef5350'];
+	return {
+		color:       up ? upColor : downColor,
+		borderColor: up ? upColor : downColor,
+		wickColor:   up ? upColor : downColor,
+	};
+}
+</script> 
