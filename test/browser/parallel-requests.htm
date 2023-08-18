@@ -16,10 +16,11 @@
 
 <br><br>
 
-<button onclick="localforage.clear()">clear indexedDB</button>
+<button onclick="closingPricesStore.clear()">clear indexedDB</button>
 
 
 <script>
+const closingPricesStore = localforage.createInstance({name: 'tse.prices'});
 document.querySelectorAll('input[type=number]').forEach(i=> i.dispatchEvent(new Event('change')));
 
 async function update() {
