@@ -16,7 +16,7 @@
 
 <br><br>
 
-<button onclick="closingPricesStore.clear()">clear indexedDB</button>
+<button onclick="delFromDb().then(()=>this.disabled=0), this.disabled=1">del items from db</button>
 
 
 <script>
@@ -31,5 +31,23 @@ async function update() {
 	
 	console.log(data);
 	console.log(error);
+}
+
+async function delFromDb() {
+	const instruments = await tse.getInstruments();
+	const toDels = instruments.slice(0, +howmany.value);
+	
+	let lastdevens = (localStorage.getItem('tse.inscode_lastdeven') || '').split('\n').filter(i=>i).map(i=>i.split(','));
+	lastdevens = new Map(lastdevens);
+	
+	const proms = toDels.map(({InsCode}) => {
+		lastdevens.delete(InsCode);
+		return closingPricesStore.removeItem(InsCode);
+	});
+	
+	lastdevens = [...lastdevens].map(i=>i.join(',')).join('\n');
+	localStorage.setItem('tse.inscode_lastdeven', lastdevens);
+	
+	return Promise.all(proms);
 }
 </script>
