@@ -39,7 +39,6 @@ function plot(d, title) {
 		height: 200,
 		series: data.map((v,i) => ( i === 0 ? {} : {stroke: colors[i], label: labels[i]} )),
 		legend: {show: true},
-		class: 'box',
 		title
 	}, [
 		data[0].map(i => (i=''+i, Date.UTC(+i.slice(0,4), +i.slice(4,6)-1, +i.slice(6,8)) / 1000)),
