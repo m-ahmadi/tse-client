@@ -864,7 +864,7 @@ async function updatePrices(selection=[], shouldCache, {pf, pn, ptot}={}) {
     ({ pn } = managerResult);
     
     if (succs.length && shouldCache) {
-      str = Object.keys(lastdevens).map(k => [k, lastdevens[k]].join(',')).join('\n');
+      const str = Object.keys(lastdevens).map(k => [k, lastdevens[k]].join(',')).join('\n');
       storage.setItem('tse.inscode_lastdeven', str);
     }
     
