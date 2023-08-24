@@ -14,48 +14,48 @@ const storage = (function () {
   let instance;
   
   if (isNode) {
-    const { readFileSync, writeFileSync, existsSync, mkdirSync, statSync, readdirSync } = require('fs');
+    const { readFileSync: read, writeFileSync: write, existsSync: exists, mkdirSync: mkdir, statSync: stat, readdirSync: readdir } = require('fs');
     const { join } = require('path');
-    const { gzipSync, gunzipSync } = require('zlib');
+    const { gzip, gunzip } = require('zlib');
     
     let datadir;
     const home = require('os').homedir();
     const defaultdir = join(home, 'tse-cache');
     const pathfile   = join(home, '.tse');
-    if ( existsSync(pathfile) ) {
-      datadir = readFileSync(pathfile, 'utf8');
-      try { statSync(datadir).isDirectory(); } catch { datadir = defaultdir; }
+    if ( exists(pathfile) ) {
+      datadir = read(pathfile, 'utf8');
+      try { stat(datadir).isDirectory(); } catch { datadir = defaultdir; }
     } else {
       datadir = defaultdir;
-      if ( !existsSync(datadir) ) mkdirSync(datadir, {recursive: true});
-      writeFileSync(pathfile, datadir);
+      if ( !exists(datadir) ) mkdir(datadir, {recursive: true});
+      write(pathfile, datadir);
     }
     
     const getItem = (key) => {
       key = key.replace('tse.', '');
       const dir = key.startsWith('prices.') ? join(datadir, 'prices') : datadir;
       const file = join(dir, `${key}.csv`);
-      if ( !existsSync(file) ) writeFileSync(file, '');
-      return readFileSync(file, 'utf8');
+      if ( !exists(file) ) write(file, '');
+      return read(file, 'utf8');
     };
     
     const setItem = (key, value) => {
       key = key.replace('tse.', '');
       const dir = key.startsWith('prices.') ? join(datadir, 'prices') : datadir;
-      writeFileSync(join(dir, `${key}.csv`), value);
+      write(join(dir, `${key}.csv`), value);
     };
     
     const getItemAsync = (key, zip=false) => new Promise((done, fail) => {
       key = key.replace('tse.', '');
       const dir = key.startsWith('prices.') ? join(datadir, 'prices') : datadir;
       const file = join(dir, `${key}.csv` + (zip?'.gz':''));
-      if ( !existsSync(file) ) {
-        writeFileSync(file, '');
+      if ( !exists(file) ) {
+        write(file, '');
         done('');
         return;
       }
-      const content = readFileSync(file, zip?undefined:'utf8');
-      done(zip ? gunzipSync(content).toString() : content);
+      const content = read(file, zip?undefined:'utf8');
+      done(zip ? gunzip(content).toString() : content);
     });
     
     const setItemAsync = (key, value, zip=false) => new Promise((done, fail) => {
@@ -66,36 +66,36 @@ const storage = (function () {
         key = key.replace('prices.', '');
       }
       const file = join(dir, `${key}.csv` + (zip?'.gz':''));
-      writeFileSync(file, zip ? gzipSync(value) : value);
+      write(file, zip ? gzip(value) : value);
       done();
     });
     
     const getItems = async function (selins=new Set(), result={}) {
       const d = join(datadir, 'prices');
-      if (!existsSync(d)) mkdirSync(d);
-      for (const i of readdirSync(d)) {
+      if (!exists(d)) mkdir(d);
+      for (const i of readdir(d)) {
         const key = i.replace('.csv','');
         if ( !selins.has(key) ) continue;
-        result[key] = readFileSync(join(d,i),'utf8');
+        result[key] = read(join(d,i),'utf8');
       }
     };
     
     const itdGetItems = async function (selins=new Set(), full=false) {
       const d = join(datadir, 'intraday');
-      if (!existsSync(d)) mkdirSync(d);
-      const dirs = readdirSync(d).filter( i => statSync(join(d,i)).isDirectory() && selins.has(i) );
+      if (!exists(d)) mkdir(d);
+      const dirs = readdir(d).filter( i => stat(join(d,i)).isDirectory() && selins.has(i) );
       let result;
       if (full) { 
         result = dirs.map(i => {
-          const files = readdirSync(join(d,i)).map(j => {
+          const files = readdir(join(d,i)).map(j => {
             const z = j.slice(-3) === '.gz';
-            return [ z ? j.slice(0,-3) : j, readFileSync(join(d,i,j), z ? null : 'utf8') ];
+            return [ z ? j.slice(0,-3) : j, read(join(d,i,j), z ? null : 'utf8') ];
           });
           return [ i, Object.fromEntries(files) ];
         });
       } else {
         result = dirs.map(i => {
-          const files = readdirSync(join(d,i)).map(j => {
+          const files = readdir(join(d,i)).map(j => {
             const z = j.slice(-3) === '.gz';
             return [z ? j.slice(0,-3) : j, true];
           });
@@ -108,11 +108,11 @@ const storage = (function () {
       key = key.replace('tse.', '');
       const d = join(datadir, 'intraday');
       const dir = join(d, key);
-      if ( !existsSync(dir) ) mkdirSync(dir);
+      if ( !exists(dir) ) mkdir(dir);
       Object.keys(obj).forEach(k => {
         const cont = obj[k];
         const filename = k + (cont === 'N/A' ? '': '.gz');
-        writeFileSync(join(dir, filename), obj[k]);
+        write(join(dir, filename), obj[k]);
       });
     };
     
@@ -121,10 +121,10 @@ const storage = (function () {
       get CACHE_DIR() { return datadir; },
       set CACHE_DIR(newdir) {
         if (typeof newdir === 'string') {
-          if ( !existsSync(newdir) ) mkdirSync(newdir, {recursive: true});
-          if ( statSync(newdir).isDirectory() ) {
+          if ( !exists(newdir) ) mkdir(newdir, {recursive: true});
+          if ( stat(newdir).isDirectory() ) {
             datadir = newdir;
-            writeFileSync(pathfile, datadir);
+            write(pathfile, datadir);
           }
         }
       },
