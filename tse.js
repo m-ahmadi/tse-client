@@ -21,14 +21,14 @@ const storage = (function () {
     let datadir;
     const home = require('os').homedir();
     const defaultdir = join(home, 'tse-cache');
-    const pathfile   = join(home, '.tse');
-    if ( exists(pathfile) ) {
-      datadir = read(pathfile, 'utf8');
+    const tracker = join(home, '.tse');
+    if ( exists(tracker) ) {
+      datadir = read(tracker, 'utf8');
       try { stat(datadir).isDirectory(); } catch { datadir = defaultdir; }
     } else {
       datadir = defaultdir;
       if ( !exists(datadir) ) mkdir(datadir, {recursive: true});
-      write(pathfile, datadir);
+      write(tracker, datadir);
     }
     
     const getItem = (key) => {
@@ -124,7 +124,7 @@ const storage = (function () {
           if ( !exists(newdir) ) mkdir(newdir, {recursive: true});
           if ( stat(newdir).isDirectory() ) {
             datadir = newdir;
-            write(pathfile, datadir);
+            write(tracker, datadir);
           }
         }
       },
