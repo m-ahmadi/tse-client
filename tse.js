@@ -14,7 +14,7 @@ const storage = (function () {
   let instance;
   
   if (isNode) {
-    const { existsSync, mkdirSync, readFileSync, writeFileSync, statSync, readdirSync } = require('fs');
+    const { readFileSync, writeFileSync, existsSync, mkdirSync, statSync, readdirSync } = require('fs');
     const { join } = require('path');
     const { gzipSync, gunzipSync } = require('zlib');
     
