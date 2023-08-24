@@ -111,7 +111,7 @@ const storage = (function () {
       if ( !exists(dir) ) mkdir(dir);
       Object.keys(obj).forEach(k => {
         const cont = obj[k];
-        const filename = k + (cont === 'N/A' ? '': '.gz');
+        const filename = k + (cont==='N/A'?'':'.gz');
         write(join(dir, filename), obj[k]);
       });
     };
