@@ -486,6 +486,7 @@ function adjust(cond, closingPrices, allShares, inscodes) {
         high  = coef.times(curr.PriceMax).round().toString(),
         yday  = coef.times(curr.PriceYesterday).round().toString(),
         first = coef.times(curr.PriceFirst).round(2).toFixed(2);
+        // note: the `toFixed()` calls are necessary and not redundant
         
         const adjustedClosingPrice = {
           InsCode:        curr.InsCode,
