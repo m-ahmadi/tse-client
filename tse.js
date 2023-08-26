@@ -454,7 +454,7 @@ function adjust(cond, closingPrices, allShares, inscodes) {
   let res = cp;
   if ( (cond === 1 || cond === 2) && len > 1 ) {
     let gaps = new Big('0.0');
-    let num = new Big('1.0');
+    let coef = new Big('1.0');
     adjustedClosingPrices.push( cp[len-1] );
     if (cond === 1) {
       for (let i=len-2; i>=0; i-=1) {
@@ -472,20 +472,20 @@ function adjust(cond, closingPrices, allShares, inscodes) {
         const targetShare = shares.get(next.DEven);
         
         if (cond === 1 && pricesDontMatch) {
-          num = num.times(next.PriceYesterday).div(curr.PClosing);
+          coef = coef.times(next.PriceYesterday).div(curr.PClosing);
         } else if (cond === 2 && pricesDontMatch && targetShare) {
           const oldShares = targetShare.NumberOfShareOld;
           const newShares = targetShare.NumberOfShareNew;
-          num = num.times(oldShares).div(newShares);
+          coef = coef.times(oldShares).div(newShares);
         }
         
         let
-        close = num.times(curr.PClosing).round(2).toFixed(2),
-        last  = num.times(curr.PDrCotVal).round(2).toFixed(2),
-        low   = num.times(curr.PriceMin).round().toString(),
-        high  = num.times(curr.PriceMax).round().toString(),
-        yday  = num.times(curr.PriceYesterday).round().toString(),
-        first = num.times(curr.PriceFirst).round(2).toFixed(2);
+        close = coef.times(curr.PClosing).round(2).toFixed(2),
+        last  = coef.times(curr.PDrCotVal).round(2).toFixed(2),
+        low   = coef.times(curr.PriceMin).round().toString(),
+        high  = coef.times(curr.PriceMax).round().toString(),
+        yday  = coef.times(curr.PriceYesterday).round().toString(),
+        first = coef.times(curr.PriceFirst).round(2).toFixed(2);
         
         const adjustedClosingPrice = {
           InsCode:        curr.InsCode,
