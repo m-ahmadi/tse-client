@@ -446,8 +446,7 @@ let storedPrices = {};
 
 Big.DP = 40;
 Big.RM = 2; // http://mikemcl.github.io/big.js/#rm
-function adjust(cond, closingPrices, allShares, inscodes) {
-  const shares = new Map(allShares.filter(share => inscodes.has(share.InsCode)).map(i => [i.DEven, i]));
+function adjust(cond, closingPrices, shares) {
   const cp = closingPrices;
   const len = closingPrices.length;
   const adjustedClosingPrices = [];
@@ -971,7 +970,7 @@ async function getPrices(symbols=[], _settings={}) {
   });
   
   const { adjustPrices, daysWithoutTrade, startDate, csv } = settings;
-  const shares = parseShares(true);
+  const allShares = parseShares(true);
   const pi = Big(ptot).mul(0.20).div(selection.length);
   
   const storedPricesMerged = {};
@@ -1003,7 +1002,8 @@ async function getPrices(symbols=[], _settings={}) {
     prices = prices.split('\n').map(i => new ClosingPrice(i));
     
     if (adjustPrices === 1 || adjustPrices === 2) {
-      prices = adjust(adjustPrices, prices, shares, inscodes);
+      const relatedShares = new Map(allShares.filter(share => inscodes.has(share.InsCode)).map(i => [i.DEven, i]));
+      prices = adjust(adjustPrices, prices, relatedShares);
     }
     
     if (!daysWithoutTrade) {
