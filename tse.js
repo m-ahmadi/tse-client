@@ -932,13 +932,18 @@ async function getPrices(symbols=[], _settings={}) {
     
     [...merges].forEach(([, v]) => v.sort((a,b) => a.order - b.order));
     
+    const selsyms = new Set(selection.map(i=> i.Symbol));
+    
     const extras = selection.map(({Symbol: sym}) =>
+      !selsyms.has(sym) &&
       merges.has(sym) &&
       merges.get(sym).slice(1).map(i => instruments[i.sym])
     ).flat().filter(i=>i);
     
-    extrasIndex = selection.length;
-    selection.push(...extras);
+    if (extras.length) {
+      extrasIndex = selection.length;
+      selection.push(...extras);
+    }
   }
   
   const updateResult = await updatePrices(selection, settings.cache, {pf, pn, ptot: ptot.mul(0.78)});
@@ -961,7 +966,7 @@ async function getPrices(symbols=[], _settings={}) {
     selection.forEach((v,i,a) => fails.includes(v.InsCode) ? a[i] = undefined : 0);
   }
   
-  if (mergeSimilarSymbols) selection.splice(extrasIndex);
+  if (mergeSimilarSymbols && extrasIndex > -1) selection.splice(extrasIndex);
   
   const columns = settings.columns.map(i => {
     const row = !Array.isArray(i) ? [i] : i;
