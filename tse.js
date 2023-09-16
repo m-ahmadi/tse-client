@@ -721,8 +721,8 @@ const pricesUpdateManager = (function () {
     }
     
     if (retrychunks.length) {
-      const inscodes = retrychunks.flat().map(i => i[0]);
-      fails = fails.filter(i => inscodes.indexOf(i) === -1);
+      const inscodes = new Set(retrychunks.flat().map(i => i[0]));
+      fails = fails.filter(i => !inscodes.has(i));
       retries++;
       qeudRetry = setTimeout(batch, PRICES_UPDATE_RETRY_DELAY, retrychunks);
       retrychunks = [];
@@ -731,7 +731,7 @@ const pricesUpdateManager = (function () {
   }
   
   function onresult(response, chunk, id) {
-    const inscodes = chunk.map(([insCode]) => insCode);
+    const inscodes = new Set(chunk.map(([insCode]) => insCode));
     
     if ( typeof response === 'string' && (/^[\d.,;@-]+$/.test(response) || response === '') ) {
       const res = response.replace(/;/g, '\n').split('@').map((v,i)=> [chunk[i][0], v]);
@@ -750,7 +750,7 @@ const pricesUpdateManager = (function () {
         }
       }
       
-      fails = fails.filter(i => inscodes.indexOf(i) === -1);
+      fails = fails.filter(i => !inscodes.has(i));
       
       if (pf) {
         const filled = pSR.div(PRICES_UPDATE_RETRY_COUNT + 2).mul(retries + 1);
@@ -963,7 +963,8 @@ async function getPrices(symbols=[], _settings={}) {
       fails: fails.map(k => syms[k]),
       succs: succs.map(k => syms[k])
     };
-    selection.forEach((v,i,a) => fails.includes(v.InsCode) ? a[i] = undefined : 0);
+    const _fails = new Set(fails);
+    selection.forEach((v,i,a) => _fails.has(v.InsCode) ? a[i] = undefined : 0);
   }
   
   if (mergeSimilarSymbols && extrasIndex > -1) selection.splice(extrasIndex);
