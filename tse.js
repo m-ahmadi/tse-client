@@ -934,11 +934,13 @@ async function getPrices(symbols=[], _settings={}) {
     
     const selsyms = new Set(selection.map(i=> i.Symbol));
     
-    const extras = selection.map(({Symbol: sym}) =>
-      !selsyms.has(sym) &&
-      merges.has(sym) &&
-      merges.get(sym).slice(1).map(i => instruments[i.sym])
-    ).flat().filter(i=>i);
+    const extras = selection.map(({Symbol: sym}) => {
+      if (!merges.has(sym)) return;
+      let leafs = merges.get(sym).slice(1).map(i => i.sym);
+      leafs = leafs.filter(i => !selsyms.has(i));
+      const leafInss = leafs.map(sym => instruments[sym]);
+      return leafInss;
+    }).flat().filter(i=>i);
     
     if (extras.length) {
       extrasIndex = selection.length;
