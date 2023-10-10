@@ -1070,7 +1070,7 @@ async function getPrices(symbols=[], _settings={}) {
     
   }
   
-  if (pf && pn !== ptot) pf(pn=ptot);
+  if (pf && pn !== ptot) pf(pn=+ptot);
   
   return result;
 }
