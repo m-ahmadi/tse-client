@@ -375,7 +375,7 @@ function parseShares(struct=false, arr=true) {
   return shares;
 }
 function dateToStr(d) {
-  return (d.getFullYear()*10000) + ( (d.getMonth()+1)*100 ) + d.getDate() + '';
+  return d.getFullYear()*10000 + (d.getMonth()+1)*100 + d.getDate() + '';
 }
 function strToDate(s) {
   return new Date( +s.slice(0,4), +s.slice(4,6)-1, +s.slice(6,8) );
