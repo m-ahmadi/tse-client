@@ -2,3 +2,4 @@ node_modules/
 package-lock.json
 settings.json
 dist/*
+test/browser/lib
