@@ -576,6 +576,7 @@ async function getLastPossibleDevens() {
 }
 async function updateInstruments() {
   const lastUpdate = storage.getItem('tse.lastInstrumentUpdate');
+  const todayDeven = +dateToStr(new Date());
   let lastDeven;
   let lastId;
   let currentInstruments;
@@ -601,7 +602,7 @@ async function updateInstruments() {
   if ( !shouldUpdate(_lastDeven, lpdNO) && !shouldUpdate(_lastDeven, lpdID) ) return;
   
   let error;
-  const res = await rq.InstrumentAndShare(+dateToStr(new Date()), lastId).catch(err => error = err);
+  const res = await rq.InstrumentAndShare(todayDeven, lastId).catch(err => error = err);
   if (error) return { title: 'Failed request: InstrumentAndShare', detail: error };
   let shares = res.split('@')[1];
 
@@ -685,7 +686,7 @@ async function updateInstruments() {
   }
   
   if ((instruments !== '' && instruments !== '*') || shares !== '') {
-    storage.setItem('tse.lastInstrumentUpdate', dateToStr(new Date()));
+    storage.setItem('tse.lastInstrumentUpdate', ''+todayDeven);
   }
 }
 
