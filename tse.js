@@ -562,6 +562,9 @@ async function getLastPossibleDevens() {
   
   const today = dateToStr(new Date());
   
+  const lastUpdate = storage.getItem('tse.lastLPDUpdate');
+  if (+today <= lastUpdate) return [NO, ID];
+  
   if ( !stored || shouldUpdate(today, NO) || shouldUpdate(today, ID) ) {
     let error;
     const res = await rq.LastPossibleDeven().catch(err => error = err);
@@ -569,6 +572,7 @@ async function getLastPossibleDevens() {
     if ( !/^\d{8};\d{8}$/.test(res) ) return { title: 'Invalid server response: LastPossibleDeven' };
     const splits = res.split(';');
     storage.setItem('tse.lastPossibleDevens', splits.join(','));
+    storage.setItem('tse.lastLPDUpdate', today);
     [NO, ID] = splits;
   }
   
