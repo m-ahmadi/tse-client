@@ -677,6 +677,7 @@ const pricesUpdateManager = (function () {
   let writing = [];
   let pf, pn, ptot, pSR, pR;
   let shouldCache;
+  let lastPossibleDeven;
   
   function poll() {
     if (timeouts.size > 0 || qeudRetry) {
@@ -723,6 +724,8 @@ const pricesUpdateManager = (function () {
           lastdevens[inscode] = newdata.split('\n').slice(-1)[0].split(',',2)[1];
           
           writing.push( shouldCache && storage.setItemAsync('tse.prices.'+inscode, data) );
+        } else {
+          lastdevens[inscode] = lastPossibleDeven;
         }
       }
       
@@ -760,8 +763,9 @@ const pricesUpdateManager = (function () {
     }
   }
   
-  function start(updateNeeded=[], _shouldCache, po={}) {
+  function start(updateNeeded=[], _shouldCache, _lastPossibleDeven, po={}) {
     shouldCache = _shouldCache;
+    lastPossibleDeven = _lastPossibleDeven;
     ({ pf, pn, ptot } = po);
     total = updateNeeded.length;
     pSR = ptot.div( Math.ceil(Big(total).div(PRICES_UPDATE_CHUNK)) ); // each successful request:   ( ptot / Math.ceil(total / PRICES_UPDATE_CHUNK) )
@@ -837,7 +841,7 @@ async function updatePrices(selection=[], shouldCache, {pf, pn, ptot}={}) {
   if (pf) pf(pn= +Big(pn).plus( ptot.mul(0.01) ) );
   
   if (toUpdate.length) {
-    const managerResult = await pricesUpdateManager(toUpdate, shouldCache, { pf, pn, ptot: ptot.sub(ptot.mul(0.02)) });
+    const managerResult = await pricesUpdateManager(toUpdate, shouldCache, lpdNO, { pf, pn, ptot: ptot.sub(ptot.mul(0.02)) });
     const { succs, fails } = managerResult;
     ({ pn } = managerResult);
     
