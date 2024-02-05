@@ -919,6 +919,7 @@ async function getPrices(symbols=[], _settings={}) {
     const syms = Object.keys(instruments);
     const ins = syms.map(k => instruments[k]);
     const roots = new Set(ins.filter(i => i.SymbolOriginal).map(i => i.SymbolOriginal));
+    const regx = new RegExp(SYMBOL_RENAME_STRING+'(\\d+)');
     
     merges = new Map([...roots].map(i => [ i, [] ]));
     
@@ -926,7 +927,6 @@ async function getPrices(symbols=[], _settings={}) {
       const { SymbolOriginal: orig, Symbol: sym, InsCode: code } = i;
       const renamedOrRoot = orig || sym;
       if (!merges.has(renamedOrRoot)) return;
-      const regx = new RegExp(SYMBOL_RENAME_STRING+'(\\d+)');
       merges.get(renamedOrRoot).push({ sym, code, order: orig ? +sym.match(regx)[1] : 1 });
     });
     
