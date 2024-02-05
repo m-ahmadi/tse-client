@@ -579,31 +579,21 @@ async function getLastPossibleDevens() {
   return [NO, ID];
 }
 async function updateInstruments() {
-  const lastUpdate = storage.getItem('tse.lastInstrumentUpdate');
-  const todayDeven = +dateToStr(new Date());
-  let lastDeven;
+  const lastUpdate = +storage.getItem('tse.lastInstrumentUpdate');
+  const today = new Date();
+  const todayDeven = +dateToStr(today);
+  if (lastUpdate && (todayDeven <= lastUpdate || today.getHours() <= TRADING_SESSION_END_HOUR)) return;
+  
   let lastId;
-  let currentInstruments;
   let currentShares;
   
   if (!lastUpdate) {
-    lastDeven = 0;
     lastId = 0;
   } else {
-    currentInstruments = parseInstruments();
-    currentShares      = parseShares();
-    const insDevens = Object.keys(currentInstruments).map( k => +currentInstruments[k].split(',',9)[8] );
-    const shareIds  = currentShares.map(i => +i.split(',',1)[0]);
-    lastDeven = Math.max(...insDevens);
-    lastId    = Math.max(...shareIds);
+    currentShares = parseShares();
+    const shareIds = currentShares.map(i => +i.split(',',1)[0]);
+    lastId = Math.max(...shareIds);
   }
-  
-  const lastPossibleDevens = await getLastPossibleDevens();
-  if (isObj(lastPossibleDevens)) return lastPossibleDevens;
-  
-  const _lastDeven = ''+lastDeven;
-  const [lpdNO, lpdID] = lastPossibleDevens;
-  if ( !shouldUpdate(_lastDeven, lpdNO) && !shouldUpdate(_lastDeven, lpdID) ) return;
   
   let error;
   const res = await rq.InstrumentAndShare(todayDeven, lastId).catch(err => error = err);
@@ -611,7 +601,7 @@ async function updateInstruments() {
   let shares = res.split('@')[1];
 
   error = 0;
-  let instruments = await rq.Instrument(lastDeven).catch(err => error = err);
+  let instruments = await rq.Instrument(0).catch(err => error = err);
   if (error) return { title: 'Failed request: Instrument', detail: error };
   
   // if (instruments === '*') console.warn('Cannot update during trading session hours.');
@@ -619,21 +609,7 @@ async function updateInstruments() {
   // if (shares === '')       console.warn('Already updated: ', 'Shares');
   
   if (instruments !== '' && instruments !== '*') {
-    let rows;
-    
-    if (currentInstruments) {
-      let orig = Object.fromEntries(Object.keys(currentInstruments).map(i => (
-        i = currentInstruments[i].split(','),
-        i.length === 19 && (i[5] = i[18], i.pop()),
-        [i[0], i.join(',')]
-      )));
-      
-      instruments.split(';').forEach((v,i)=> (i = v.split(',',1)[0], orig[i] = v));
-      
-      rows = Object.keys(orig).map(k => orig[k].split(','));
-    } else {
-      rows = instruments.split(';').map(i=> i.split(','));
-    }
+    let rows = instruments.split(';').map(i=> i.split(','));
     
     let _rows = [...rows.map(i=> (i=[...i], i[5]=cleanFa(i[5]).trim(), i))];
     
@@ -671,12 +647,7 @@ async function updateInstruments() {
     _rows = undefined;
     rows = undefined;
     
-    if (currentInstruments && Object.keys(currentInstruments).length) {
-      instruments.forEach(i => currentInstruments[ i[0] ] = i.join(','));
-      instruments = Object.keys(currentInstruments).map(k => currentInstruments[k]).join('\n');
-    } else {
-      instruments = instruments.map(i=>i.join(',')).join('\n');
-    }
+    instruments = instruments.map(i=>i.join(',')).join('\n');
     storage.setItem('tse.instruments', instruments);
   }
   
