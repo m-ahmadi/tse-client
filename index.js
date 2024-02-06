@@ -252,6 +252,7 @@ if (cmd.opts().cacheDir) { handleCacheDir(cmd.opts().cacheDir); return; }
     const tickAmount = 14 / datalen;
     
     data.forEach((file, i) => {
+      if (file === undefined) { progress.tick(tickAmount); return; }
       const sym = symbols[i];
       const instrument = symins[sym];
       const name = safeWinFilename( getFilename(fileName, instrument, priceAdjust) );
