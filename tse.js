@@ -430,6 +430,8 @@ const MERGED_SYMBOL_CONTENT       = 'merged';
 const defaultSettings = {
   columns: [0,2,3,4,5,6,7,8,9],
   adjustPrices: 0,
+  getAdjustInfo: false,
+  getAdjustInfoOnly: false,
   daysWithoutTrade: false,
   startDate: '20010321',
   mergeSimilarSymbols: true,
@@ -446,16 +448,21 @@ let storedPrices = {};
 
 Big.DP = 40;
 Big.RM = 2; // http://mikemcl.github.io/big.js/#rm
-function adjust(cond, closingPrices, shares) {
+function adjust(cond, closingPrices, shares, getInfo, getInfoOnly) {
   const cp = closingPrices;
   const len = closingPrices.length;
+  const shouldGetInfo = getInfo || getInfoOnly;
   const adjustedClosingPrices = [];
-  let res = cp;
-  if ( (cond === 1 || cond === 2) && len > 1 ) {
+  const info = {events: [], validGPLRatio: undefined};
+  let res = {
+    prices: getInfoOnly ? undefined : cp,
+    info: shouldGetInfo ? info : undefined,
+  };
+  if ( (cond === 1 || cond === 2 || shouldGetInfo) && len > 1 ) {
     let gaps = new Big('0.0');
     let coef = new Big('1.0');
     adjustedClosingPrices.push( cp[len-1] );
-    if (cond === 1) {
+    if (cond === 1 || shouldGetInfo) {
       for (let i=len-2; i>=0; i-=1) {
         const [curr, next] = [ cp[i], cp[i+1] ];
         if (!Big(curr.PClosing).eq(next.PriceYesterday) && curr.InsCode === next.InsCode) {
@@ -465,11 +472,39 @@ function adjust(cond, closingPrices, shares) {
     }
     const gapsToLifespanRatio = gaps.div(len);
     const hasValidRatio = gapsToLifespanRatio.lt('0.08');
-    if ( (cond === 1 && hasValidRatio) || cond === 2 ) {
+    info.validGPLRatio = hasValidRatio;
+    if ( (cond === 1 && hasValidRatio) || cond === 2 || shouldGetInfo ) {
       for (let i=len-2; i>=0; i-=1) {
         const [curr, next] = [ cp[i], cp[i+1] ];
         const pricesDontMatch = !Big(curr.PClosing).eq(next.PriceYesterday) && curr.InsCode === next.InsCode;
         const targetShare = shares.get(next.DEven);
+        
+        if (shouldGetInfo && pricesDontMatch && (hasValidRatio || targetShare)) {// halt event
+          const adjustEvent = {};
+          const priceBeforeEvent = curr.PClosing;
+          const priceAfterEvent = next.PriceYesterday;
+          const dateBeforeEvent = curr.DEven;
+          let date = dateBeforeEvent;
+          if (targetShare) {// capital increase event
+            const {NumberOfShareOld: oldShares, NumberOfShareNew: newShares} = targetShare;
+            const increasePct = Big(newShares).sub(oldShares).div(oldShares);
+            adjustEvent.type = 'capital increase';
+            adjustEvent.increasePct = increasePct.toString();
+            adjustEvent.oldShares = ''+oldShares;
+            adjustEvent.newShares = ''+newShares;
+            //const {DEven: eventDate} = targetShare;
+            //date = eventDate; // alternative date to use, but results in less accurate external price adjustment
+          } else {// dividend event
+            const dividend = Big(priceBeforeEvent).sub(priceAfterEvent);
+            adjustEvent.type = 'dividend';
+            adjustEvent.dividend = dividend.toString();
+          }
+          adjustEvent.priceBeforeEvent = priceBeforeEvent;
+          adjustEvent.priceAfterEvent = priceAfterEvent;
+          adjustEvent.date = date;
+          info.events.push(adjustEvent);
+        }
+        if (getInfoOnly) continue;
         
         if (cond === 1 && pricesDontMatch) {
           coef = coef.times(next.PriceYesterday).div(curr.PClosing);
@@ -505,7 +540,12 @@ function adjust(cond, closingPrices, shares) {
         adjustedClosingPrices.push(adjustedClosingPrice);
       }
       
-      res = adjustedClosingPrices.reverse();
+      adjustedClosingPrices.reverse();
+
+      res = {
+        prices: getInfoOnly ? undefined : adjustedClosingPrices,
+        info: shouldGetInfo ? info : undefined,
+      };
     }
   }
   return res;
@@ -972,7 +1012,10 @@ async function getPrices(symbols=[], _settings={}) {
     }
   }
   
-  const getInstrumentPrices = (instrument) => {
+  const { getAdjustInfo, getAdjustInfoOnly } = settings;
+  const shouldGetAdjustInfo = getAdjustInfo || getAdjustInfoOnly;
+  
+  const getInstrumentData = (instrument) => {
     const { InsCode: inscode, Symbol: sym, SymbolOriginal: symOrig } = instrument;
     
     let prices, inscodes;
@@ -990,9 +1033,13 @@ async function getPrices(symbols=[], _settings={}) {
     
     prices = prices.split('\n').map(i => new ClosingPrice(i));
     
-    if (adjustPrices === 1 || adjustPrices === 2) {
+    let adjustInfo;
+    
+    if (adjustPrices > 0 || shouldGetAdjustInfo) {
       const relatedShares = new Map(allShares.filter(share => inscodes.has(share.InsCode)).map(i => [i.DEven, i]));
-      prices = adjust(adjustPrices, prices, relatedShares);
+      const adjRes = adjust(adjustPrices, prices, relatedShares, getAdjustInfo, getAdjustInfoOnly);
+      if (adjustPrices > 0) prices = adjRes.prices || [];
+      if (shouldGetAdjustInfo) adjustInfo = adjRes.info;
     }
     
     if (!daysWithoutTrade) {
@@ -1001,7 +1048,7 @@ async function getPrices(symbols=[], _settings={}) {
     
     prices = prices.filter(i => +i.DEven > +startDate);
     
-    return prices;
+    return {prices, adjustInfo};
   };
   
   if (csv) {
@@ -1010,13 +1057,17 @@ async function getPrices(symbols=[], _settings={}) {
     
     result.data = selection.map(instrument => {
       if (!instrument) return;
-      let res = headers;
+      const res = {csv: headers, adjustInfo: undefined};
       
-      const prices = getInstrumentPrices(instrument);
-      if (!prices) return res;
-      if (prices === MERGED_SYMBOL_CONTENT) return prices;
+      const insData = getInstrumentData(instrument);
+      if (!insData) return res;
+      if (insData === MERGED_SYMBOL_CONTENT) return insData;
       
-      res += prices
+      const {prices, adjustInfo} = insData;
+      if (getAdjustInfoOnly) return { adjustInfo };
+      if (adjustInfo) res.adjustInfo = adjustInfo;
+      
+      res.csv += prices
         .map(price => 
           columns.map(i => getCell(i.name, instrument, price)).join(csvDelimiter)
         )
@@ -1033,9 +1084,13 @@ async function getPrices(symbols=[], _settings={}) {
       if (!instrument) return;
       const res = Object.fromEntries( columns.map(i => [i.header, []]) );
       
-      const prices = getInstrumentPrices(instrument);
-      if (!prices) return res;
-      if (prices === MERGED_SYMBOL_CONTENT) return prices;
+      const insData = getInstrumentData(instrument);
+      if (!insData) return res;
+      if (insData === MERGED_SYMBOL_CONTENT) return insData;
+      
+      const {prices, adjustInfo} = insData;
+      if (getAdjustInfoOnly) return { adjustInfo };
+      if (adjustInfo) res.adjustInfo = adjustInfo;
       
       for (const price of prices) {
         for (const {header, name} of columns) {

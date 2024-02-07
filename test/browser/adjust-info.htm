@@ -1,0 +1,236 @@
+<head>
+	<meta charset="utf8" />
+	<style>div{font-family:monospace}code{background:#e3e3e3;}</style>
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tabulator-tables@5.5.4/dist/css/tabulator.min.css" />
+</head>
+<script src="https://cdn.jsdelivr.net/npm/big.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jalaali-js/dist/jalaali.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/localforage"></script>
+<script src="../../tse.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dequal"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked@11.2.0/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tabulator-tables@5.5.4/dist/js/tabulator.min.js"></script>
+
+<div id="_basicTests">
+### Integrity of getPrices() result in relation to the options  
+<button id="_btn1" onclick="runBasicTests(); this.disabled=1">run</button>  
+Does result respect the `getAdjustInfo` option? <b class="r">🔲</b>  
+Does result respect the `getAdjustInfoOnly` option? <b class="r">🔲</b>  
+Does result respect the `getAdjustInfo` and `getAdjustInfoOnly` options when `adjustPrices` is set? <b class="r">🔲</b>  
+Does result respect the `getAdjustInfo` option when `csv` option is set? <b class="r">🔲</b>
+</div>
+
+<div>
+	<h3>Comparing internally vs externally adjusted prices</h3>
+	
+	type=<select id="_type">
+		<option value="1">capital increase + dividends</option>
+		<option value="2">capital increase</option>
+	</select>
+	<label><input id="_dwt" type="checkbox" checked />daysWithoutTrade</label>
+	<label><input id="_mss" type="checkbox" checked />mergeSimilarSymbols</label>
+	<label><input id="_alr" type="checkbox" checked />appendLastRaw</label>
+	<button id="_btn2" onclick="comparePrices(+_type.selectedOptions[0].value, ...[_dwt,_mss,_alr].map(i=>i.checked)).then(()=>this.disabled=0); this.disabled=1" disabled>run</button>
+
+<pre>
+Progress:
+    (1/3) getting raw prices <span id="_p1">🔲</span>
+    (2/3) getting internally adjusted prices <span id="_p2">🔲</span>
+    (3/3) adjusting prices externally <span id="_p3">🔲</span>
+
+<span id="_priceComparisonResultHeader"></span>
+<div id="_priceComparisonResultBody"></div>
+</pre>
+
+</div>
+
+<script>
+_basicTests.innerHTML = marked.parse(_basicTests.innerHTML);
+dequal = dequal.dequal;
+//tse.API_URL = 'http://localhost:3000/';
+sym = ['فولاد'];
+syms = [];
+inss = {};
+neq = (a,b,c) => a.map((_,i) => a[i] !== b[i] ? [c[i], a[i], b[i], i] : 0).filter(i=>i);
+sleep = t => new Promise(r => setTimeout(r, t));
+deepcopy = x => JSON.parse(JSON.stringify(x));
+table = undefined;
+(async () => {
+	inss = await tse.getInstruments(true, false, 'Symbol');
+	syms = Object.keys(inss);
+	_btn2.disabled = false;
+})();
+
+
+basicTests = [
+	async function () {
+		let {data:[d1]} = await tse.getPrices(sym, {getAdjustInfo: false});
+		let {data:[d2]} = await tse.getPrices(sym, {getAdjustInfo: true});
+		return !d1.adjustInfo && d2.adjustInfo;
+	},
+	async function () {
+		let {data:[d]} = await tse.getPrices(sym, {getAdjustInfoOnly: true});
+		return d.adjustInfo && !d.close;
+	},
+	async function () {
+		let {data:[d1]} = await tse.getPrices(sym, {adjustPrices: 1, getAdjustInfo: false});
+		let {data:[d2]} = await tse.getPrices(sym, {adjustPrices: 1, getAdjustInfo: true});
+		let {data:[d3]} = await tse.getPrices(sym, {adjustPrices: 1, getAdjustInfoOnly: true});
+		return !d1.adjustInfo && d2.adjustInfo && (!d3.close && d3.adjustInfo);
+	},
+	async function () {
+		let {data:[d]} = await tse.getPrices(sym, {getAdjustInfo: true, csv: true});
+		return d.adjustInfo && d.csv && !d.close;
+	},
+];
+async function runBasicTests() {
+	let rs = _basicTests.querySelectorAll('.r');
+	for (let [i, test] of basicTests.entries()) {
+		let res = await test();
+		let r = rs[i];
+		r.innerText = res ? '✅' : '❌';
+	}
+}
+
+
+async function comparePrices(type, daysWithoutTrade, mergeSimilarSymbols, appendLastRaw) {
+	if (table) { table.destroy(); _priceComparisonResultHeader.innerText=''; };
+	let onprogress = console.log;
+	let columns = [0,2,3,4,5,6]; // open,high,last,low,close
+	
+	_p1.innerText = '⏳';
+	let resRaw = await tse.getPrices(syms, {adjustPrices: 0, getAdjustInfo: true, columns, onprogress, mergeSimilarSymbols, daysWithoutTrade});
+	
+	_p1.innerText = resRaw.err ? '❌' : '✅';
+	console.clear();
+	
+	_p2.innerText = '⏳';
+	let resAdj = await tse.getPrices(syms, {adjustPrices: type, columns, onprogress, mergeSimilarSymbols, daysWithoutTrade});
+	_p2.innerText = resAdj.err ? '❌' : '✅';
+	console.clear();
+	
+	let raws = resRaw.data;
+	let adjs = resAdj.data;
+	
+	let res = [];
+	_p3.innerText = '⏳';
+	await sleep(100);
+	
+	for (let i=0; i<raws.length; i++) {
+		console.log(i+1);
+		let sym = syms[i];
+		let ins = inss[sym];
+		let raw = raws[i];
+		let adjInternal = adjs[i];
+		
+		if (raw === undefined || raw === 'merged' || raw.date.length === 0) continue;
+		
+		let adjustInfo = deepcopy(raw.adjustInfo);
+		
+		let { validGPLRatio, events } = adjustInfo;
+		if (!validGPLRatio) continue;
+		
+		let adjExternal = adjust(raw, events, type, appendLastRaw);
+		
+		let isEqual = dequal(adjInternal, adjExternal);
+		if (!isEqual) {
+			let neqs = neq(adjInternal.close, adjExternal.close, adjExternal.date);
+			if (!neqs.length) {// prices other than "close" might differ
+				let ks = ['open','high','low','last'];
+				let prices = ks.map(k => neq(adjInternal[k], adjExternal[k], adjExternal.date));
+				let str = ks.map((v,i)=>prices[i].length ? v+'='+prices[i] : 0).filter(i=>i).join(' ');
+				res.push([sym, 'neq other prices', str, '']);
+				continue;
+			};
+			let [count, first, last] = [neqs.length, neqs[0], neqs[neqs.length-1]];
+			let [date0, should0, is0] = first;
+			let [date1, should1, is1] = last;
+			let f = (...a) => a.join(' - ');
+			res.push([sym, count, f(date0,is0,should0), f(date1,is1,should1)]);
+		}
+	}
+	_p3.innerText = '✅';
+	console.clear();
+	
+	let err = res.length;
+	_priceComparisonResultHeader.innerText = (err?'❌':'✅') + ' errors: '+ err +'\n';
+	
+	r = res;
+	if (r.length) {
+		let headers = ['sym','neqlen','first date-is-shouldBe','last date-is-shouldBe'];
+		makeTable(r, headers);
+	}
+}
+
+function adjust(prices, adjustEvents, type, appendLastRaw) {	
+	if (type === 1) {
+		adjustEvents.reduce((lastCoef, i) => {
+			let coef = lastCoef.times(i.priceAfterEvent).div(i.priceBeforeEvent);
+			i.coef = coef.toString();
+			return coef;
+		}, Big('1.0'));
+	} else if (type === 2) {
+		adjustEvents = adjustEvents.filter(i => i.type === 'capital increase');
+		
+		adjustEvents.reduce((lastCoef, i) => {
+			let coef = lastCoef.times(i.oldShares).div(i.newShares);
+			i.coef = coef.toString();
+			return coef;
+		}, Big('1.0'));
+	}
+	
+	adjustEvents.sort((a, b) => a.date - b.date);
+	adjustEvents = [ ...adjustEvents, {date: Infinity, coef: 1} ];
+	
+	const k1 = ['open', 'last', 'close'];
+	const k2 = ['high', 'low'];
+	const adj = {date:[],open:[],high:[],low:[],last:[],close:[]};
+	
+	let j = 0;
+	let adjustEvent = adjustEvents[j];
+	let eventDate = +adjustEvent.date;
+	let coef = adjustEvent.coef;
+	let len = prices.date.length;
+	for (let i=0, _len=appendLastRaw?len-1:len; i<_len; i++) {
+		const priceDate = prices.date[i];
+		
+		while (priceDate > eventDate) {
+			adjustEvent = adjustEvents[++j];
+			eventDate = +adjustEvent.date;
+			coef = adjustEvent.coef;
+		}
+		
+		adj.date.push(priceDate);
+		
+		k1.forEach(k => adj[k].push(
+			+Big(prices[k][i]).times(coef).round(2).toFixed(2)
+		));
+		
+		k2.forEach(k => adj[k].push(
+			+Big(prices[k][i]).times(coef).round().toString()
+		));
+	}
+	
+	if (appendLastRaw) {
+		let lastIdx = len-1;
+		[...k1, ...k2, 'date'].forEach(k => adj[k].push(prices[k][lastIdx]) );
+	}
+	
+	return adj;
+}
+
+function makeTable(rows, headers) {
+	let data = rows.map(row => Object.fromEntries(
+		headers.map((header,i) => [ header, row[i] ])
+	));
+	let columns = headers.map(i => ({title: i, field: i}));
+	table = new Tabulator(_priceComparisonResultBody, {data, columns});
+	table.on('tableBuilt', () => {
+		table.setSort([
+			{column: headers[0], dir: 'asc'},
+			{column: headers[1], dir: 'asc'},
+		]);
+	});
+}
+
+</script>

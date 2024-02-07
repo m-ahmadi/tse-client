@@ -251,8 +251,10 @@ if (cmd.opts().cacheDir) { handleCacheDir(cmd.opts().cacheDir); return; }
     const datalen = data.length;
     const tickAmount = 14 / datalen;
     
-    data.forEach((file, i) => {
-      if (file === undefined) { progress.tick(tickAmount); return; }
+    data.forEach((item, i) => {
+      if (item === undefined) { progress.tick(tickAmount); return; }
+      const {csv} = item;
+      const file = item === 'merged' ? item : csv;
       const sym = symbols[i];
       const instrument = symins[sym];
       const name = safeWinFilename( getFilename(fileName, instrument, priceAdjust) );
