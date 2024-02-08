@@ -408,12 +408,14 @@ Update (if needed) and return prices of instruments.
 	+ **`csvDelimiter`:** A cell delimiter character to use when generating CSV results. Default: `','`
 	+ **`onprogress`:** A callback function which gets called with a number indicating the progress. Default: `undefined`
 	+ **`progressTotal`:** A number to use as the completion point of progress. Default: `100`
+	+ **`debugMergeSimilarSymbols`:** Get some stats on merged symbols. Default: `false`
 
 **return:** `Result`
 ```typescript
 interface Result {
   data:   Array<ClosingPrice>;
   error?: CustomError;
+	debug?: DebugResult;
 }
 
 interface ClosingPrice {
@@ -470,6 +472,32 @@ interface CustomError {
   symbols?: string[];
   fails?:   string[];
   succs?:   string[];
+}
+
+interface DebugResult {
+  mergeSets?: DebugMergeSet[];
+}
+interface DebugMergeSet {
+  mergeItems: MergeItem[];
+  hasOverlap: boolean;
+  statsAtEachOverlap: MergeOverlapStats[];
+}
+interface MergeItem {
+  sym: string;
+  code: string;
+  order: number;
+  dayFirst: number;
+  dayLast: number;
+}
+interface MergeOverlapStats {
+  trimForw: MergeOverlapDirectionalStats;
+  trimBack: MergeOverlapDirectionalStats;
+}
+interface MergeOverlapDirectionalStats {
+  count: number;
+  adjs: number;
+  trades: number;
+  fixable: boolean;
 }
 
 enum AdjustOption {
