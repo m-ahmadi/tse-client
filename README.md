@@ -389,7 +389,7 @@ interface Instruments {
 Update (if needed) and return prices of instruments.  
 - **`symbols`:** An array of *`Farsi`* instrument symbols.  
 - **`settings`:** A settings object.
-	+ **`columns`:** Select which `ClosingPrice` props to return and specify optional string for the prop.  
+	+ **`columns`:** Select which `ClosingPrice` props (except `adjustInfo`) to return and specify optional string for the prop.  
 		For example: `[ [0,'DATE'], [6,'CLOSE'], [7,'VOL'] ]`  
 		Default: `[0,2,3,4,5,6,7,8,9]`  
 		See [`columnList`](#tsecolumnlist) for the list of all column indexes and their names.
@@ -397,6 +397,8 @@ Update (if needed) and return prices of instruments.
 		`0`: None &emsp; &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;(*`بدون تعدیل`*)  
 		`1`: Capital Increase + Dividends &emsp; (*`افزایش سرمایه + سود نقدی`*)  
 		`2`: Capital Increase &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;(*`افزایش سرمایه`*)
+	+ **`getAdjustInfo`:** If `true`, an additional property named `adjustInfo` will be appended to the `ClosingPrice` object, which contains all the information needed to manually adjust prices. Default: `false`
+	+ **`getAdjustInfoOnly`:** Get `adjustInfo` data but without the rest of `ClosingPrice` data. Default: `false`
 	+ **`startDate`:** Only return prices after this date. Min: `'20010321'`. Default: `'20010321'`
 	+ **`daysWithoutTrade`:** Whether to include days that have `0` trades. Default: `false`
 	+ **`mergeSimilarSymbols`:** Whether to merge the data of similar [renamed symbols](#renamed-symbols). Default: `true`
@@ -431,11 +433,25 @@ interface ClosingPrice {
   name:        string[];  // string
   namelatin:   string[];  // string
   companycode: string[];  // string
+  adjustInfo?: {events: AdjustEvent[], validGPLRatio: boolean};
+}
+
+interface AdjustEvent {
+  date:             string;
+  type:             'capital increase' | 'dividend';
+  priceBeforeEvent: string;
+  priceAfterEvent:  string;
+  dividend?:        string; // only when `type` is 'dividend'
+  increasePct?:     string; // only when `type` is 'capital increase'
+  oldShares?:       string; // only when `type: is 'capital increase'
+  newShares?:       string; // only when `type` is 'capital increase'
 }
 
 interface PriceSettings {               
   columns?:                     Array<[number, string?]>;
   adjustPrices?:                AdjustOption;
+  getAdjustInfo?:               boolean;
+  getAdjustInfoOnly?:           boolean;
   daysWithoutTrade?:            boolean;
   startDate?:                   string;
   mergeSimilarSymbols?:         boolean;
@@ -473,6 +489,8 @@ enum ErrorType {
 const defaultSettings = {
   columns:             [0,2,3,4,5,6,7,8,9],
   adjustPrices:        0,
+  getAdjustInfo:       false,
+  getAdjustInfoOnly:   false,
   daysWithoutTrade:    false,
   startDate:           '20010321',
   mergeSimilarSymbols: true,
