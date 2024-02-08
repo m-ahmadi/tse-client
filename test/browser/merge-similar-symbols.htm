@@ -1,48 +1,171 @@
 <head>
 	<meta charset="utf8" />
-	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/uplot/dist/uPlot.min.css" />
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tabulator-tables@5.5.4/dist/css/tabulator.min.css" />
+	<link rel="stylesheet" href="lib/uPlot.min.css" />
+	<link rel="stylesheet" href="lib/tabulator.min.css" />
+	<style>div{font-family:monospace}.red{color:red}.green{color:lime}.box{border:1px solid grey}.rr{color:red}</style>
+	<script src="https://cdn.jsdelivr.net/npm/big.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/jalaali-js/dist/jalaali.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/localforage"></script>
+	<script src="../../tse.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dequal"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked@11.2.0/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tabulator-tables@5.5.4/dist/js/tabulator.min.js"></script>
 </head>
-<script src="https://cdn.jsdelivr.net/npm/big.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/jalaali-js/dist/jalaali.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/localforage"></script>
-<script src="../../tse.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/uplot/dist/uPlot.iife.min.js"></script>
+
+<div id="_tests">
+### Tests <button id="_btn1" onclick="runTests().then(()=>this.disabled=0); this.disabled=1;">run</button>
+Does length of merged root instrument equals sum of the lengths of all unmerged instruments? <b class="r">🔲</b>  
+Does content of all merged leaf instruments equals the "merged" string? <b class="r">🔲</b>  
+Do the dates of unmerged instruments equal the corresponding subsection in the merged root instrument? <b class="r">🔲</b>  
+</div>
+
+<div id="_reports">
+### Reports <button id="_btn2" onclick="runReports().then(()=>this.disabled=0); this.disabled=1;">run</button>
+symbols that cannot be merged "As is" (problematic symbols): <b class="rr">❓</b>
+<div class="r box"></div>
+
+"problematic symbols", fixable by non-trade trim: <b class="rr">❓</b>
+<div class="r box"></div>
+
+"problematic symbols", unfixable by non-trade trim (fixable with trade trim): <b class="rr">❓</b>
+<div class="r box"></div>
+
+"problematic symbols", unfixable even by trade trim (due to existance of adjust-info in trim): <b class="rr">❓</b>
+<div class="r box"></div>
+</div>
 
 <script>
-(async () => {
-	r = await tse.getPrices(['ذوب', 'ذوب-ق2'], {mergeSimilarSymbols: 0});
-	console.log(r.data);
+[_tests, _reports].forEach(i => i.innerHTML = marked.parse(i.innerHTML));
+//tse.API_URL = 'http://localhost:3000/';
+dequal = dequal.dequal;
+sum = a => a.reduce((r,i) => r+=i);
+log = console.log;
+
+async function runTests() {
+	let mergeSet = ['ذوب', 'ذوب-ق2'];
 	
-	r = await tse.getPrices(['ذوب', 'ذوب-ق2'], {mergeSimilarSymbols: 1});
-	console.log(r.data);
+	let daysWithoutTrade = false;
+	let adjustPrices = 1;
+	let r1 = await tse.getPrices(mergeSet, {mergeSimilarSymbols: false, daysWithoutTrade, adjustPrices});
+	let r2 = await tse.getPrices(mergeSet, {mergeSimilarSymbols: true, daysWithoutTrade, adjustPrices});
+	if (r1.error || r2.error) throw Error('TSE Error.');
 	
+	let [root, leafs] = [mergeSet[0], mergeSet.slice(1)];
+	let [rootIdx, leafIdxs] = [ mergeSet.indexOf(root), leafs.map(i => mergeSet.indexOf(i)) ];
 	
-	sym = 'ذوب';
+	let [unmergedItems, mergedItems] = [r1.data, r2.data];
 	
-	r = await tse.getPrices([sym], {adjustPrices: 0});
-	plot(r.data[0], sym+' - adjust 0');
+	let unmergedRoot = unmergedItems[rootIdx].date;
+	let unmergedLeafs = leafIdxs.map(idx => unmergedItems[idx].date);
 	
-	r = await tse.getPrices([sym], {adjustPrices: 2});
-	plot(r.data[0], sym+' - adjust 2');
+	let mergedRoot = mergedItems[rootIdx].date;
+	let mergedLeafs = leafIdxs.map(idx => mergedItems[idx]);
 	
-	r = await tse.getPrices([sym], {adjustPrices: 1});
-	plot(r.data[0], sym+' - adjust 1');
-})();
+	let tests = [
+		() => unmergedRoot.length + sum(unmergedLeafs.map(i=>i.length)) === mergedRoot.length,
+		() => mergedLeafs.every(i => i === 'merged'),
+		() => {
+			let getLen = o => o.date.length;
+			let res = unmergedItems.toReversed().map((unmergedItem,idx,a) => {
+				const len = getLen(unmergedItem);
+				let start, end;
+				if (idx === 0) {
+					[start, end] = [0, len];
+				} else {
+					start = sum(a.slice(0, idx).map(getLen));
+					end = start + len;
+				}
+				const mergedSlice = mergedRoot.slice(start, end);
+				return dequal(mergedSlice, unmergedItem.date);
+			});
+			return res.every(i=>i);
+		}
+	];
+	
+	let rs = _tests.querySelectorAll('.r');
+	for (let [i, test] of tests.entries()) {
+		let res = test();
+		let r = rs[i];
+		r.innerText = res ? '✅' : '❌';
+	}
+}
 
 
-function plot(d, title) {
-	const colors = [, 'black', 'blue'];
-	const labels = [, 'close', 'last'];
-	const data = [d.date, d.close, d.last];
-	new uPlot({
-		width: 1850,
-		height: 200,
-		series: data.map((v,i) => ( i === 0 ? {} : {stroke: colors[i], label: labels[i]} )),
-		legend: {show: true},
-		title
-	}, [
-		data[0].map(i => (i=''+i, Date.UTC(+i.slice(0,4), +i.slice(4,6)-1, +i.slice(6,8)) / 1000)),
-		...data.slice(1)
-	], document.body);
+async function runReports() {
+	let inss = await tse.getInstruments(true, false, 'Symbol');
+	let syms = Object.keys(inss);
+	
+	let mergeSimilarSymbols = true;
+	let daysWithoutTrade = true;
+	let getAdjustInfo = false;
+	let debugMergeSimilarSymbols = true;
+	let onprogress = console.log;
+	
+	let res = await tse.getPrices(syms, {mergeSimilarSymbols, daysWithoutTrade, getAdjustInfo, debugMergeSimilarSymbols, onprogress});
+	let { mergeSets } = res.debug;
+	
+	let reports = [
+		i => i.hasOverlap,
+		i => i.hasOverlap && i.statsAtEachOverlap.every(({trimBack:b,trimForw:f}) => (b.fixable && b.trades==0) || (f.fixable && f.trades==0) ),
+		i => i.hasOverlap && i.statsAtEachOverlap.every(({trimBack:b,trimForw:f}) => (b.fixable && b.trades>0) || (f.fixable && f.trades>0) ),
+		i => i.hasOverlap && i.statsAtEachOverlap.some(({trimBack:b,trimForw:f}) => !b.fixable && !f.fixable ),
+	];
+	
+	let rs = _reports.querySelectorAll('.r');
+	let rrs = _reports.querySelectorAll('.rr');
+	
+	for (let [i, predicate] of reports.entries()) {
+		let rows = mergeSets.filter(predicate).map(mkrow);
+		rrs[i].innerText = rows.length;
+		makeTable(rows, rs[i]);
+	}
+}
+
+function mkrow({mergeItems}) {
+	return [mergeItems[0].sym, mergeItems.length, getBounds(mergeItems), getJunctions(mergeItems), getFaultyJunctions(mergeItems)];
+}
+
+function getBounds(mergeItems) {
+	const mergeItemsReversed = mergeItems.toReversed();
+	const bounds = mergeItemsReversed.map(i => [i.dayFirst, i.dayLast]);
+	const span = i => '<span class="red">'+i+'</span>';
+	bounds.forEach(([currFirst], i, a) => {
+		if (i < 1) return;
+		const [, prevLast] = a[i-1];
+		if (currFirst < prevLast) {
+			a[i][0] = span(currFirst);
+			a[i-1][1] = span(prevLast);
+		}
+	});
+	return bounds.map(i=>i.join('-')).join(' , ');
+}
+
+function getJunctions(mergeItems) {
+	return mergeItems.toReversed().map((v,i,a) => i>0 && [a[i-1].dayLast, v.dayFirst].join('-')).filter(i=>i).join(' , ');
+}
+
+function getFaultyJunctions(mergeItems) {
+	return mergeItems.map((curr, currIdx, a) => {
+		if (currIdx < 1) return;
+		const prevIdx = currIdx - 1;
+		const prev = a[prevIdx];
+		const junction = [currIdx, prevIdx];
+		return curr.dayLast > prev.dayFirst ? junction : undefined;
+	}).filter(i=>i).map(i=>i.map(j=>j+1).join('-')).toReversed().join(' , ');
+}
+
+function makeTable(rows, el) {
+	const headers = ['sym', 'n of items', 'bounds of items', 'junctions between items', 'index of faulty junctions (1-based)'];
+	const data = rows.map(row => Object.fromEntries(
+		headers.map((header,i) => [ header, row[i] ])
+	));
+	const columns = headers.map(i => ({ title: i, field: i, formatter:'html'}));
+	const table = new Tabulator(el, {data, columns});
+	table.on('tableBuilt', () => {
+		table.setSort([
+			{column: headers[0], dir: 'asc'},
+		]);
+	});
 }
 </script>

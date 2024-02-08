@@ -440,7 +440,8 @@ const defaultSettings = {
   csvHeaders: true,
   csvDelimiter: ',',
   onprogress: undefined,
-  progressTotal: 100
+  progressTotal: 100,
+  debugMergeSimilarSymbols: false,
 };
 
 let lastdevens   = {};
@@ -541,7 +542,7 @@ function adjust(cond, closingPrices, shares, getInfo, getInfoOnly) {
       }
       
       adjustedClosingPrices.reverse();
-
+      
       res = {
         prices: getInfoOnly ? undefined : adjustedClosingPrices,
         info: shouldGetInfo ? info : undefined,
@@ -1003,12 +1004,128 @@ async function getPrices(symbols=[], _settings={}) {
   const pi = Big(ptot).mul(0.20).div(selection.length);
   
   const storedPricesMerged = {};
+  const { debugMergeSimilarSymbols } = settings;
   
   if (mergeSimilarSymbols) {
-    for (const [, merge] of [...merges]) {
-      const codes = merge.map(i => i.code);
-      const [latest] = codes;
-      storedPricesMerged[latest] = codes.map(code => storedPrices[code]).reverse().filter(i=>i).join('\n');
+    let rowsByCode = new Map();
+    const cpKeys = Object.keys(new ClosingPrice(Array(11).join(',')));
+    const debugMergeSets = [];
+    for (const [, mergeItems] of [...merges]) {
+      for (let mergeItem of mergeItems) {
+        const { code } = mergeItem;
+        const storedData = storedPrices[code];
+        if (!storedData) { rowsByCode.set(code, []); continue; }
+        const rows = storedData.split('\n').map(i => new ClosingPrice(i));
+        rowsByCode.set(code, rows);
+        const len = rows.length;
+        mergeItem.dayFirst = len && +rows[0].DEven;
+        mergeItem.dayLast = len && +rows.slice(-1)[0].DEven;
+      }
+      
+      const mergeItemsReversed = [...mergeItems].reverse();
+      const codes = mergeItemsReversed.map(i => i.code);
+      const latestCode = codes[codes.length-1];
+      const bounds = mergeItemsReversed.map(i=> [i.dayFirst, i.dayLast]).flat();
+      const boundsOverlap = bounds.some((v,i,a) => i>0 && v < a[i-1]);
+      const debugMergeSet = { mergeItems };
+      
+      if (boundsOverlap) {
+        const sum = a => a.reduce((r,i)=>r+= i);
+        const equ = (a,b) => cpKeys.every(k => a[k] === b[k]);
+        const instrumentsRows = codes.map(code => rowsByCode.get(code));
+        const a = instrumentsRows.flat();
+        const m = new Map();
+        m.set(a[0].DEven, a[0]);
+        for (let i=1, len=a.length-1; i<len; i++) {
+          const [prev, curr] = [a[i-1], a[i]];
+          const {DEven: day} = curr;
+          let select = curr;
+          let existing = m.get(day);
+          if (existing) {
+            const conflicts = [existing, curr].map(i => [i, i.ZTotTran, Math.abs(i.InsCode - prev.InsCode)]);
+            const [[higherTradeLowerDistance]] = conflicts.sort((a,b)=>a[2]-b[2]).sort((a,b)=>b[1]-a[1]);
+            const row = {...higherTradeLowerDistance};
+            const trades = conflicts.map(i => +i[0].ZTotTran);
+            row.ZTotTran = ''+sum(trades);
+            select = row;
+          }
+          m.set(day, select);
+          const hasAdj = curr.InsCode === prev.InsCode && curr.PriceYesterday !== prev.PClosing;
+          if (hasAdj) {
+            const {DEven: yday} = prev;
+            let select = prev;
+            let existing = m.get(yday);
+            if (existing) {
+              if (equ(existing, prev)) continue;
+              if (existing.PClosing !== prev.PClosing) {
+                const trades = [existing, prev].map(i => +i.ZTotTran);
+                const row = {...prev};
+                row.ZTotTran = ''+sum(trades);
+                select = row;
+              } else {
+                const conflicts = [existing, prev].map(i => [i, i.ZTotTran, Math.abs(i.InsCode - curr.InsCode)]);
+                const [[higherTradeLowerDistance]] = conflicts.sort((a,b)=>a[2]-b[2]).sort((a,b)=>b[1]-a[1]);
+                const row = {...higherTradeLowerDistance};
+                const trades = conflicts.map(i => +i[0].ZTotTran);
+                row.ZTotTran = ''+sum(trades);
+                select = row;
+              }
+            }
+            m.set(yday, select);
+          }
+        }
+        
+        if (debugMergeSimilarSymbols) {
+          const withAdj = (v,i,a)=> i>0 && v.PriceYesterday !== a[i-1].PClosing;
+          const withTrade = i=> i.DEven !== '0';
+          const overlapIndexes = a.map((v,i,a)=> i>0 && v.DEven < a[i-1].DEven ? i : -1).filter(i=>i>-1);
+          const statsAtEachIndex = overlapIndexes.map(i => {
+            const _prev = +a[i-1].DEven;                             // lower date of overlap
+            const forwAll = a.slice(i);                              // from overlap till end
+            const toTrimForw = forwAll.filter(i => i.DEven < _prev); // from overlap till where overlap resolves
+            const trimForwCount = toTrimForw.length;
+            const adjsInTrimForw = toTrimForw.filter(withAdj).length;
+            const trimForw = {
+              count:   trimForwCount,
+              adjs:    adjsInTrimForw,
+              trades:  toTrimForw.filter(withTrade).length,
+              fixable: trimForwCount > 0 && adjsInTrimForw === 0,
+            };
+            
+            const _next = +a[i].DEven;                                // upper date of overlap
+            const backAll = a.slice(0, i);                            // from start till overlap
+            const toTrimBack = backAll.filter(i => i.DEven <= _next); // from start till where overlap resolves
+            const trimBackCount = toTrimBack.length;
+            const adjsInTrimBack = toTrimBack.filter(withAdj).length;
+            const trimBack = {
+              count:   trimBackCount,
+              adjs:    adjsInTrimBack,
+              trades:  toTrimBack.filter(withTrade).length,
+              fixable: trimBackCount > 0 && adjsInTrimBack === 0,
+            };
+            
+            return {atIndex: i, trimForw, trimBack};
+          });
+          
+          debugMergeSet.hasOverlap = true;
+          debugMergeSet.statsAtEachOverlap = statsAtEachIndex;
+        }
+        
+        const fixedRows = [...m.values()];
+        fixedRows.sort((a,b) => a.DEven - b.DEven);
+        const fixedCsv = fixedRows.map(i => cpKeys.map(k=>i[k]).join(',') ).join('\n');
+        storedPricesMerged[latestCode] = fixedCsv;
+      } else {
+        const mergedCsv = codes.map(code => storedPrices[code]).filter(i=>i).join('\n');
+        storedPricesMerged[latestCode] = mergedCsv;
+      }
+      
+      if (debugMergeSimilarSymbols) debugMergeSets.push(debugMergeSet);
+    }
+    
+    rowsByCode = undefined;
+    if (debugMergeSimilarSymbols) {
+      result.debug = {mergeSets: debugMergeSets};
     }
   }
   
