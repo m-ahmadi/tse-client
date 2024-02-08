@@ -249,13 +249,14 @@ if (cmd.opts().cacheDir) { handleCacheDir(cmd.opts().cacheDir); return; }
     
     const symins = await tse.getInstruments(true, false, 'Symbol');
     const datalen = data.length;
+    const tickAmount = 14 / datalen;
     
     data.forEach(({csv}, i) => {
       const sym = symbols[i];
       const instrument = symins[sym];
       const name = safeWinFilename( getFilename(fileName, instrument, priceAdjust) );
       writeFileSync(join(fileOutdir, name+'.'+fileExtension), bom+csv, fileEncoding);
-      progress.tick(14/datalen);
+      progress.tick(tickAmount);
     });
     
     if (!progress.complete) progress.tick(progress.total - progress.curr);
