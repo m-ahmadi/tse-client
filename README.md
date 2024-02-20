@@ -45,7 +45,7 @@ The `0.x` and `1.x` versions were a direct port of the [official Windows app](ht
 		- [`client`](#client)
 		- [`misc`](#misc)
 		- [`shareholder`](#shareholder)
-- [Some Notes](#some-notes)	
+- [Note](#note)	
 	+ [تغییر نمادهای متشابه](#renamed-symbols)
 	
 # CLI
@@ -772,7 +772,7 @@ shares | sharespot     | change | companycode | companyname
 -------|---------------|--------|-------------|-------------
 تعداد سهم | درصد از کل سهام | نوع تغییر | کد شرکت     | نام شرکت
 
-# Some Notes
+# Note
 - `Instrument.Symbol` characters are cleaned from `zero-width` characters, `ك` and  `ي`.  
 - The price adjustment algorithm is still a direct port of the [official Windows app](http://cdn.tsetmc.com/Site.aspx?ParTree=111A11).
 - In Browser, the `InstrumentAndShare` data is stored in `localStorage`.
