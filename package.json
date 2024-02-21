@@ -1,6 +1,6 @@
 {
   "name": "tse-client",
-  "version": "2.25.0",
+  "version": "2.25.1",
   "description": "A client for fetching stock data from the Tehran Stock Exchange (TSETMC). Works in Browser, Node and as CLI.",
   "main": "index.js",
   "bin": {
