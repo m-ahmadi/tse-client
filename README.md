@@ -778,7 +778,7 @@ shares | sharespot     | change | companycode | companyname
 - In Browser, the `InstrumentAndShare` data is stored in `localStorage`.
 - In Browser, the `ClosingPrices` data is stored in `indexedDB`.
 - In Node, data compression is done with the `zlib` module.
-- #### Renamed Symbols
+- ### Renamed Symbols
   :برای منحصر به فرد بودن تمامی نمادها، نمادهای متشابه بر اساس الگوریتم زیر تغییر داده می شوند
   ```
   در صورت مواجه با نمادهای متشابه
