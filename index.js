@@ -258,7 +258,9 @@ if (cmd.opts().cacheDir) { handleCacheDir(cmd.opts().cacheDir); return; }
     const tickAmount = 14 / datalen;
     const adjustInfos = {};
     
-    data.forEach(({csv, adjustInfo}, i) => {
+    data.forEach((item, i) => {
+      if (item === undefined) { progress.tick(tickAmount); return; }
+      const {csv, adjustInfo} = item;
       const sym = symbols[i];
       const instrument = symins[sym];
       const name = safeWinFilename( getFilename(fileName, instrument, priceAdjust) );
