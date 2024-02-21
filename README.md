@@ -160,15 +160,15 @@ tse i --cols "Symbol,Name,CIsin" --bom > out.csv  # all  instruments,  some colu
 tse i -F "i=51" --cols "LatinSymbol,InstrumentID" # some instruments,  some columns
 tse i -F "i=51" --cols --header                   # some instruments,  all  columns
 ```
-#### Disable caching:
-```shell
-tse ذوب -k
-```
 #### Similar [renamed symbols](#renamed-symbols) are merged by default:
 ```shell
 tse ذوب       # merged data of ذوب and ذوب-ق2
 tse ذوب -u    # only the data of ذوب
 tse ذوب-ق2 -u # only the data of ذوب-ق2 
+```
+#### Disable caching:
+```shell
+tse ذوب -k
 ```
 #### Save settings:
 ```shell
