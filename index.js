@@ -25,6 +25,8 @@ const defaultSettings = {
   fileHeaders:           true,
   cache:                 true,
   mergedSymbols:         true,
+  getAdjustInfo:         false,
+  getAdjustInfoOnly:     false,
   intraday: {
     symbols:          [],
     startDate:        '1d',
@@ -89,6 +91,8 @@ cmd
   .option('-H, --file-no-headers',           'Boolean. Generate files without the header row. default: false')
   .option('-k, --no-cache',                  'Boolean. Do not cache the data. default: false')
   .option('-u, --no-merged-symbols',         'Boolean. Do not merge the data of similar symbols. default: false')
+  .option('-w, --get-adjust-info',           'Boolean. Output adjust info as well. default: false')
+  .option('-q, --get-adjust-info-only',      'Boolean. Only output adjust info. default: false')
   .option('--save',                          'Boolean. Save options for later use. default: false')
   .option('--save-reset',                    'Boolean. Reset saved options back to defaults. default: false')
   .option('--cache-dir [path]',              'Show or change the location of cache directory.'+t+'if [path] is provided, new location is set but'+t+'existing content is not moved to the new location.')
@@ -171,7 +175,7 @@ if (cmd.opts().cacheDir) { handleCacheDir(cmd.opts().cacheDir); return; }
   if (symbols.length) {
     const progress = new Progress(':bar :percent (Elapsed: :elapsed s)', {total: 100, width: 18, complete: '█', incomplete: '░', clear: true});
     
-    const { priceColumns, priceDaysWithoutTrade, fileDelimiter, fileHeaders, fileOutdir, fileExtension, cache, mergedSymbols } = settings;
+    const { priceColumns, priceDaysWithoutTrade, fileDelimiter, fileHeaders, fileOutdir, fileExtension, cache, mergedSymbols, getAdjustInfo, getAdjustInfoOnly } = settings;
     let { priceStartDate, priceAdjust, fileName, fileEncoding } = settings;
     priceStartDate = parseDateOption(priceStartDate);
     priceAdjust    = +priceAdjust;
@@ -205,7 +209,9 @@ if (cmd.opts().cacheDir) { handleCacheDir(cmd.opts().cacheDir); return; }
       onprogress:          (n) => progress.tick(n - progress.curr),
       progressTotal:       86,
       cache,
-      mergeSimilarSymbols: mergedSymbols
+      mergeSimilarSymbols: mergedSymbols,
+      getAdjustInfo,
+      getAdjustInfoOnly,
     };
     const { error, data } = await tse.getPrices(symbols, _settings);
     
@@ -250,17 +256,26 @@ if (cmd.opts().cacheDir) { handleCacheDir(cmd.opts().cacheDir); return; }
     const symins = await tse.getInstruments(true, false, 'Symbol');
     const datalen = data.length;
     const tickAmount = 14 / datalen;
+    const adjustInfos = {};
     
     data.forEach((item, i) => {
       if (item === undefined) { progress.tick(tickAmount); return; }
-      const {csv} = item;
-      const file = item === 'merged' ? item : csv;
+      const isMerged = item === 'merged';
+      const {csv, adjustInfo} = item;
+      const file = isMerged ? item : csv;
       const sym = symbols[i];
       const instrument = symins[sym];
       const name = safeWinFilename( getFilename(fileName, instrument, priceAdjust) );
-      writeFileSync(join(fileOutdir, name+'.'+fileExtension), bom+file, fileEncoding);
+      adjustInfos[sym] = isMerged ? item : adjustInfo;
+      if (!getAdjustInfoOnly) {
+        writeFileSync(join(fileOutdir, name+'.'+fileExtension), bom+file, fileEncoding);
+      }
       progress.tick(tickAmount);
     });
+    
+    if (getAdjustInfo || getAdjustInfoOnly) {
+      writeFileSync(join(fileOutdir, 'adjust-info.json'), JSON.stringify(adjustInfos));
+    }
     
     if (!progress.complete) progress.tick(progress.total - progress.curr);
     

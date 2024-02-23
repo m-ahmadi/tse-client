@@ -166,6 +166,11 @@ tse ذوب       # merged data of ذوب and ذوب-ق2
 tse ذوب -u    # only the data of ذوب
 tse ذوب-ق2 -u # only the data of ذوب-ق2 
 ```
+#### Get price adjustment data:
+```shell
+tse فولاد -w # get adjust info      (with    price data)
+tse فولاد -q # get adjust info only (without price data)
+```
 #### Disable caching:
 ```shell
 tse ذوب -k
