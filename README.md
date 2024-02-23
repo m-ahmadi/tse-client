@@ -783,12 +783,17 @@ shares | sharespot     | change | companycode | companyname
 - In Browser, the `InstrumentAndShare` data is stored in `localStorage`.
 - In Browser, the `ClosingPrices` data is stored in `indexedDB`.
 - In Node, data compression is done with the `zlib` module.
+
+<div dir="rtl">
+
 - ### Renamed Symbols
-  :برای منحصر به فرد بودن تمامی نمادها، نمادهای متشابه بر اساس الگوریتم زیر تغییرنام داده می شوند
+  برای منحصر به فرد بودن تمامی نمادها، نمادهای متشابه بر اساس الگوریتم زیر تغییرنام داده می شوند:
   ```
   در صورت مواجه با نمادهای متشابه
       نمادهای متشابه بر اساس آخرین روزی که فعال بوده اند مرتب شده، سپس
       نمادی که دارای جدیدترین تاریخ است، دست نخورده باقی مانده، و
       به باقی نمادها یک خط تیره "-" و حرف "ق" و عدد جایگاه نماد در لیست مرتب شده اضافه می شود
   ```
-  .نماد های تغییرنام داده شده را نمایش می دهد `tse ls -R` فرمان
+  نماد های تغییرنام داده شده را نمایش می دهد `tse ls -R` فرمان.
+
+</div>
