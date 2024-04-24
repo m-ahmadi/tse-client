@@ -7,7 +7,7 @@
 <button id="_add" onclick="addChart(undefined, _sym.value, +_w.value, +_h.value, +_b.value).then(()=>setElems(1)); setElems(0);" disabled>add</button>
 <input type="search" id="_sym" list="_syms" onfocus="!_syms.options.length && (loadSyms().then(()=>this.disabled=0), this.disabled=1); _add.disabled=!this.value" onclick="_add.disabled=!this.value" oninput="_add.disabled=!this.value" />
 <datalist id="_syms"></datalist>
-cols<input id="_cols" type="number" style="width:40px;" min="1" step="1" value="3" onchange="_charts.style.gridTemplateColumns = Array(+this.value).fill('auto').join(' '); persist.cols = +this.value" />
+cols<input id="_cols" type="number" style="width:40px;" min="1" step="1" value="3" onchange="_charts.style.gridTemplateColumns = Array(+this.value).fill('auto').join(' '); persist.cols = +this.value; _save.disabled=false;" />
 <input id="_w" type="number" min="1" value="600">
 <input id="_h" type="number" min="1" value="300">
 last<input id="_b" type="number" min="1" value="6" style="width:40px;">month(s)
