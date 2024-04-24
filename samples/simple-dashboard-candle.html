@@ -4,8 +4,8 @@
 	<script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.0.1/dist/lightweight-charts.standalone.production.js"></script>
 </head>
 
-<button id="_add" onclick="addChart(undefined, _sym.value, +_w.value, +_h.value, +_b.value).then(()=>setElems(1)); setElems(0);" disabled>add</button>
-<input type="search" id="_sym" list="_syms" onfocus="!_syms.options.length && (loadSyms().then(()=>this.disabled=0), this.disabled=1); _add.disabled=!this.value" onclick="_add.disabled=!this.value" oninput="_add.disabled=!this.value" />
+<button id="_add" onclick="addCharts(_sel.value).then(()=>setElems(1)); setElems(0);" disabled>add</button>
+<input type="search" id="_sym" list="_syms" onfocus="!_syms.options.length && (loadSyms().then(()=>this.disabled=0), this.disabled=1);" onchange="_sel.value+=(_sel.value?sep:'')+this.value; _sel.dispatchEvent(new Event('change',{bubbles:true}));" />
 <datalist id="_syms"></datalist>
 cols<input id="_cols" type="number" style="width:40px;" min="1" step="1" value="3" onchange="_charts.style.gridTemplateColumns = Array(+this.value).fill('auto').join(' '); persist.cols = +this.value; _save.disabled=false;" />
 <input id="_w" type="number" min="1" value="600">
@@ -13,6 +13,8 @@ cols<input id="_cols" type="number" style="width:40px;" min="1" step="1" value="
 last<input id="_b" type="number" min="1" value="6" style="width:40px;">month(s)
 <button onclick="charts.forEach(i=>i.remove()); charts=[]; persist.chartConfs=[]; _save.disabled=false">clear</button>
 <button id="_save" onclick="localStorage.setItem('mytse2', JSON.stringify(persist)), this.disabled=true" disabled>save</button>
+<br>
+<textarea id="_sel" rows="2" cols="84" style="text-align:right;" oninput="_add.disabled=!this.value;" onchange="_add.disabled=!this.value;"></textarea>
 
 <div id="_charts" style="display: grid; grid-template-columns: auto auto auto; row-gap: .5rem; column-gap: .2rem;"></div>
 
@@ -20,6 +22,7 @@ last<input id="_b" type="number" min="1" value="6" style="width:40px;">month(s)
 let charts = [];
 let persist = {cols: 3, chartConfs:[]};
 let symfilter = i => [300,303,313,67,68,69].includes(+i.YVal) && ['تسه','انرژی','پذیره','عمده'].every(j => !i.Symbol.includes(j)) && !i.SymbolOriginal;
+let sep = ' - ';
 abs = Math.abs;
 
 (async () => {
@@ -30,6 +33,7 @@ abs = Math.abs;
 	let savedConfs = persist.chartConfs;
 	let savedSyms = savedConfs.map(i => i[0]);
 	if (savedSyms.length) {
+		_sel.value = savedSyms.join(sep);
 		let savedMonthsBacks = savedConfs.map(([,,,monthsBack]) => monthsBack);
 		let minSavedMonthsBacks = Math.min(...savedMonthsBacks);
 		let data = await getData(savedSyms, minSavedMonthsBacks);
@@ -39,6 +43,12 @@ abs = Math.abs;
 
 async function loadSyms() {
 	_syms.innerHTML = (await tse.getInstruments()).filter(symfilter).map(i => `<option value="${i.Symbol}" />`).sort((a,b)=>a.localeCompare(b,'fa')).join('\n');
+}
+
+async function addCharts(symstr='', width=abs(_w.value), height=abs(_h.value), monthsBack=abs(_b.value)) {
+	let syms = symstr.trim().split(sep);
+	let data = await getData(syms, monthsBack);
+	for (let [i, sym] of syms.entries()) await addChart(data[i], sym, width, height, monthsBack);
 }
 
 async function addChart(symData, sym='', width=abs(_w.value), height=abs(_h.value), monthsBack=abs(_b.value), syncing) {
@@ -152,7 +162,12 @@ async function getData(syms=[], monthsBack) {
 		columns: [0,1,2,3,4,6,7],
 		startDate: getRelativeDate(monthsBack),
 	});
-	if (error) throw Error('TSE Error.');
+	if (error) {
+		if (error.code === 2) {
+			alert([error.title, ...error.symbols].join('\n'));
+		}
+		throw Error('TSE Error.');
+	}
 	return data;
 }
 
