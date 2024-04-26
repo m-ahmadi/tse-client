@@ -30,6 +30,11 @@ abs = Math.abs;
 	if (storedState) persist = JSON.parse(storedState);
 	_cols.value = persist.cols;
 	_charts.style.gridTemplateColumns = Array(persist.cols).fill('auto').join(' ');
+	let lastChartConf = persist.chartConfs.slice(-1)[0];
+	let [, wLastchart, hLastchart, bLastchart] = lastChartConf;
+	_w.value = wLastchart;
+	_h.value = hLastchart;
+	_b.value = bLastchart;
 	let savedConfs = persist.chartConfs;
 	let savedSyms = savedConfs.map(i => i[0]);
 	if (savedSyms.length) {
