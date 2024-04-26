@@ -20,7 +20,7 @@ last<input id="_b" type="number" min="1" value="6" style="width:40px;">month(s)
 
 <script>
 let charts = [];
-let persist = {cols: 3, chartConfs:[]};
+let persist = {cols: +_cols.value, chartConfs:[]};
 let symfilter = i => [300,303,313,67,68,69].includes(+i.YVal) && ['تسه','انرژی','پذیره','عمده'].every(j => !i.Symbol.includes(j)) && !i.SymbolOriginal;
 let sep = ' - ';
 abs = Math.abs;
