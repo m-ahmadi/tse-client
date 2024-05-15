@@ -28,8 +28,8 @@
   },
   "homepage": "https://github.com/m-ahmadi/tse-client#readme",
   "dependencies": {
-    "big.js": "^6.2.1",
     "commander": "^8.3.0",
+    "decimal.js": "^10.4.3",
     "jalaali-js": "^1.2.6",
     "localforage": "^1.10.0",
     "node-fetch": "^2.6.7",

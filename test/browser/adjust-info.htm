@@ -3,7 +3,7 @@
 	<style>div{font-family:monospace}code{background:#e3e3e3;}</style>
 	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tabulator-tables@5.5.4/dist/css/tabulator.min.css" />
 </head>
-<script src="https://cdn.jsdelivr.net/npm/big.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/decimal.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jalaali-js/dist/jalaali.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/localforage"></script>
 <script src="../../tse.js"></script>
@@ -168,7 +168,7 @@ function adjust(prices, adjustEvents, type, appendLastRaw) {
 			let coef = lastCoef.times(i.priceAfterEvent).div(i.priceBeforeEvent);
 			i.coef = coef.toString();
 			return coef;
-		}, Big('1.0'));
+		}, Decimal('1.0'));
 	} else if (type === 2) {
 		adjustEvents = adjustEvents.filter(i => i.type === 'capital increase');
 		
@@ -176,7 +176,7 @@ function adjust(prices, adjustEvents, type, appendLastRaw) {
 			let coef = lastCoef.times(i.oldShares).div(i.newShares);
 			i.coef = coef.toString();
 			return coef;
-		}, Big('1.0'));
+		}, Decimal('1.0'));
 	}
 	
 	adjustEvents.sort((a, b) => a.date - b.date);
@@ -203,11 +203,11 @@ function adjust(prices, adjustEvents, type, appendLastRaw) {
 		adj.date.push(priceDate);
 		
 		k1.forEach(k => adj[k].push(
-			+Big(prices[k][i]).times(coef).round(2).toFixed(2)
+			+Decimal(prices[k][i]).times(coef).toDecimalPlaces(2).toFixed(2)
 		));
 		
 		k2.forEach(k => adj[k].push(
-			+Big(prices[k][i]).times(coef).round().toString()
+			+Decimal(prices[k][i]).times(coef).toDecimalPlaces(0).toString()
 		));
 	}
 	

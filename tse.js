@@ -2,12 +2,13 @@
 const isNode    = (function(){return typeof global!=='undefined'&&this===global})();
 const isBrowser = (function(){return typeof window!=='undefined'&&this===window})();
 const fetch   = isNode ? require('node-fetch') : isBrowser ? window.fetch   : undefined;
-const Big     = isNode ? require('big.js')     : isBrowser ? window.Big     : undefined;
+const Decimal = isNode ? require('decimal.js') : isBrowser ? window.Decimal : undefined;
 const jalaali = isNode ? require('jalaali-js') : isBrowser ? window.jalaali : undefined;
 if (isBrowser) {
-  if (!Big)         throw new Error('Cannot find required dependency: Big');
+  if (!Decimal)     throw new Error('Cannot find required dependency: Decimal');
   if (!localforage) throw new Error('Cannot find required dependency: localforage');
 }
+Decimal.set({ precision: 40, rounding: Decimal.ROUND_HALF_EVEN });
 //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 // storage
 const storage = (function () {
@@ -181,7 +182,7 @@ const storage = (function () {
           if (selins.has(key)) result[key] = val;
         });
       } else {
-        await itdstore.iterate((val, key) => {
+      await itdstore.iterate((val, key) => {
           if (selins.has(key)) result[key] = Object.keys(val).reduce((r,k) => (r[k] = true, r), {});
         });
       }
@@ -447,8 +448,6 @@ const defaultSettings = {
 let lastdevens   = {};
 let storedPrices = {};
 
-Big.DP = 40;
-Big.RM = 2; // http://mikemcl.github.io/big.js/#rm
 function adjust(cond, closingPrices, shares, getInfo, getInfoOnly) {
   const cp = closingPrices;
   const len = closingPrices.length;
@@ -460,13 +459,13 @@ function adjust(cond, closingPrices, shares, getInfo, getInfoOnly) {
     info: shouldGetInfo ? info : undefined,
   };
   if ( (cond === 1 || cond === 2 || shouldGetInfo) && len > 1 ) {
-    let gaps = new Big('0.0');
-    let coef = new Big('1.0');
+    let gaps = new Decimal('0.0');
+    let coef = new Decimal('1.0');
     adjustedClosingPrices.push( cp[len-1] );
     if (cond === 1 || shouldGetInfo) {
       for (let i=len-2; i>=0; i-=1) {
         const [curr, next] = [ cp[i], cp[i+1] ];
-        if (!Big(curr.PClosing).eq(next.PriceYesterday) && curr.InsCode === next.InsCode) {
+        if (!Decimal(curr.PClosing).eq(next.PriceYesterday) && curr.InsCode === next.InsCode) {
           gaps = gaps.plus(1);
         }
       }
@@ -477,7 +476,7 @@ function adjust(cond, closingPrices, shares, getInfo, getInfoOnly) {
     if ( (cond === 1 && hasValidRatio) || cond === 2 || shouldGetInfo ) {
       for (let i=len-2; i>=0; i-=1) {
         const [curr, next] = [ cp[i], cp[i+1] ];
-        const pricesDontMatch = !Big(curr.PClosing).eq(next.PriceYesterday) && curr.InsCode === next.InsCode;
+        const pricesDontMatch = !Decimal(curr.PClosing).eq(next.PriceYesterday) && curr.InsCode === next.InsCode;
         const targetShare = shares.get(next.DEven);
         
         if (shouldGetInfo && pricesDontMatch && (hasValidRatio || targetShare)) {// halt event
@@ -488,7 +487,7 @@ function adjust(cond, closingPrices, shares, getInfo, getInfoOnly) {
           let date = dateBeforeEvent;
           if (targetShare) {// capital increase event
             const {NumberOfShareOld: oldShares, NumberOfShareNew: newShares} = targetShare;
-            const increasePct = Big(newShares).sub(oldShares).div(oldShares);
+            const increasePct = Decimal(newShares).sub(oldShares).div(oldShares);
             adjustEvent.type = 'capital increase';
             adjustEvent.increasePct = increasePct.toString();
             adjustEvent.oldShares = ''+oldShares;
@@ -496,7 +495,7 @@ function adjust(cond, closingPrices, shares, getInfo, getInfoOnly) {
             //const {DEven: eventDate} = targetShare;
             //date = eventDate; // alternative date to use, but results in less accurate external price adjustment
           } else {// dividend event
-            const dividend = Big(priceBeforeEvent).sub(priceAfterEvent);
+            const dividend = Decimal(priceBeforeEvent).sub(priceAfterEvent);
             adjustEvent.type = 'dividend';
             adjustEvent.dividend = dividend.toString();
           }
@@ -516,12 +515,12 @@ function adjust(cond, closingPrices, shares, getInfo, getInfoOnly) {
         }
         
         let
-        close = coef.times(curr.PClosing).round(2).toFixed(2),
-        last  = coef.times(curr.PDrCotVal).round(2).toFixed(2),
-        low   = coef.times(curr.PriceMin).round().toString(),
-        high  = coef.times(curr.PriceMax).round().toString(),
-        yday  = coef.times(curr.PriceYesterday).round().toString(),
-        first = coef.times(curr.PriceFirst).round(2).toFixed(2);
+        close = coef.times(curr.PClosing).toDecimalPlaces(2).toFixed(2),
+        last  = coef.times(curr.PDrCotVal).toDecimalPlaces(2).toFixed(2),
+        low   = coef.times(curr.PriceMin).toDecimalPlaces(0).toString(),
+        high  = coef.times(curr.PriceMax).toDecimalPlaces(0).toString(),
+        yday  = coef.times(curr.PriceYesterday).toDecimalPlaces(0).toString(),
+        first = coef.times(curr.PriceFirst).toDecimalPlaces(2).toFixed(2);
         // note: the `toFixed()` calls are necessary and not redundant
         
         const adjustedClosingPrice = {
@@ -774,7 +773,7 @@ const pricesUpdateManager = (function () {
       
       if (pf) {
         const filled = pSR.div(PRICES_UPDATE_RETRY_COUNT + 2).mul(retries + 1);
-        pf(pn= +Big(pn).plus( pSR.sub(filled) ) );
+        pf(pn= +Decimal(pn).plus( pSR.sub(filled) ) );
       }
     } else {
       fails.push(...inscodes);
@@ -791,7 +790,7 @@ const pricesUpdateManager = (function () {
       .then( r => onresult(r, chunk, id) )
       .catch( () => onresult(undefined, chunk, id) );
     
-    if (pf) pf(pn= +Big(pn).plus(pR) );
+    if (pf) pf(pn= +Decimal(pn).plus(pR) );
   }
   
   function batch(chunks=[]) {
@@ -809,8 +808,8 @@ const pricesUpdateManager = (function () {
     lastPossibleDeven = _lastPossibleDeven;
     ({ pf, pn, ptot } = po);
     total = updateNeeded.length;
-    pSR = ptot.div( Math.ceil(Big(total).div(PRICES_UPDATE_CHUNK)) ); // each successful request:   ( ptot / Math.ceil(total / PRICES_UPDATE_CHUNK) )
-    pR = pSR.div(PRICES_UPDATE_RETRY_COUNT + 2);                      // each request:               pSR / (PRICES_UPDATE_RETRY_COUNT + 2)
+    pSR = ptot.div( Math.ceil(Decimal(total).div(PRICES_UPDATE_CHUNK)) ); // each successful request:   ( ptot / Math.ceil(total / PRICES_UPDATE_CHUNK) )
+    pR = pSR.div(PRICES_UPDATE_RETRY_COUNT + 2);                          // each request:               pSR / (PRICES_UPDATE_RETRY_COUNT + 2)
     succs = [];
     fails = [];
     retries = 0;
@@ -841,7 +840,7 @@ async function updatePrices(selection=[], shouldCache, {pf, pn, ptot}={}) {
   }
   
   let result = { succs: [], fails: [], error: undefined, pn };
-  const pfin = +Big(pn).plus(ptot);
+  const pfin = +Decimal(pn).plus(ptot);
   
   const lastPossibleDevens = await getLastPossibleDevens();
   if (isObj(lastPossibleDevens)) {
@@ -872,14 +871,14 @@ async function updatePrices(selection=[], shouldCache, {pf, pn, ptot}={}) {
       }
     }
   }).filter(i=>i);
-  if (pf) pf(pn= +Big(pn).plus( ptot.mul(0.01) ) );
+  if (pf) pf(pn= +Decimal(pn).plus( ptot.mul(0.01) ) );
   
   const selins = new Set(selection.map(i => i.InsCode));
   const storedins = new Set(Object.keys(storedPrices));
   if ( !storedins.size || [...selins].find(i => !storedins.has(i)) ) {
     await storage.getItems(selins, storedPrices);
   }
-  if (pf) pf(pn= +Big(pn).plus( ptot.mul(0.01) ) );
+  if (pf) pf(pn= +Decimal(pn).plus( ptot.mul(0.01) ) );
   
   if (toUpdate.length) {
     const managerResult = await pricesUpdateManager(toUpdate, shouldCache, lpdNO, { pf, pn, ptot: ptot.sub(ptot.mul(0.02)) });
@@ -910,10 +909,10 @@ async function getPrices(symbols=[], _settings={}) {
   if (typeof pf !== 'function') pf = undefined;
   if (typeof ptot !== 'number') ptot = defaultSettings.progressTotal;
   let pn = 0;
-  ptot = Big(ptot);
+  ptot = Decimal(ptot);
   
   const err = await updateInstruments();
-  if (pf) pf(pn= +Big(pn).plus( ptot.mul(0.01) ) );
+  if (pf) pf(pn= +Decimal(pn).plus( ptot.mul(0.01) ) );
   if (err) {
     const { title, detail } = err;
     result.error = { code: 1, title, detail };
@@ -924,7 +923,7 @@ async function getPrices(symbols=[], _settings={}) {
   const instruments = parseInstruments(true, undefined, 'Symbol');
   const selection = symbols.map(i => instruments[i]);
   const notFounds = symbols.filter((v,i) => !selection[i]);
-  if (pf) pf(pn= +Big(pn).plus( ptot.mul(0.01) ) );
+  if (pf) pf(pn= +Decimal(pn).plus( ptot.mul(0.01) ) );
   if (notFounds.length) {
     result.error = { code: 2, title: 'Incorrect Symbol', symbols: notFounds };
     if (pf) pf(+ptot);
@@ -1001,7 +1000,7 @@ async function getPrices(symbols=[], _settings={}) {
   
   const { adjustPrices, daysWithoutTrade, startDate, csv } = settings;
   const allShares = parseShares(true);
-  const pi = Big(ptot).mul(0.20).div(selection.length);
+  const pi = Decimal(ptot).mul(0.20).div(selection.length);
   
   const storedPricesMerged = {};
   const { debugMergeSimilarSymbols } = settings;
@@ -1190,7 +1189,7 @@ async function getPrices(symbols=[], _settings={}) {
         )
         .join('\n');
       
-      if (pf) pf(pn= +Big(pn).plus(pi) );
+      if (pf) pf(pn= +Decimal(pn).plus(pi) );
       return res;
     });
     
@@ -1216,7 +1215,7 @@ async function getPrices(symbols=[], _settings={}) {
         }
       }
       
-      if (pf) pf(pn= +Big(pn).plus(pi) );
+      if (pf) pf(pn= +Decimal(pn).plus(pi) );
       return res;
     });
     
@@ -1457,7 +1456,7 @@ const itdUpdateManager = (function () {
       
       if (pf) {
         let filled = pSR.div(retryCount + 2).mul(retries + 1);
-        pf(pn= +Big(pn).plus( pSR.sub(filled) ) );
+        pf(pn= +Decimal(pn).plus( pSR.sub(filled) ) );
       }
     } else {
       fails.push(chunk);
@@ -1504,7 +1503,7 @@ const itdUpdateManager = (function () {
     
     if (controller) setTimeout(() => controller.abort(), chunkMaxWait);
     
-    if (pf) pf(pn= +Big(pn).plus(pR) );
+    if (pf) pf(pn= +Decimal(pn).plus(pR) );
   }
   
   function batch(chunks=[]) {
@@ -1554,10 +1553,10 @@ async function getIntraday(symbols=[], _settings={}) {
   if (typeof pf !== 'function') pf = undefined;
   if (typeof ptot !== 'number') ptot = itdDefaultSettings.progressTotal;
   let pn = 0;
-  ptot = Big(ptot);
+  ptot = Decimal(ptot);
   
   const err = await updateInstruments();
-  if (pf) pf(pn= +Big(pn).plus( ptot.mul(0.01) ) );
+  if (pf) pf(pn= +Decimal(pn).plus( ptot.mul(0.01) ) );
   if (err) {
     const { title, detail } = err;
     result.error = { code: 1, title, detail };
@@ -1568,7 +1567,7 @@ async function getIntraday(symbols=[], _settings={}) {
   const instruments = parseInstruments(true, undefined, 'Symbol');
   const selection = symbols.map(i => instruments[i]);
   const notFounds = symbols.filter((v,i) => !selection[i]);
-  if (pf) pf(pn= +Big(pn).plus( ptot.mul(0.01) ) );
+  if (pf) pf(pn= +Decimal(pn).plus( ptot.mul(0.01) ) );
   if (notFounds.length) {
     result.error = { code: 2, title: 'Incorrect Symbol', symbols: notFounds };
     if (pf) pf(+ptot);
@@ -1623,7 +1622,7 @@ async function getIntraday(symbols=[], _settings={}) {
     }
   }
   storedInscodeDevens = Object.fromEntries(storedInscodeDevens);
-  if (pf) pf(pn= +Big(pn).plus( ptot.mul(0.01) ) );
+  if (pf) pf(pn= +Decimal(pn).plus( ptot.mul(0.01) ) );
   
   /** note:  ↓... let == const (mostly) */
   
@@ -1658,7 +1657,7 @@ async function getIntraday(symbols=[], _settings={}) {
       : devens.filter(deven => !stored[inscode][deven]);
     if (needupdate.length) return [inscode, needupdate];
   }).filter(i=>i);
-  if (pf) pf(pn= +Big(pn).plus( ptot.mul(0.01) ) );
+  if (pf) pf(pn= +Decimal(pn).plus( ptot.mul(0.01) ) );
   
   let { chunkDelay, chunkMaxWait, retryCount, retryDelay, servers } = settings;
   if (!Array.isArray(servers) || servers.some(i => !Number.isInteger(i) || i < 0)) servers = itdDefaultSettings.servers;

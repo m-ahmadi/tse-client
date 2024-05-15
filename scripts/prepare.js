@@ -2,7 +2,7 @@ const fs = require('fs');
 const { execSync }  = require('child_process');
 process.env.path += require('path').delimiter + './node_modules/.bin';
 
-execSync('terser node_modules/big.js/big.js -o dep1.js -c -m');
+execSync('terser node_modules/decimal.js/decimal.js -o dep1.js -c -m');
 
 fs.copyFileSync('node_modules/jalaali-js/dist/jalaali.min.js', 'dep2.js');
 fs.copyFileSync('node_modules/localforage/dist/localforage.min.js', 'dep3.js');
