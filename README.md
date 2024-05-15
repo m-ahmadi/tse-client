@@ -47,6 +47,7 @@ The `0.x` and `1.x` versions were a direct port of the [official Windows app](ht
 		- [`shareholder`](#shareholder)
 - [Note](#note)	
 	+ [تغییرنام نمادهای متشابه](#renamed-symbols)
+	+ [تعدیل دستی](#manual-price-adjustment)
 	
 # CLI
 
@@ -795,5 +796,9 @@ shares | sharespot     | change | companycode | companyname
       به باقی نمادها یک خط تیره "-" و حرف "ق" و عدد جایگاه نماد در لیست مرتب شده اضافه می شود
   ```
   فرمان `tse ls -R` نماد های تغییرنام داده شده را نمایش می دهد.
+- ### Manual Price Adjustment
+  با استفاده از [اطلاعات این قسمت](#get-price-adjustment-data) می توان عملیات تعدیل قیمت نماد را به شکل دستی نیز انجام داد.  
+  [در این فایل](samples/manual_price_adjustment_example.py) نمونه مثالی از انجام این عملیات در دسترس می‌باشد.  
+  با استفاده از این روش می توان هر نوع داده قیمتی یک نماد را تعدیل کرد. (من‌جمله قیمت‌های ماهانه، هفتگی، ساعتی، دقیقه‌ایی و غیره)
 
 </div>
