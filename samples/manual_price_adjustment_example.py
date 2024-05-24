@@ -150,7 +150,7 @@ for k in cols_price_dp0:
 	prices[k] = prices[k].apply(he_round, args=[0])
 
 # Get the intact last row to be replaced with the adjusted last row.
-# There is no need to adjust the row (same as the internal code).
+# There is no need to adjust the last row (same as the internal code).
 # The reason for not using the already loaded data in the variable `prices` is
 # that its `DataFrame` has been loaded with some columns parsed as something
 # other than string and since that can affect the decimal places of the numbers,
