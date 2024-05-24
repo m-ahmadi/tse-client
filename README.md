@@ -277,7 +277,7 @@ const tse = require('tse-client');
 #### Using the module itself:
 *(dependencies must be loaded before)*
 ```html
-<script src="https://cdn.jsdelivr.net/npm/big.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/decimal.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/localforage"></script>
 <script src="https://cdn.jsdelivr.net/npm/jalaali-js/dist/jalaali.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/pako/dist/pako.min.js"></script>
@@ -311,7 +311,7 @@ tse.getPrices(['فولاد']).then(res => console.log(res.data[0]));
 
 dependency | desc
 -------|-------------
-`big.js`      | `Required`. For price adjustment calculations.
+`decimal.js`  | `Required`. For price adjustment calculations.
 `localforage` | `Required`. For storing in `indexedDB`. 
 `jalaali-js`  | `Optional`. Only needed for `dateshamsi` column. *(Recommanded to not exclude this, though you can)*
 `pako`        | `Semi-Required`. Only used by [`getIntraday()`](#tsegetintradaysymbols-string-settings-intradaysettings).
