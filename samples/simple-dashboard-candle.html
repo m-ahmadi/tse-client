@@ -201,7 +201,8 @@ function isDataValid(times=[], sym) {
 }
 
 function dvnToTs(s) {
-	return new Date(+v.slice(0,4), +v.slice(4,6)-1, +v.slice(6,8)) / 1e3;
+	let sf = [...Array(8)].map((_,i)=> (i===4||i===6||i===8?'-':'') + s[i]).join('');
+	return Math.floor(+new Date(sf) / 1000);
 }
 
 function getRelativeDate(nMonths=1) {
