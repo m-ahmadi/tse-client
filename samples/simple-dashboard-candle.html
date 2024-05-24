@@ -120,6 +120,18 @@ async function addChart(symData, sym='', width=abs(_w.value), height=abs(_h.valu
 	volumeSeries.priceScale().applyOptions({scaleMargins:{top: 0.8, bottom: 0}});
 	volumeSeries.setData(volumes);
 	
+	// setup chart's markers
+	markers = symData.adjustInfo.events.map(i => {
+		let time = dvnToTs(i.date);
+		let isDividend = i.type === 'dividend';
+		let text = isDividend ? ('D '+i.dividend) : 'C '+ (+i.increasePct*100).toFixed(2) + '%';
+		let color = i.type === 'capital increase' ? '#0496FF' : '#FFD400';
+		let position = isDividend ? 'belowBar' : 'aboveBar';
+		return {time, position, shape: 'circle', size: 2, text, color};
+	});
+	markers.sort((a,b) => a.time - b.time);
+	candleSeries.setMarkers(markers);
+	
 	// setup chart's legend
 	function template(symbol='', candle={}, volumeValue='') {
 		let {time} = candle;
@@ -167,6 +179,7 @@ async function getData(syms=[], monthsBack) {
 	let {data, error} = await tse.getPrices(syms, {
 		columns: [0,1,2,3,4,6,7],
 		startDate: getRelativeDate(monthsBack),
+		getAdjustInfo: true,
 	});
 	if (error) {
 		if (error.code === 2) {
