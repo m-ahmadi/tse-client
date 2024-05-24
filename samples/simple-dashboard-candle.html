@@ -71,8 +71,7 @@ async function addChart(symData, sym='', width=abs(_w.value), height=abs(_h.valu
 	let candles = symData.date.map((v,i) => {
 		if (v < startDate) return;
 		let [open, high, low, close, vol] = ['open','high','low','close','vol'].map(k => symData[k][i]);
-		v = ''+v;
-		let time = new Date(+v.slice(0,4), +v.slice(4,6)-1, +v.slice(6,8)) / 1e3;
+		let time = dvnToTs(''+v);
 		let positive = i > 0 ? close >= symData.close[i-1] : true; // note: not used `yesterday` due to index symbols
 		let volumeColor = positive ? '#A7D2A8' : '#FEA6A7';
 		let candleColors = getCandleColors(positive);
@@ -199,6 +198,10 @@ function isDataValid(times=[], sym) {
 		return [false, errorText];
 	}
 	return [true];
+}
+
+function dvnToTs(s) {
+	return new Date(+v.slice(0,4), +v.slice(4,6)-1, +v.slice(6,8)) / 1e3;
 }
 
 function getRelativeDate(nMonths=1) {
