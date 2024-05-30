@@ -660,7 +660,7 @@ interface InstrumentsITD {
 }
 ```
 #### `tse.getIntraday(symbols: string[], settings?: IntradaySettings)`
-Crawl intraday data from the instrument's history page of the [tsetmc.com](http://tsetmc.com) website. **(Experimental)**
+Crawl intraday data from the instrument's history page of the [tsetmc.com](https://tsetmc.com) website. **(Experimental)**
 - **`symbols`:** An array of *`Farsi`* instrument symbols.  
 - **`settings`:** A settings object.
 	+ **`startDate`:** Only return data after this date. Min: `'20010321'`. Default: `'20010321'`
