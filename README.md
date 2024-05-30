@@ -451,7 +451,7 @@ interface AdjustEvent {
   priceAfterEvent:  string;
   dividend?:        string; // only when `type` is 'dividend'
   increasePct?:     string; // only when `type` is 'capital increase'
-  oldShares?:       string; // only when `type: is 'capital increase'
+  oldShares?:       string; // only when `type` is 'capital increase'
   newShares?:       string; // only when `type` is 'capital increase'
 }
 
