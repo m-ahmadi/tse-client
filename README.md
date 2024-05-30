@@ -1,7 +1,7 @@
 # [TSE Client](https://www.npmjs.com/package/tse-client) [![GitHub tag](https://img.shields.io/github/tag/m-ahmadi/tse-client.svg)](https://GitHub.com/m-ahmadi/tse-client/tags/) [![GitHub issues](https://img.shields.io/github/issues/m-ahmadi/tse-client.svg)](https://GitHub.com/m-ahmadi/tse-client/issues/) 
 A client for fetching stock data from the Tehran Stock Exchange (TSETMC).  
 Works in Browser, Node, and as CLI.  
-The `0.x` and `1.x` versions were a direct port of the [official Windows app](http://cdn.tsetmc.com/Site.aspx?ParTree=111A11). 
+The `0.x` and `1.x` versions were a direct port of the [official Windows app](https://cdn.tsetmc.com/StaticContent/TseClient). 
 
 <p float="left">
 	<img src="samples/comparison-a.gif" width="513" />
@@ -362,7 +362,7 @@ Update (if needed) and return list of instruments.
 
 **return:** `Array<Instrument | string> | Instruments`  
 
-Visit the [official documentation](http://cdn.tsetmc.com/Site.aspx?ParTree=1114111118&LnkIdn=83) for description of each `Instrument` field.  
+Visit the [official documentation](https://cdn.tsetmc.com/StaticContent/WS-Instrument) for description of each `Instrument` field.  
 ```typescript
 interface Instrument {
 //                            👇 C# equivalent
@@ -737,7 +737,7 @@ time | count | volume | price | discarded
 -----|-------|--------|-------|---------
 زمان  | تعداد   | حجم    | قیمت   | باطل شده 
 
-## [`client`](http://cdn.tsetmc.com/Site.aspx?ParTree=1114111116&LnkIdn=3568)
+## [`client`](https://cdn.tsetmc.com/StaticContent/WS-ClientType)
 ![](/samples/itdcols-client.png)
 
 column | desc | desc Fa
@@ -771,7 +771,7 @@ column | desc | desc Fa
 ## `misc`
 basevol | flow | daymin      | daymax       | state
 --------|------|-------------|--------------|--------
-حجم مبنا  | بازار  | کمینه قیمت مجاز | بیشینه قیمت مجاز | [وضعیت نماد](http://cdn.tsetmc.com/Site.aspx?ParTree=111411111Y&LnkIdn=833) 
+حجم مبنا  | بازار  | کمینه قیمت مجاز | بیشینه قیمت مجاز | [وضعیت نماد](https://cdn.tsetmc.com/StaticContent/WS-InstrumentsState) 
 
 ## `shareholder`
 shares | sharespot     | change | companycode | companyname
@@ -780,7 +780,7 @@ shares | sharespot     | change | companycode | companyname
 
 # Note
 - `Instrument.Symbol` characters are cleaned from `zero-width` characters, `ك` and  `ي`.  
-- The price adjustment algorithm is still a direct port of the [official Windows app](http://cdn.tsetmc.com/Site.aspx?ParTree=111A11).
+- The price adjustment algorithm is still a direct port of the [official Windows app](https://tsetmc.com/StaticContent/TseClient).
 - In Browser, the `InstrumentAndShare` data is stored in `localStorage`.
 - In Browser, the `ClosingPrices` data is stored in `indexedDB`.
 - In Node, data compression is done with the `zlib` module.
