@@ -809,6 +809,7 @@ async function list(opts) {
     
     delete a.symbols;
     delete a.intraday;
+    delete a.instrument;
     
     delete b.symbols;
     
