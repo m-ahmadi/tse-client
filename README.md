@@ -421,7 +421,7 @@ Update (if needed) and return prices of instruments.
 interface Result {
   data:   Array<ClosingPrice>;
   error?: CustomError;
-	debug?: DebugResult;
+  debug?: DebugResult;
 }
 
 interface ClosingPrice {
