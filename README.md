@@ -255,7 +255,7 @@ const tse = require('tse-client');
   );
   
   // intraday crawler
-  res = await tse.getIntraday(['ذوب', 'فولاد']), {
+  res = await tse.getIntraday(['ذوب', 'فولاد'], {
     startDate: '20201122',
     endDate: '20201122',
     gzip: false
